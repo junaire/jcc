@@ -1,0 +1,15 @@
+Checks: '-*,
+    clang-diagnostic-*,
+    clang-analyzer-*,
+    concurrency-*,
+    bugprone-*,
+    google-*,
+    modernize-*,
+    performance-*,
+    readability-*,
+
+    -modernize-use-trailing-return-type,
+    -cppcoreguidelines-pro-type-*,
+    -cppcoreguidelines-owning-memory,
+    -google-runtime-*,
+    -google-objc-*'
