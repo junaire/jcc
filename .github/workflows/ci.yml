@@ -18,7 +18,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Set up
-        run: mkdir ${{github.workspace}}/build
+        run: |
+          mkdir ${{github.workspace}}/build
+          conan remove -f '*/system'
       - name: Configure conan
         working-directory: ${{github.workspace}}/build
         run: |
