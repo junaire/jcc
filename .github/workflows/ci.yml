@@ -13,11 +13,19 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-2019]
 
     steps:
       - uses: actions/checkout@v2
+      - name: Configure conan
+        run: |
+          pip3 install conan
+          pip3 install conan_package_tools
       - name: Configure CMake
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
       - name: Build
-        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel
+      - name: Test
+        run: |
+          cd ${{github.workspace}}/build
+          ctest --verbose

@@ -9,3 +9,8 @@ target_include_directories(
 	PUBLIC
 	${PROJECT_SOURCE_DIR}/include
 )
+
+target_link_libraries(
+    test_lexer
+    ${CONAN_LIBS}
+)
