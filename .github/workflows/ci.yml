@@ -19,8 +19,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Configure conan
         run: |
-          pip install --user conan
-          pip install --user conan_package_tools
+          pip3 install --user conan
+          pip3 install --user conan_package_tools
       - name: Configure CMake
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
       - name: Build
