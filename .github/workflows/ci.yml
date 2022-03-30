@@ -26,4 +26,6 @@ jobs:
       - name: Build
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
       - name: test
-        run: cd cmake-build-${{ matrix.build_type }} && ctest --verbose
+        run: |
+          cd ${{github.workspace}}/build
+          ctest --verbose
