@@ -226,7 +226,7 @@ Token Lexer::lex() {
       if (tryConsume('=')) {
         return lexAtom(TokenKind::EqualEqual);
       }
-      return lexAtom(TokenKind::EqualEqual);
+      return lexAtom(TokenKind::Equal);
     }
     case '^': {
       if (tryConsume('=')) {

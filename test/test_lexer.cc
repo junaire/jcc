@@ -1,14 +1,18 @@
 #include <string_view>
-
+#include <iostream>
 #include "gtest/gtest.h"
 #include "jcc/lexer.h"
 #include "jcc/token.h"
 
-TEST(LexerTest, Basic) {
-  std::string_view code = R"(int main() {return 1;})";
+Lexer makeLexer(std::string_view code) {
   const char* start = code.data();
   const char* end = code.data() + code.size();
-  Lexer lexer{start, end};
+  return Lexer{start, end};
+}
+
+
+TEST(LexerTest, Basic) {
+  Lexer lexer = makeLexer("int main() {return 0;}");
   EXPECT_EQ(TokenKind::Int, lexer.lex().getKind());
   EXPECT_EQ(TokenKind::Identifier, lexer.lex().getKind());
   EXPECT_EQ(TokenKind::LeftParen, lexer.lex().getKind());
@@ -18,4 +22,22 @@ TEST(LexerTest, Basic) {
   EXPECT_EQ(TokenKind::NumericConstant, lexer.lex().getKind());
   EXPECT_EQ(TokenKind::Semi, lexer.lex().getKind());
   EXPECT_EQ(TokenKind::RightBracket, lexer.lex().getKind());
+
+  lexer = makeLexer("int foo() { int i = 1 + 2; i++;");
+
+  EXPECT_EQ(TokenKind::Int, lexer.lex().getKind());
+  EXPECT_EQ(TokenKind::Identifier, lexer.lex().getKind());
+  EXPECT_EQ(TokenKind::LeftParen, lexer.lex().getKind());
+  EXPECT_EQ(TokenKind::RightParen, lexer.lex().getKind());
+  EXPECT_EQ(TokenKind::LeftBracket, lexer.lex().getKind());
+  EXPECT_EQ(TokenKind::Int, lexer.lex().getKind());
+  EXPECT_EQ(TokenKind::Identifier, lexer.lex().getKind());
+  EXPECT_EQ(TokenKind::Equal, lexer.lex().getKind());
+  EXPECT_EQ(TokenKind::NumericConstant, lexer.lex().getKind());
+  EXPECT_EQ(TokenKind::Plus, lexer.lex().getKind());
+  EXPECT_EQ(TokenKind::NumericConstant, lexer.lex().getKind());
+  EXPECT_EQ(TokenKind::Semi, lexer.lex().getKind());
+  EXPECT_EQ(TokenKind::Identifier, lexer.lex().getKind());
+  EXPECT_EQ(TokenKind::PlusPlus, lexer.lex().getKind());
+  EXPECT_EQ(TokenKind::Semi, lexer.lex().getKind());
 }
