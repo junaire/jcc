@@ -307,7 +307,7 @@ char Lexer::peek() const {
 }
 
 char Lexer::peekAhead(int offset) const {
-  assert(bufferPtr + offset > bufferEnd && "Cannot peek over the buffer!");
+  assert(bufferPtr + offset != bufferEnd && "Cannot peek over the buffer!");
   return *(bufferPtr + offset);
 }
 
