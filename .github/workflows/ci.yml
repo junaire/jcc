@@ -17,15 +17,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Set up
-        run: |
-          mkdir ${{github.workspace}}/build
-          conan remove -f '*/system'
       - name: Configure conan
         working-directory: ${{github.workspace}}/build
         run: |
           pip install --user conan
-          conan install ${{github.workspace}}
+          pip install --user conan_package_tools
       - name: Configure CMake
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
       - name: Build
