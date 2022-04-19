@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+class Expr;
+
 class Stmt {
  public:
   virtual ~Stmt() = default;
@@ -31,14 +33,15 @@ class CompoundStatement : public Stmt {
 class ExpressionStatement : public Stmt {};
 
 class IfStatement : public Stmt {
-  // Clang says we should use a expr to represent the condition
+  Expr* condition_{nullptr};
   Stmt* thenStmt_{nullptr};
   Stmt* elseStmt_{nullptr};
 
  public:
-  IfStatement(/*Expr* condition*/ Stmt* thenStmt, Stmt* elseStmt)
-      : thenStmt_(thenStmt), elseStmt_(elseStmt) {}
+  IfStatement(Expr* condition, Stmt* thenStmt, Stmt* elseStmt)
+      : condition_(condition), thenStmt_(thenStmt), elseStmt_(elseStmt) {}
 
+  Expr* getCondition() { return condition_; }
   Stmt* getThen() { return thenStmt_; }
   Stmt* getElse() { return elseStmt_; }
 };
@@ -48,27 +51,44 @@ class SwitchStatement : public Stmt {
 };
 
 class WhileStatement : public Stmt {
-  // Clang says we should use a expr to represent the condition
+  Expr* condition_{nullptr};
   Stmt* body_{nullptr};
 
  public:
-  explicit WhileStatement(Stmt* body) : body_(body) {}
+  explicit WhileStatement(Expr* condition, Stmt* body)
+      : condition_(condition), body_(body) {}
+  Expr* getCondition() { return condition_; }
   Stmt* getBody() { return body_; }
 };
 
 class DoStatement : public Stmt {
+  Expr* condition_{nullptr};
   Stmt* body_{nullptr};
 
  public:
-  explicit DoStatement(Stmt* body) : body_(body) {}
+  explicit DoStatement(Expr* condition, Stmt* body)
+      : condition_(condition), body_(body) {}
   Stmt* getBody() { return body_; }
+  Expr* getCondition() { return condition_; }
 };
 
 class ForStatement : public Stmt {
+  Stmt* init_{nullptr};
+  Stmt* condition_{nullptr};
+  Stmt* increment_{nullptr};
   Stmt* body_{nullptr};
 
  public:
-  explicit ForStatement(Stmt* body) : body_(body) {}
+  explicit ForStatement(Stmt* init, Stmt* condition, Stmt* increment,
+                        Stmt* body)
+      : init_(init),
+        condition_(condition),
+        increment_(increment),
+        body_(body) {}
+
+  Stmt* getInit() { return init_; }
+  Stmt* getCondition() { return condition_; }
+  Stmt* getIncrement() { return increment_; }
   Stmt* getBody() { return body_; }
 };
 
