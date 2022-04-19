@@ -103,15 +103,14 @@ class BinaryExpr : public Expr {
 };
 
 class ArraySubscriptExpr : public Expr {
-  // We all know its size is 2, do we really need to use std::vector?
-  std::vector<Expr*> subExprs_;
+  Expr* lhs_{nullptr};
+  Expr* rhs_{nullptr};
 
  public:
-  explicit ArraySubscriptExpr(std::vector<Expr*> subExprs)
-      : subExprs_(std::move(subExprs)) {}
+  explicit ArraySubscriptExpr(Expr* lhs, Expr* rhs) : lhs_(lhs), rhs_(rhs) {}
 
-  Expr* getLhs() { return subExprs_[0]; }
-  Expr* getRhs() { return subExprs_[1]; }
+  Expr* getLhs() { return lhs_; }
+  Expr* getRhs() { return rhs_; }
 };
 
 class MemberExpr : public Expr {
