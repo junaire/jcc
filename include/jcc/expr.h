@@ -64,6 +64,18 @@ class CallExpr : public Expr {
       : callee_(callee), args_(std::move(args)) {}
 };
 
+class CastExpr : public Expr {
+  // TODO(Jun): Implement this.
+};
+
+class InitListExpr : public Expr {
+  std::vector<Stmt*> initExprs_;
+
+ public:
+  explicit InitListExpr(std::vector<Stmt*> initExprs)
+      : initExprs_(std::move(initExprs)) {}
+};
+
 // TODO(Jun): Add more kinds.
 enum class UnaryOperatorKind {
   PreIncrement,

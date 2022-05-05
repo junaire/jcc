@@ -47,7 +47,11 @@ class IfStatement : public Stmt {
 };
 
 class SwitchStatement : public Stmt {
-  // Unimplemented
+  std::vector<Stmt*> cases_;
+
+ public:
+  explicit SwitchStatement(std::vector<Stmt*> cases)
+      : cases_(std::move(cases)) {}
 };
 
 class WhileStatement : public Stmt {
