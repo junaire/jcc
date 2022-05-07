@@ -1,12 +1,24 @@
 #pragma once
+
+#include <memory>
+
 #include "jcc/stmt.h"
+
+class Type;
+class Decl;
 
 // C11 6.5.1
 // An expression is a sequence of operators and operands that specifies
 // computation of a value, or that designates an object or a function, or that
 // generates side effects, or that performs a combination thereof.
 class Expr : public Stmt {
+  std::unique_ptr<Type> type_{nullptr};
+
  public:
+  explicit Expr(SourceRange loc) : Stmt(std::move(loc)) {}
+  Expr(SourceRange loc, Type* type) : Stmt(std::move(loc)), type_(type) {}
+
+  Type* getType() { return type_.get(); }
   virtual ~Expr() = default;
 };
 
@@ -14,7 +26,8 @@ class StringLiteral : public Expr {
   std::string literal_;
 
  public:
-  explicit StringLiteral(const char* literal) : literal_(literal) {}
+  StringLiteral(SourceRange loc, const char* literal)
+      : Expr(std::move(loc)), literal_(literal) {}
 };
 
 class CharacterLiteral : public Expr {
@@ -22,7 +35,8 @@ class CharacterLiteral : public Expr {
   char value_{0};
 
  public:
-  explicit CharacterLiteral(char value) : value_(value) {}
+  CharacterLiteral(SourceRange loc, char value)
+      : Expr(std::move(loc)), value_(value) {}
   [[nodiscard]] char getValue() const { return value_; }
 };
 
@@ -30,7 +44,8 @@ class IntergerLiteral : public Expr {
   int value_{0};
 
  public:
-  explicit IntergerLiteral(int value) : value_(value) {}
+  IntergerLiteral(SourceRange loc, int value)
+      : Expr(std::move(loc)), value_(value) {}
   [[nodiscard]] int getValue() const { return value_; }
 };
 
@@ -38,17 +53,9 @@ class FloatingLiteral : public Expr {
   double value_{0};
 
  public:
-  explicit FloatingLiteral(double value) : value_(value) {}
+  FloatingLiteral(SourceRange loc, double value)
+      : Expr(std::move(loc)), value_(value) {}
   [[nodiscard]] double getValue() const { return value_; };
-};
-
-class ParenExpr : public Expr {
-  Stmt* value_{nullptr};
-
- public:
-  // Clang pass a Expr to the Stmt
-  explicit ParenExpr(Expr* stmt) : value_(stmt) {}
-  Stmt* getSubExpr() { return value_; }
 };
 
 class ConstantExpr : public Expr {
@@ -60,8 +67,8 @@ class CallExpr : public Expr {
   std::vector<Expr*> args_;
 
  public:
-  explicit CallExpr(Expr* callee, std::vector<Expr*> args)
-      : callee_(callee), args_(std::move(args)) {}
+  CallExpr(SourceRange loc, Expr* callee, std::vector<Expr*> args)
+      : Expr(std::move(loc)), callee_(callee), args_(std::move(args)) {}
 };
 
 class CastExpr : public Expr {
@@ -72,8 +79,8 @@ class InitListExpr : public Expr {
   std::vector<Stmt*> initExprs_;
 
  public:
-  explicit InitListExpr(std::vector<Stmt*> initExprs)
-      : initExprs_(std::move(initExprs)) {}
+  explicit InitListExpr(SourceRange loc, std::vector<Stmt*> initExprs)
+      : Expr(std::move(loc)), initExprs_(std::move(initExprs)) {}
 };
 
 // TODO(Jun): Add more kinds.
@@ -87,8 +94,8 @@ class UnaryExpr : public Expr {
   Stmt* value_{nullptr};
 
  public:
-  explicit UnaryExpr(UnaryOperatorKind kind, Stmt* value)
-      : kind_(kind), value_(value) {}
+  UnaryExpr(SourceRange loc, UnaryOperatorKind kind, Stmt* value)
+      : Expr(std::move(loc)), kind_(kind), value_(value) {}
 
   [[nodiscard]] UnaryOperatorKind getKind() const { return kind_; }
 };
@@ -108,8 +115,9 @@ class BinaryExpr : public Expr {
   std::vector<Expr*> subExprs_;
 
  public:
-  explicit BinaryExpr(BinaryOperatorKind kind, std::vector<Expr*> subExprs)
-      : kind_(kind), subExprs_(std::move(subExprs)) {}
+  BinaryExpr(SourceRange loc, BinaryOperatorKind kind,
+             std::vector<Expr*> subExprs)
+      : Expr(std::move(loc)), kind_(kind), subExprs_(std::move(subExprs)) {}
 
   [[nodiscard]] BinaryOperatorKind getKind() const { return kind_; }
 };
@@ -119,7 +127,8 @@ class ArraySubscriptExpr : public Expr {
   Expr* rhs_{nullptr};
 
  public:
-  explicit ArraySubscriptExpr(Expr* lhs, Expr* rhs) : lhs_(lhs), rhs_(rhs) {}
+  ArraySubscriptExpr(SourceRange loc, Expr* lhs, Expr* rhs)
+      : Expr(std::move(loc)), lhs_(lhs), rhs_(rhs) {}
 
   Expr* getLhs() { return lhs_; }
   Expr* getRhs() { return rhs_; }
@@ -127,7 +136,12 @@ class ArraySubscriptExpr : public Expr {
 
 class MemberExpr : public Expr {
   Stmt* base_{nullptr};
-  // a decl?
+  Decl* member_{nullptr};
+
  public:
-  explicit MemberExpr(Stmt* base) : base_(base) {}
+  MemberExpr(SourceRange loc, Stmt* base, Decl* member)
+      : Expr(std::move(loc)), base_(base), member_(member) {}
+
+  Stmt* getBase() { return base_; }
+  Decl* getMember() { return member_; }
 };
