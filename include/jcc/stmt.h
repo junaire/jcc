@@ -8,6 +8,7 @@
 #include "jcc/source_location.h"
 
 class Expr;
+class Decl;
 class LabelDecl;
 
 class Stmt {
@@ -19,7 +20,7 @@ class Stmt {
   SourceRange getSourceRange() { return range_; }
 
   template <typename Ty>
-  requires std::convertible_to<Ty, Stmt> Ty* as() {
+  requires std::convertible_to<Ty, Stmt> Ty* asStmt() {
     return static_cast<Ty*>(this);
   }
 
@@ -160,7 +161,16 @@ class ReturnStatement : public Stmt {
   Stmt* returnExpr_{nullptr};
 
  public:
-  explicit ReturnStatement(SourceRange loc, Stmt* returnExpr)
+  ReturnStatement(SourceRange loc, Stmt* returnExpr)
       : Stmt(std::move(loc)), returnExpr_(returnExpr) {}
   Stmt* getReturn() { return returnExpr_; }
+};
+
+class DeclStmt : public Stmt {
+  Decl* decl_{nullptr};
+
+ public:
+  DeclStmt(SourceRange loc, Decl* decl) : Stmt(std::move(loc)), decl_(decl) {}
+
+  Decl* getDecl() { return decl_; }
 };

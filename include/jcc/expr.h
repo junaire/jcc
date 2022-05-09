@@ -1,5 +1,6 @@
 #pragma once
 
+#include <concepts>
 #include <memory>
 
 #include "jcc/stmt.h"
@@ -18,7 +19,13 @@ class Expr : public Stmt {
   explicit Expr(SourceRange loc) : Stmt(std::move(loc)) {}
   Expr(SourceRange loc, Type* type) : Stmt(std::move(loc)), type_(type) {}
 
+  template <typename Ty>
+  requires std::convertible_to<Ty, Expr> Ty* asExpr() {
+    return static_cast<Ty*>(this);
+  }
+
   Type* getType() { return type_.get(); }
+
   virtual ~Expr() = default;
 };
 
@@ -144,4 +151,14 @@ class MemberExpr : public Expr {
 
   Stmt* getBase() { return base_; }
   Decl* getMember() { return member_; }
+};
+
+class DeclRefExpr : public Expr {
+  Decl* decl_{nullptr};
+
+ public:
+  DeclRefExpr(SourceRange loc, Decl* decl)
+      : Expr(std::move(loc)), decl_(decl) {}
+
+  Decl* getRefDecl() { return decl_; }
 };
