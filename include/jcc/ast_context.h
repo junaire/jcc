@@ -8,8 +8,10 @@ class ASTContext {
 
  public:
   ASTContext() = default;
-  void* allocate(std::size_t size) {
-    void* mem = malloc(size);
+
+  template<typename T>
+  void* allocate() {
+    void* mem = malloc(sizeof(T));
     slabs.push_back(mem);
     return mem;
   }
