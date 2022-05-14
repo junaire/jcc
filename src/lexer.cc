@@ -297,12 +297,14 @@ bool Lexer::isValidChar() const {
 }
 
 void Lexer::advance() {
-  assert(bufferPtr != bufferEnd && "Cannot advance the buffPtr!");
+  assert(bufferPtr != bufferEnd + 1 && "Have already reached EOF!");
   bufferPtr++;
 }
 
 char Lexer::peek() const {
-  assert(bufferPtr != bufferEnd && "Cannot peek the end of the file!");
+  if (bufferPtr == bufferEnd) {
+    return '\0';
+  }
   return *bufferPtr;
 }
 
@@ -328,7 +330,7 @@ void Lexer::skipUntil(char ch, bool skipItself) {
   }
 }
 
-bool Lexer::done() const { return bufferPtr == bufferEnd; }
+bool Lexer::done() const { return bufferPtr == bufferEnd + 1; }
 
 Token Lexer::lexAtom(TokenKind kind) {
   Token tok{kind};
@@ -351,9 +353,8 @@ Token Lexer::lexIdentifierOrKeyword() {
   }
   // the token may be a keyword.
   std::string_view tok{data, len};
-  if (auto matchResult = keywords_.matchKeyword({data, len});
-      matchResult.first) {
-    return lexAtom(matchResult.second);
+  if (auto [isMatch, keyword] = keywords_.matchKeyword({data, len}); isMatch) {
+    return lexAtom(keyword);
   }
   return Token{TokenKind::Identifier, data, len};
 }
