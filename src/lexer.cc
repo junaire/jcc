@@ -139,47 +139,54 @@ Token Lexer::lex() {
     case '.':
       return lexAtom(TokenKind::Period);
     case '-': {
+      SourceLocation loc{line_, column_, getOffset()};
       if (tryConsume('>')) {
-        return lexAtom(TokenKind::Arrow);
+        return lexAtom(TokenKind::Arrow, loc);
       }
       if (tryConsume('-')) {
-        return lexAtom(TokenKind::MinusMinus);
+        return lexAtom(TokenKind::MinusMinus, loc);
       }
       if (tryConsume('=')) {
-        return lexAtom(TokenKind::MinusEqual);
+        return lexAtom(TokenKind::MinusEqual, loc);
       }
-      return lexAtom(TokenKind::Minus);
+      return lexAtom(TokenKind::Minus, loc);
     }
     case '+': {
+      SourceLocation loc{line_, column_, getOffset()};
       if (tryConsume('+')) {
-        return lexAtom(TokenKind::PlusPlus);
+        return lexAtom(TokenKind::PlusPlus, loc);
       }
       if (tryConsume('=')) {
-        return lexAtom(TokenKind::PlusEqual);
+        return lexAtom(TokenKind::PlusEqual, loc);
       }
-      return lexAtom(TokenKind::Plus);
+      return lexAtom(TokenKind::Plus, loc);
     }
     case '&': {
+      SourceLocation loc{line_, column_, getOffset()};
+
       if (tryConsume('&')) {
-        return lexAtom(TokenKind::AmpersandAmpersand);
+        return lexAtom(TokenKind::AmpersandAmpersand, loc);
       }
-      return lexAtom(TokenKind::Ampersand);
+      return lexAtom(TokenKind::Ampersand, loc);
     }
     case '*': {
+      SourceLocation loc{line_, column_, getOffset()};
       if (tryConsume('=')) {
-        return lexAtom(TokenKind::StarEqual);
+        return lexAtom(TokenKind::StarEqual, loc);
       }
-      return lexAtom(TokenKind::Star);
+      return lexAtom(TokenKind::Star, loc);
     }
     case '~':
       return lexAtom(TokenKind::Tilde);
     case '!': {
+      SourceLocation loc{line_, column_, getOffset()};
       if (tryConsume('=')) {
-        return lexAtom(TokenKind::NotEqual);
+        return lexAtom(TokenKind::NotEqual, loc);
       }
-      return lexAtom(TokenKind::Question);
+      return lexAtom(TokenKind::Question, loc);
     }
     case '/': {
+      SourceLocation loc{line_, column_, getOffset()};
       if (tryConsume('*')) {
         // skip comments
         while (true) {
@@ -188,22 +195,24 @@ Token Lexer::lex() {
         }
       }
       if (tryConsume('=')) {
-        return lexAtom(TokenKind::SlashEqual);
+        return lexAtom(TokenKind::SlashEqual, loc);
       }
-      return lexAtom(TokenKind::Slash);
+      return lexAtom(TokenKind::Slash, loc);
     }
     case '%': {
+      SourceLocation loc{line_, column_, getOffset()};
       if (tryConsume('=')) {
-        return lexAtom(TokenKind::PercentEqual);
+        return lexAtom(TokenKind::PercentEqual, loc);
       }
-      return lexAtom(TokenKind::Percent);
+      return lexAtom(TokenKind::Percent, loc);
     }
     case '<': {
+      SourceLocation loc{line_, column_, getOffset()};
       if (tryConsume('<')) {
         if (tryConsume('=')) {
-          return lexAtom(TokenKind::LeftShiftEqual);
+          return lexAtom(TokenKind::LeftShiftEqual, loc);
         }
-        return lexAtom(TokenKind::LeftShift);
+        return lexAtom(TokenKind::LeftShift, loc);
       }
       if (tryConsume('=')) {
         return lexAtom(TokenKind::LessEqual);
@@ -211,37 +220,41 @@ Token Lexer::lex() {
       return lexAtom(TokenKind::Less);
     }
     case '>': {
+      SourceLocation loc{line_, column_, getOffset()};
       if (tryConsume('>')) {
         if (tryConsume('=')) {
-          return lexAtom(TokenKind::RightShiftEqual);
+          return lexAtom(TokenKind::RightShiftEqual, loc);
         }
-        return lexAtom(TokenKind::RightShift);
+        return lexAtom(TokenKind::RightShift, loc);
       }
       if (tryConsume('=')) {
-        return lexAtom(TokenKind::GreaterEqual);
+        return lexAtom(TokenKind::GreaterEqual, loc);
       }
-      return lexAtom(TokenKind::Greater);
+      return lexAtom(TokenKind::Greater, loc);
     }
     case '=': {
+      SourceLocation loc{line_, column_, getOffset()};
       if (tryConsume('=')) {
         return lexAtom(TokenKind::EqualEqual);
       }
       return lexAtom(TokenKind::Equal);
     }
     case '^': {
+      SourceLocation loc{line_, column_, getOffset()};
       if (tryConsume('=')) {
-        return lexAtom(TokenKind::CarretEqual);
+        return lexAtom(TokenKind::CarretEqual, loc);
       }
-      return lexAtom(TokenKind::Carret);
+      return lexAtom(TokenKind::Carret, loc);
     }
     case '|': {
+      SourceLocation loc{line_, column_, getOffset()};
       if (tryConsume('=')) {
-        return lexAtom(TokenKind::PipeEqual);
+        return lexAtom(TokenKind::PipeEqual, loc);
       }
       if (tryConsume('|')) {
-        return lexAtom(TokenKind::PipePipe);
+        return lexAtom(TokenKind::PipePipe, loc);
       }
-      return lexAtom(TokenKind::Pipe);
+      return lexAtom(TokenKind::Pipe, loc);
     }
     case '?':
       return lexAtom(TokenKind::Question);
@@ -265,7 +278,7 @@ Token Lexer::lex() {
     case '\0':
       return lexAtom(TokenKind::Eof);
     default:
-      assert(0);
+      assert(false && "Hit an unknown character!");
   }
 }
 
@@ -296,9 +309,19 @@ bool Lexer::isValidChar() const {
   return flag;
 }
 
+bool Lexer::isLineTerminator() const { return *bufferPtr == '\n'; }
+
 void Lexer::advance() {
   assert(bufferPtr != bufferEnd + 1 && "Have already reached EOF!");
   bufferPtr++;
+  // FIXME: This won't work with windows files.
+  if (isLineTerminator()) {
+    line_ = 1;
+    column_++;
+    bufferPtr++;
+  } else {
+    line_++;
+  }
 }
 
 char Lexer::peek() const {
@@ -312,6 +335,8 @@ char Lexer::peekAhead(int offset) const {
   assert(bufferPtr + offset != bufferEnd && "Cannot peek over the buffer!");
   return *(bufferPtr + offset);
 }
+
+std::size_t Lexer::getOffset() const { return bufferEnd - bufferPtr; }
 
 bool Lexer::tryConsume(char ch) {
   if (peekAhead() == ch) {
@@ -333,12 +358,19 @@ void Lexer::skipUntil(char ch, bool skipItself) {
 bool Lexer::done() const { return bufferPtr == bufferEnd + 1; }
 
 Token Lexer::lexAtom(TokenKind kind) {
-  Token tok{kind};
+  Token tok{kind, bufferPtr, 1, SourceLocation{line_, column_, getOffset()}};
+  advance();
+  return tok;
+}
+
+Token Lexer::lexAtom(TokenKind kind, SourceLocation loc) {
+  Token tok{kind, bufferPtr, 1, loc};
   advance();
   return tok;
 }
 
 Token Lexer::lexIdentifierOrKeyword() {
+  SourceLocation loc{line_, column_, getOffset()};
   const char* data = bufferPtr;
   Token::TokenSize len = 1;
   advance();
@@ -354,13 +386,14 @@ Token Lexer::lexIdentifierOrKeyword() {
   // the token may be a keyword.
   std::string_view tok{data, len};
   if (auto [isMatch, keyword] = keywords_.matchKeyword({data, len}); isMatch) {
-    return lexAtom(keyword);
+    return lexAtom(keyword, loc);
   }
-  return Token{TokenKind::Identifier, data, len};
+  return Token{TokenKind::Identifier, data, len, loc};
 }
 
 Token Lexer::lexStringLiteral() {
   advance();
+  SourceLocation loc{line_, column_, getOffset()};
   const char* data = bufferPtr;
   Token::TokenSize len = 1;
 
@@ -369,13 +402,14 @@ Token Lexer::lexStringLiteral() {
   }
   advance();
 
-  return Token{TokenKind::StringLiteral, data, len};
+  return Token{TokenKind::StringLiteral, data, len, loc};
 }
 
 // TODO(Jun): extend this to support hex and exp
 Token Lexer::lexNumericConstant() {
   const char* data = bufferPtr;
   Token::TokenSize len = 1;
+  SourceLocation loc{line_, column_, getOffset()};
   advance();
   while (true) {
     char c = peek();
@@ -386,5 +420,6 @@ Token Lexer::lexNumericConstant() {
       break;
     }
   }
-  return Token{TokenKind::NumericConstant, data, len};
+  return Token{TokenKind::NumericConstant, data, len, loc};
 }
+

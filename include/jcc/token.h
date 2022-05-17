@@ -4,6 +4,8 @@
 #include <string>
 #include <string_view>
 
+#include "jcc/source_location.h"
+
 enum class TokenKind {
   StringLiteral,
   NumericConstant,
@@ -117,12 +119,21 @@ enum class TokenKind {
 // But for now, we can also hold the token's actual value, this will make
 // debugging easier.
 class Token {
+  TokenKind kind_;
+  // I'm not sure if we need to do more for identifiers,
+  // if so, we can use a variant.
+  const char* data_;
+
+  std::size_t length_;
+
+  SourceLocation loc_;
+
  public:
   using TokenSize = std::size_t;
-  Token() = default;
-  explicit Token(TokenKind kind, const char* data, TokenSize len)
-      : kind_(kind), data_(data), length_(len) {}
-  explicit Token(TokenKind kind) : kind_(kind), data_(nullptr), length_(0) {}
+
+  Token(TokenKind kind, const char* data, std::size_t len,
+        const SourceLocation& loc)
+      : kind_(kind), data_(data), length_(len), loc_(loc) {}
 
   [[nodiscard]] TokenKind getKind() const { return kind_; }
 
@@ -337,16 +348,9 @@ class Token {
     }
   }
 
-  [[nodiscard]] TokenSize getLength() const { return length_; }
+  [[nodiscard]] std::size_t getLength() const { return length_; }
 
   [[nodiscard]] const char* getData() const { return data_; }
 
- private:
-  TokenKind kind_;
-  // I'm not sure if we need to do more for identifiers,
-  // if so, we can use a variant.
-  const char* data_;
-
-  TokenSize length_;
-  // TODO(Jun): Add source location
+  SourceLocation getLoc() { return loc_; }
 };

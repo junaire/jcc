@@ -1,5 +1,5 @@
 #pragma once
-
+#include <string>
 #include <string_view>
 #include <unordered_map>
 #include <utility>
@@ -18,16 +18,40 @@ class Keywords {
 // the lexer is not responsible for managing the buffer, instead it's an
 // observer.
 class Lexer {
+  std::string fileName_;
+  const char* bufferStart;
+  const char* bufferEnd;
+  const char* bufferPtr;
+
+  std::size_t line_;
+  std::size_t column_;
+
+  Keywords keywords_;
+
  public:
-  Lexer() = default;
-  Lexer(const char* start, const char* end)
-      : bufferStart(start), bufferEnd(end), bufferPtr(start){};
+  explicit Lexer(std::string_view source)
+      : fileName_("<Buffer>"),
+        bufferStart(source.begin()),
+        bufferEnd(source.end()),
+        bufferPtr(source.begin()),
+        line_(1),
+        column_(1){};
+
+  Lexer(std::string name, std::string_view source)
+      : fileName_(std::move(name)),
+        bufferStart(source.begin()),
+        bufferEnd(source.end()),
+        bufferPtr(source.begin()),
+        line_(1),
+        column_(1){};
 
   Token lex();
+
   [[nodiscard]] bool done() const;
 
  private:
   Token lexAtom(TokenKind kind);
+  Token lexAtom(TokenKind kind, SourceLocation loc);
   Token lexStringLiteral();
   Token lexIdentifierOrKeyword();
   Token lexNumericConstant();
@@ -38,12 +62,7 @@ class Lexer {
   char peek() const;
   char peekAhead(int offset = 1) const;
   bool tryConsume(char ch);
+  std::size_t getOffset() const;
   [[nodiscard]] bool isValidChar() const;
-
-  const char* bufferStart;
-  const char* bufferEnd;
-  const char* bufferPtr;
-
-  Keywords keywords_;
-  // Do we need record the name of the current lexing file?
+  [[nodiscard]] bool isLineTerminator() const;
 };
