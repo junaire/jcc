@@ -29,15 +29,7 @@ class Lexer {
   Keywords keywords_;
 
  public:
-  explicit Lexer(std::string_view source)
-      : fileName_("<Buffer>"),
-        bufferStart(source.begin()),
-        bufferEnd(source.end()),
-        bufferPtr(source.begin()),
-        line_(1),
-        column_(1){};
-
-  Lexer(std::string name, std::string_view source)
+  explicit Lexer(std::string_view source, std::string name = "<Buffer>")
       : fileName_(std::move(name)),
         bufferStart(source.begin()),
         bufferEnd(source.end()),
