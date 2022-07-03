@@ -18,7 +18,7 @@ class Decl {
   explicit Decl(SourceRange loc) : loc_(std::move(loc)) {}
 
  public:
-  static Decl* create(ASTContext& ctx, SourceLocation loc);
+  static Decl* create(ASTContext& ctx, SourceRange loc);
   virtual ~Decl() = default;
 };
 
@@ -35,8 +35,8 @@ class VarDecl : public Decl {
         name_(std::move(name)) {}
 
  public:
-  static Decl* create(ASTContext& ctx, SourceRange loc, Stmt* init,
-                      std::unique_ptr<Type> type, std::string name);
+  static VarDecl* create(ASTContext& ctx, SourceRange loc, Stmt* init,
+                         std::unique_ptr<Type> type, std::string name);
 
   [[nodiscard]] std::string_view getName() const { return name_; }
 
@@ -95,6 +95,7 @@ class RecordDecl : public Decl {
  public:
   static RecordDecl* create(ASTContext& ctx, SourceRange loc, std::string name,
                             std::vector<VarDecl*> members);
+
   [[nodiscard]] std::string_view getName() const { return name_; }
 
   VarDecl* getMember(std::size_t index) { return members_[index]; }

@@ -153,7 +153,7 @@ class BreakStatement : public Stmt {
   SourceRange breakLoc_;
 
  public:
-  BreakStatement(SourceRange loc, SourceLocation breakLoc)
+  BreakStatement(SourceRange loc, SourceRange breakLoc)
       : Stmt(std::move(loc)), breakLoc_(std::move(breakLoc)) {}
 };
 

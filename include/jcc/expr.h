@@ -20,7 +20,7 @@ class Expr : public Stmt {
   explicit Expr(SourceRange loc) : Stmt(std::move(loc)) {}
 
  public:
-  static Expr* create(ASTContext& ctx, SourceRange loc, Type* type);
+  static Expr* create(ASTContext& ctx, SourceRange loc);
 
   template <typename Ty>
   requires std::convertible_to<Ty, Expr> Ty* asExpr() {
@@ -55,6 +55,7 @@ class CharacterLiteral : public Expr {
 
  public:
   static CharacterLiteral* create(ASTContext& ctx, SourceRange loc, char value);
+
   [[nodiscard]] char getValue() const { return value_; }
 };
 
@@ -66,6 +67,7 @@ class IntergerLiteral : public Expr {
 
  public:
   static IntergerLiteral* create(ASTContext& ctx, SourceRange loc, int value);
+
   [[nodiscard]] int getValue() const { return value_; }
 };
 
@@ -78,6 +80,7 @@ class FloatingLiteral : public Expr {
  public:
   static FloatingLiteral* create(ASTContext& ctx, SourceRange loc,
                                  double value);
+
   [[nodiscard]] double getValue() const { return value_; };
 };
 
