@@ -32,9 +32,11 @@ class Lexer {
  public:
   explicit Lexer(std::string_view source, std::string name = "<Buffer>")
       : fileName_(std::move(name)),
-        bufferStart(source.begin()),
-        bufferEnd(source.end()),
-        bufferPtr(source.begin()) {}
+        // FIXME: we can't initialize const char* with string_view::begin() in
+        // MSVC, not sure it's a bug :(
+        bufferStart(source.data()),
+        bufferEnd(source.data() + source.length()),
+        bufferPtr(source.data()) {}
 
   Token lex();
 
