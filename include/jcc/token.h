@@ -45,6 +45,7 @@ enum class TokenKind {
   Union,
   Unsigned,
   Void,
+  Volatile,
   While,
   DashAlignas,
   DashAtmoic,
@@ -131,17 +132,25 @@ class Token {
  public:
   using TokenSize = std::size_t;
 
+  Token() = default;
   Token(TokenKind kind, const char* data, std::size_t len,
         const SourceLocation& loc)
       : kind_(kind), data_(data), length_(len), loc_(loc) {}
 
   [[nodiscard]] TokenKind getKind() const { return kind_; }
 
-  [[nodiscard]] bool is(TokenKind kind) const { return kind_ == kind; }
-  template <typename... Ts>
-  [[nodiscard]] bool isOneOf(TokenKind kind, Ts... kinds) {
-    assert(0 && "Unimplemented!");
+  template <TokenKind kind>
+  [[nodiscard]] bool is() const {
+    return kind_ == kind;
+  }
+
+  template <TokenKind kind, TokenKind... kinds>
+  [[nodiscard]] bool isOneOf() {
+    if (is<kind>()) {
+      return true;
+    }
     if constexpr (sizeof...(kinds) > 0) {
+      return isOneOf<kinds...>();
     }
     return false;
   }
@@ -353,4 +362,41 @@ class Token {
   [[nodiscard]] const char* getData() const { return data_; }
 
   SourceLocation getLoc() { return loc_; }
+
+  [[nodiscard]] bool isTypename() const {
+    // FIXME: the list seems to be not complete.
+    switch (getKind()) {
+      case TokenKind::Auto:
+      case TokenKind::Char:
+      case TokenKind::Const:
+      case TokenKind::Default:
+      case TokenKind::Double:
+      case TokenKind::Enum:
+      case TokenKind::Extern:
+      case TokenKind::Float:
+      case TokenKind::Inline:
+      case TokenKind::Int:
+      case TokenKind::Long:
+      case TokenKind::Register:
+      case TokenKind::Restrict:
+      case TokenKind::Short:
+      case TokenKind::Signed:
+      case TokenKind::Static:
+      case TokenKind::Struct:
+      case TokenKind::Typedef:
+      case TokenKind::Union:
+      case TokenKind::Unsigned:
+      case TokenKind::Void:
+      case TokenKind::Volatile:
+      case TokenKind::DashAlignas:
+      case TokenKind::DashAtmoic:
+      case TokenKind::DashBool:
+      case TokenKind::DashComplex:
+      case TokenKind::DashNoReturn:
+      case TokenKind::DashThreadLocal:
+        return true;
+      default:
+        return false;
+    }
+  }
 };

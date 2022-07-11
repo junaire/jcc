@@ -7,7 +7,6 @@
 class SourceLocation {
   std::size_t line_;
   std::size_t column_;
-
   std::size_t offset_;
 
  public:

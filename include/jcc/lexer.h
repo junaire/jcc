@@ -12,6 +12,7 @@ class Keywords {
  public:
   Keywords();
 
+  // FIXME: odd api
   std::pair<bool, TokenKind> matchKeyword(std::string_view identifier);
 };
 
@@ -23,8 +24,8 @@ class Lexer {
   const char* bufferEnd;
   const char* bufferPtr;
 
-  std::size_t line_;
-  std::size_t column_;
+  std::size_t line_ = 1;
+  std::size_t column_ = 1;
 
   Keywords keywords_;
 
@@ -33,9 +34,7 @@ class Lexer {
       : fileName_(std::move(name)),
         bufferStart(source.begin()),
         bufferEnd(source.end()),
-        bufferPtr(source.begin()),
-        line_(1),
-        column_(1){};
+        bufferPtr(source.begin()) {}
 
   Token lex();
 

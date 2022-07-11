@@ -35,12 +35,13 @@ enum class Kind : std::uint32_t {
 
 class Type {
   std::string name_;
-  std::uint32_t kind_;
 
-  int size_;
-  int alignment_;
+  std::uint32_t kind_ = 0;
+  std::uint8_t quals_ = 0;
 
-  std::uint8_t quals_;
+  int size_ = 0;
+  int alignment_ = 0;
+
 
  public:
   Type() = default;
