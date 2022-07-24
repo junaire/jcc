@@ -1,6 +1,7 @@
 SET(SOURCES
 	main.cc
 	lexer.cc
+	parser.cc
 )
 
 add_executable(
