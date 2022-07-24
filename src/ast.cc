@@ -9,7 +9,7 @@ Decl* Decl::create(ASTContext& ctx, SourceRange loc) {
 }
 
 VarDecl* VarDecl::create(ASTContext& ctx, SourceRange loc, Stmt* init,
-                         std::unique_ptr<Type> type, std::string name) {
+                         Type type, std::string name) {
   void* mem = ctx.allocate<VarDecl>();
   return new (mem)
       VarDecl{std::move(loc), init, std::move(type), std::move(name)};
@@ -17,7 +17,7 @@ VarDecl* VarDecl::create(ASTContext& ctx, SourceRange loc, Stmt* init,
 
 FunctionDecl* FunctionDecl::create(ASTContext& ctx, SourceRange loc,
                                    std::string name, std::vector<VarDecl*> args,
-                                   std::unique_ptr<Type> returnTy, Stmt* body) {
+                                   Type returnTy, Stmt* body) {
   void* mem = ctx.allocate<FunctionDecl>();
   return new (mem) FunctionDecl{std::move(loc), std::move(name),
                                 std::move(args), std::move(returnTy), body};
