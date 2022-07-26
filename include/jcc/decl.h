@@ -101,3 +101,114 @@ class RecordDecl : public Decl {
 
   [[nodiscard]] std::size_t getMemberNum() const { return members_.size(); }
 };
+
+class DeclSpec {
+ public:
+  enum class StorageClassSpec {
+    Typedef,
+    Extern,
+    Static,
+    ThreadLocal,
+    Auto,
+    Register
+  };
+
+  enum class TypeQual { Const, Restrict, Volatile, Atomic };
+
+  enum class FunctionSpec { Inline, NoReturn };
+
+  using TypeSpecKind = TypeKind;
+
+  static const TypeSpecKind TSK_Void = TypeKind::Void;
+  static const TypeSpecKind TSK_Bool = TypeKind::Bool;
+  static const TypeSpecKind TSK_Char = TypeKind::Char;
+  static const TypeSpecKind TSK_Int = TypeKind::Int;
+  static const TypeSpecKind TSK_Float = TypeKind::Float;
+  static const TypeSpecKind TSK_Double = TypeKind::Double;
+  static const TypeSpecKind TSK_Enum = TypeKind::Enum;
+  static const TypeSpecKind TSK_Union = TypeKind::Union;
+  static const TypeSpecKind TSK_Struct = TypeKind::Struct;
+
+  enum class TypeSpecWidth { Unspecified, Short, Long, LongLong };
+
+  enum class TypeSpecSign { Unspecified, Signed, Unsigned };
+
+  DeclSpec() = default;
+
+  [[nodiscard]] StorageClassSpec getStorageClassSpec() const { return SCS; }
+
+  [[nodiscard]] TypeQual getTypeQual() const { return TQ; }
+
+  [[nodiscard]] TypeSpecKind getTypeSpec() const { return TSK; }
+
+  [[nodiscard]] FunctionSpec getFunctionSpec() const { return FS; }
+
+  [[nodiscard]] TypeSpecKind getTypeSpecKind() const { return TSK; }
+
+  [[nodiscard]] TypeSpecWidth getTypeSpecWidth() const { return TSW; }
+
+  [[nodiscard]] TypeSpecSign getTypeSpecSign() const { return TSS; }
+
+  void setStorageClassSpec(StorageClassSpec spec) { SCS = spec; }
+
+  void setFunctionSpec(FunctionSpec spec) { FS = spec; }
+
+  void setTypeQual(TypeQual qual) { TQ = qual; }
+
+  void setTypeSpecKind(TypeSpecKind kind) { TSK = kind; }
+
+  void setTypeSpecWidth(TypeSpecWidth width) { TSW = width; }
+
+  void setTypeSpecSign(TypeSpecSign sign) { TSS = sign; }
+
+  [[nodiscard]] bool isTypedef() const {
+    return SCS == StorageClassSpec::Typedef;
+  }
+
+  [[nodiscard]] bool isExtern() const {
+    return SCS == StorageClassSpec::Extern;
+  }
+
+  [[nodiscard]] bool isRegister() const {
+    return SCS == StorageClassSpec::Register;
+  }
+
+  [[nodiscard]] bool isStatic() const {
+    return SCS == StorageClassSpec::Static;
+  }
+
+  [[nodiscard]] bool isThreadLocal() const {
+    return SCS == StorageClassSpec::ThreadLocal;
+  }
+
+  [[nodiscard]] bool isAuto() const { return SCS == StorageClassSpec::Auto; }
+
+  [[nodiscard]] bool isInline() const { return FS == FunctionSpec::Inline; }
+
+  [[nodiscard]] bool isNoReturn() const { return FS == FunctionSpec::NoReturn; }
+
+  [[nodiscard]] bool isConst() const { return TQ == TypeQual::Const; }
+
+  [[nodiscard]] bool isRestrict() const { return TQ == TypeQual::Restrict; }
+
+  [[nodiscard]] bool isAtomic() const { return TQ == TypeQual::Atomic; }
+
+  [[nodiscard]] bool isVolatile() const { return TQ == TypeQual::Volatile; }
+
+ private:
+  StorageClassSpec SCS;
+  TypeQual TQ;
+  FunctionSpec FS;
+  TypeSpecKind TSK;
+  TypeSpecWidth TSW = TypeSpecWidth::Unspecified;
+  TypeSpecSign TSS = TypeSpecSign::Unspecified;
+};
+
+class Declarator {
+  DeclSpec declSpec_;
+
+ public:
+  explicit Declarator(DeclSpec declSpec) : declSpec_(declSpec) {}
+
+  DeclSpec getDeclSpec() { return declSpec_; }
+};
