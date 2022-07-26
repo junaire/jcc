@@ -1,121 +1,122 @@
 #pragma once
 
 #include <concepts>
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
 
-enum class Qualifiers : std::uint8_t {
-  Const = 1 << 0,
-  Restrict = 1 << 1,
-  Volatile = 1 << 2,
+#include "jcc/token.h"
+
+enum class Qualifiers {
+  Unspecified,
+  Const,
+  Restrict,
+  Volatile,
 };
 
-// FIXME: Do we really need bitmask here?
-enum class Kind : std::uint32_t {
-  Void = 1 << 0,
-  Bool = 1 << 1,
-  Char = 1 << 2,
-  Short = 1 << 3,
-  Int = 1 << 4,
-  Long = 1 << 5,
-  Float = 1 << 6,
-  Double = 1 << 7,
-  Ldouble = 1 << 8,
-  Enum = 1 << 9,
-  Ptr = 1 << 10,
-  Func = 1 << 11,
-  Array = 1 << 12,
-  Vla = 1 << 13,  // variable-length array
-  Struct = 1 << 14,
-  Union = 1 << 15,
+enum class TypeKind {
+  Void,
+  Bool,
+  Char,
+  Short,
+  Int,
+  Long,
+  Float,
+  Double,
+  Ldouble,
+  Enum,
+  Ptr,
+  Func,
+  Array,
+  Vla,  // variable-length array
+  Struct,
+  Union,
 };
 
 class Type {
-  std::string name_;
+  TypeKind kind_;
+  Token name_;
+  Qualifiers quals_ = Qualifiers::Unspecified;
 
-  std::uint32_t kind_ = 0;
-  std::uint8_t quals_ = 0;
+  std::unique_ptr<Type> base_;
 
   int size_ = 0;
   int alignment_ = 0;
 
+  bool unsigned_ = false;
 
  public:
   Type() = default;
 
-  explicit Type(Kind kind) : kind_(static_cast<std::uint32_t>(kind)) {}
+  explicit Type(TypeKind kind, int size, int alignment)
+      : kind_(kind), size_(size), alignment_(alignment) {}
 
-  Type(Kind kind, std::string name)
-      : kind_(static_cast<std::uint32_t>(kind)), name_(std::move(name)) {}
-
-  template <typename Ty>
-  requires std::convertible_to<Ty, Type> Ty* asType() {
-    return static_cast<Ty*>(this);
+  [[nodiscard]] bool hasQualifiers() const {
+    return quals_ != Qualifiers::Unspecified;
   }
 
-  [[nodiscard]] int getSize() const { return size_; }
-
-  [[nodiscard]] int getAlignment() const { return alignment_; }
-
-  template <Qualifiers qualifier, Qualifiers... otherQuals>
-  void setQualifiers() {
-    quals_ |= static_cast<std::uint8_t>(qualifier);
-    if constexpr (sizeof...(otherQuals) > 0) {
-      setQualifiers<otherQuals...>();
-    }
-  }
-
-  [[nodiscard]] bool isConst() const {
-    return (quals_ & static_cast<std::uint8_t>(Qualifiers::Const)) != 0;
-  }
+  [[nodiscard]] bool isConst() const { return quals_ == Qualifiers::Const; }
 
   [[nodiscard]] bool isRestrict() const {
-    return (quals_ & static_cast<std::uint8_t>(Qualifiers::Restrict)) != 0;
+    return quals_ == Qualifiers::Restrict;
   }
 
   [[nodiscard]] bool isVolatile() const {
-    return (quals_ & static_cast<std::uint8_t>(Qualifiers::Volatile)) != 0;
+    return quals_ == Qualifiers::Volatile;
   }
 
-  [[nodiscard]] bool hasQualifiers() const { return quals_ != 0; }
-
-  template <Kind kind, Kind... otherKinds>
-  void setKinds() {
-    kind_ |= static_cast<std::uint8_t>(kind);
-    if constexpr (sizeof...(otherKinds) > 0) {
-      setKinds<otherKinds...>();
-    }
-  }
-
-  template <Kind ty, Kind... tyKinds>
+  template <TypeKind ty, TypeKind... tyKinds>
   [[nodiscard]] bool is() const {
     if constexpr (sizeof...(tyKinds) != 0) {
-      return (kind_ & static_cast<std::uint32_t>(ty)) || is<tyKinds...>();
+      return kind_ == ty || is<tyKinds...>();
     }
     return false;
   }
 
   [[nodiscard]] bool isInteger() const {
-    return this->is<Kind::Bool, Kind::Char, Kind::Short, Kind::Int>();
+    using enum TypeKind;
+    return this->is<Bool, Char, Short, Int>();
   }
 
   [[nodiscard]] bool isFloating() const {
-    return this->is<Kind::Double, Kind::Ldouble, Kind::Float>();
+    using enum TypeKind;
+    return this->is<Double, Ldouble, Float>();
   }
 
   [[nodiscard]] bool isNumeric() const { return isInteger() || isFloating(); }
 
-  [[nodiscard]] bool isPointer() const { return this->is<Kind::Ptr>(); }
+  [[nodiscard]] bool isPointer() const { return this->is<TypeKind::Ptr>(); }
 
-  [[nodiscard]] std::string_view getName() const { return name_; }
-
-  void setName(std::string name) { name_ = std::move(name); }
+  void setName(Token name) { name_ = name; }
 
   void setSizeAlign(int size, int alignment) {
     size_ = size;
     alignment_ = alignment;
   }
+
+  void setBase(std::unique_ptr<Type> base) { base_ = std::move(base); }
+
+  void setUnsigned(bool usg = true) { unsigned_ = usg; }
+
+  [[nodiscard]] std::string_view getName() const { return name_.getName(); }
+
+  [[nodiscard]] int getSize() const { return size_; }
+
+  [[nodiscard]] int getAlignment() const { return alignment_; }
+
+  [[nodiscard]] Type* getBase() const { return base_.get(); }
+
+  [[nodiscard]] bool isUnsigned() const { return unsigned_; }
+
+  static Type createPointerToType(std::unique_ptr<Type> base) {
+    Type type(TypeKind::Ptr, 8, 8);
+    type.setBase(std::move(base));
+    type.setUnsigned();
+    return type;
+  }
+
+  static Type createEnumType() { return Type(TypeKind::Enum, 4, 4); }
+
+  static Type createStructType() { return Type(TypeKind::Struct, 0, 1); }
 };
