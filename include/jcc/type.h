@@ -42,11 +42,9 @@ class Type {
   int alignment_ = 0;
   bool unsigned_ = false;
 
-	Type* origin = nullptr;
+  Type* origin = nullptr;
 
   Token name_;
-
-
 
  public:
   Type() = default;
@@ -81,7 +79,7 @@ class Type {
     return false;
   }
 
-	[[nodiscard]] TypeKind getKind() const { return kind_;}
+  [[nodiscard]] TypeKind getKind() const { return kind_; }
 
   [[nodiscard]] bool isInteger() const {
     using enum TypeKind;
@@ -104,7 +102,6 @@ class Type {
     alignment_ = alignment;
   }
 
-
   void setUnsigned(bool usg = true) { unsigned_ = usg; }
 
   [[nodiscard]] std::string_view getName() const { return name_.getName(); }
@@ -121,50 +118,52 @@ class Type {
 
   static std::unique_ptr<Type> createStructType();
 
-	static bool isCompatible(const Type& lhs, const Type& rhs);
+  static bool isCompatible(const Type& lhs, const Type& rhs);
 };
 
 class ArrayType : public Type {
-	unsigned len_ = 0;
-	Type* base_ = nullptr;
-public:
-	ArrayType() = default;
-	ArrayType(TypeKind kind, int size, int alignment) : Type(kind, size, alignment) {}
+  unsigned len_ = 0;
+  Type* base_ = nullptr;
 
-	[[nodiscard]] unsigned getLength() const { return len_;} 
+ public:
+  ArrayType() = default;
+  ArrayType(TypeKind kind, int size, int alignment)
+      : Type(kind, size, alignment) {}
+
+  [[nodiscard]] unsigned getLength() const { return len_; }
 
   [[nodiscard]] Type* getBase() const { return base_; }
 
   void setBase(Type* base) { base_ = base; }
-
 };
 
 class StructType : public Type {
-	class StructMember: public Type {
-		std::unique_ptr<Type> type_;
+  class StructMember : public Type {
+    std::unique_ptr<Type> type_;
   };
 
-	std::vector<std::unique_ptr<StructMember>> members_;
-public:
-	StructType() = default;
+  std::vector<std::unique_ptr<StructMember>> members_;
 
-	StructType(TypeKind kind, int size, int alignment) : Type(kind, size, alignment) {}
+ public:
+  StructType() = default;
 
-
+  StructType(TypeKind kind, int size, int alignment)
+      : Type(kind, size, alignment) {}
 };
-
 
 class FunctionType : public Type {
-	std::unique_ptr<Type> returnType_;
-	std::vector<std::unique_ptr<Type>> paramTypes_;
-public:
-	FunctionType() = default;
-	FunctionType(TypeKind kind, int size, int alignment) : Type(kind, size, alignment) {}
+  std::unique_ptr<Type> returnType_;
+  std::vector<std::unique_ptr<Type>> paramTypes_;
 
-	Type* getReturnType() { return returnType_.get();}
+ public:
+  FunctionType() = default;
+  FunctionType(TypeKind kind, int size, int alignment)
+      : Type(kind, size, alignment) {}
 
-	Type* getParamType(unsigned idx) { 
-		assert(idx < paramTypes_.size() && "No more params!");
-		return paramTypes_[idx].get();}
+  Type* getReturnType() { return returnType_.get(); }
+
+  Type* getParamType(unsigned idx) {
+    assert(idx < paramTypes_.size() && "No more params!");
+    return paramTypes_[idx].get();
+  }
 };
-

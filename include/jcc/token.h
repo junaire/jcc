@@ -4,6 +4,7 @@
 #include <string>
 #include <string_view>
 
+#include "jcc/common.h"
 #include "jcc/source_location.h"
 
 enum class TokenKind {
@@ -109,7 +110,8 @@ enum class TokenKind {
   // Note that we're still missing some punctuators like:
   // <: :> <% %> %: %:%:
   // Ref: C11 6.4.6
-  Eof
+  Eof,
+  Unspecified
 };
 
 // not all tokens need value, for some kinds like:
@@ -120,7 +122,7 @@ enum class TokenKind {
 // But for now, we can also hold the token's actual value, this will make
 // debugging easier.
 class Token {
-  TokenKind kind_;
+  TokenKind kind_ = TokenKind::Unspecified;
   // I'm not sure if we need to do more for identifiers,
   // if so, we can use a variant.
   const char* data_;
@@ -154,6 +156,8 @@ class Token {
     }
     return false;
   }
+
+  [[nodiscard]] bool isValid() const { return kind_ == TokenKind::Unspecified; }
 
   [[nodiscard]] std::string_view getValue() const {
     assert(getLength() != 0 &&
@@ -353,7 +357,7 @@ class Token {
       case TokenKind::Eof:
         return "Eof";
       default:
-        assert(0);
+        jcc_unreachable();
     }
   }
 

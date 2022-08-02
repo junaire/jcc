@@ -369,6 +369,7 @@ Token Lexer::lexAtom(TokenKind kind, SourceLocation loc) {
   return tok;
 }
 
+// FIXME: can identifiers contain numbers?
 Token Lexer::lexIdentifierOrKeyword() {
   SourceLocation loc{line_, column_, getOffset()};
   const char* data = bufferPtr;
@@ -422,4 +423,3 @@ Token Lexer::lexNumericConstant() {
   }
   return Token{TokenKind::NumericConstant, data, len, loc};
 }
-

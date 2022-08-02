@@ -1,36 +1,29 @@
 #pragma once
+#include <memory>
 #include <optional>
 
 #include "jcc/ast_context.h"
+#include "jcc/decl.h"
 #include "jcc/lexer.h"
 #include "jcc/token.h"
-
-class Type;
-class Expr;
-class Stmt;
-class Decl;
-class VarDecl;
-
-struct Attr {
-  bool isTypedef = false;
-  bool isStatic = false;
-  bool isExtern = false;
-  bool isInline = false;
-  bool isTls = false;
-  int align = 0;
-};
 
 class Parser {
  public:
   explicit Parser(Lexer& lexer) : lexer_(lexer) {}
 
   std::vector<Decl*> parseTranslateUnit();
-  Decl* parseFunction(Type type, const Attr& attr);
-  Decl* parseDeclaration(Type type, const Attr& attr);
+  Decl* parseFunction(const DeclSpec& declSpec);
+  Decl* parseDeclaration(const DeclSpec& declSpec);
   Stmt* parseFunctionBody();
   std::vector<VarDecl*> parseParams();
-  void parseDeclarator();
-  std::pair<Type, Attr> parseDeclSpec();
+  Declarator parseDeclarator(const DeclSpec& declSpec);
+  DeclSpec parseDeclSpec();
+  std::unique_ptr<Type> parseTypeSuffix(std::unique_ptr<Type> type);
+
+  std::unique_ptr<Type> parsePointers(Declarator& declrator);
+  std::unique_ptr<Type> parseTypename();
+
+  ASTContext& getASTContext() { return ctx_; }
 
  private:
   Token currentToken();
@@ -40,5 +33,5 @@ class Parser {
   Lexer& lexer_;
   Token token_;
   std::optional<Token> cache_;
-  ASTContext ctx;
+  ASTContext ctx_;
 };

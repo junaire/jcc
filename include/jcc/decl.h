@@ -5,6 +5,7 @@
 #include <string_view>
 #include <vector>
 
+#include "jcc/ast_context.h"
 #include "jcc/source_location.h"
 #include "jcc/type.h"
 
@@ -199,16 +200,65 @@ class DeclSpec {
   StorageClassSpec SCS;
   TypeQual TQ;
   FunctionSpec FS;
-  TypeSpecKind TSK;
+  TypeSpecKind TSK = TSK_Int;  // Yeah, implicit int, so evil
   TypeSpecWidth TSW = TypeSpecWidth::Unspecified;
   TypeSpecSign TSS = TypeSpecSign::Unspecified;
 };
 
 class Declarator {
+  // Maybe a mutbale referecnce is enough
   DeclSpec declSpec_;
+  ASTContext& ctx_;
 
  public:
-  explicit Declarator(DeclSpec declSpec) : declSpec_(declSpec) {}
+  explicit Declarator(DeclSpec declSpec, ASTContext& ctx)
+      : declSpec_(declSpec), ctx_(ctx) {}
 
   DeclSpec getDeclSpec() { return declSpec_; }
+
+  Type* getBaseType() {
+    // FIXME: If the type is builtin-tpye, then it's just a reference, and we
+    // don't control its lifetime. However, if it's a user-defined type, we need
+    // to find a way to delete it...
+    Type* type;
+    switch (declSpec_.getTypeSpecKind()) {
+      using enum TypeKind;
+      case Void:
+        type = ctx_.getVoidType();
+        break;
+      case Bool:
+        type = ctx_.getBoolType();
+        break;
+      case Char:
+        type = ctx_.getCharType();
+        break;
+      case Short:
+        type = ctx_.getShortType();
+        break;
+      case Int:
+        type = ctx_.getIntType();
+        break;
+      case Long:
+        type = ctx_.getLongType();
+        break;
+      case Float:
+        type = ctx_.getFloatType();
+        break;
+      case Double:
+        type = ctx_.getDoubleType();
+        break;
+      case Ldouble:
+        type = ctx_.getLdoubleType();
+        break;
+      case Enum:
+      case Ptr:
+      case Func:
+      case Array:
+      case Vla:  // variable-length array
+      case Struct:
+      case Union:
+        jcc_unreachable();
+    }
+    return type;
+  }
 };

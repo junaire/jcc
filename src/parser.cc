@@ -58,88 +58,90 @@ DeclSpec Parser::parseDeclSpec() {
     }
     consumeToken();
 
-	if (declSpec.isTypedef()) {
-		if (declSpec.isStatic() || declSpec.isExtern() || declSpec.isInline() || declSpec.isThreadLocal()) {
-			// TODO(Jun): Can you have a nice diag instead of panic?
-			jcc_unreachable();
-		}
-	}
+    if (declSpec.isTypedef()) {
+      if (declSpec.isStatic() || declSpec.isExtern() || declSpec.isInline() ||
+          declSpec.isThreadLocal()) {
+        // TODO(Jun): Can you have a nice diag instead of panic?
+        jcc_unreachable();
+      }
+    }
 
-  // Ignore some keywords with no effects like `auto`
-  if (currentToken()
-          .isOneOf<Const, Auto, Volatile, Register, Restrict, DashNoReturn>()) {
+    // Ignore some keywords with no effects like `auto`
+    if (currentToken()
+            .isOneOf<Const, Auto, Volatile, Register, Restrict,
+                     DashNoReturn>()) {
+      consumeToken();
+    }
+
+    // Deal with _Atomic
+    if (currentToken().isOneOf<DashAtmoic>()) {
+      consumeToken();  // eat `(`
+      Type type = parseTypename();
+      consumeToken();  // eat `)`
+      declSpec.setTypeQual(DeclSpec::TypeQual::Atomic);
+    }
+
+    // Deal with _Alignas
+    if (currentToken().is<TokenKind::DashAlignas>()) {
+      jcc_unreachable();
+    }
+
+    // Handle user defined types
+    if (currentToken().isOneOf<Struct, Union, Typedef, Enum>()) {
+      jcc_unreachable();
+    }
+
+    // Handle builtin types
+
+    switch (currentToken().getKind()) {
+      case Void:
+        declSpec.setTypeSpecKind(DeclSpec::TSK_Void);
+        break;
+      case DashBool:
+        declSpec.setTypeSpecKind(DeclSpec::TSK_Bool);
+        break;
+      case Char:
+        declSpec.setTypeSpecKind(DeclSpec::TSK_Char);
+        break;
+      case Short:
+        declSpec.setTypeSpecWidth(DeclSpec::TypeSpecWidth::Short);
+        break;
+      case Int:
+        declSpec.setTypeSpecKind(DeclSpec::TSK_Int);
+        break;
+      case Long:
+        if (declSpec.getTypeSpecWidth() == DeclSpec::TypeSpecWidth::Long) {
+          declSpec.setTypeSpecWidth(DeclSpec::TypeSpecWidth::LongLong);
+        } else {
+          declSpec.setTypeSpecWidth(DeclSpec::TypeSpecWidth::Long);
+        }
+        break;
+      case Float:
+        declSpec.setTypeSpecKind(DeclSpec::TSK_Float);
+        break;
+      case Double:
+        declSpec.setTypeSpecKind(DeclSpec::TSK_Double);
+        break;
+      case Signed:
+        declSpec.setTypeSpecSign(DeclSpec::TypeSpecSign::Signed);
+        break;
+      case Unsigned:
+        declSpec.setTypeSpecSign(DeclSpec::TypeSpecSign::Unsigned);
+        break;
+      default:
+        jcc_unreachable();
+    }
     consumeToken();
   }
-
-  // Deal with _Atomic
-  if (currentToken().isOneOf<DashAtmoic>()) {
-    consumeToken();  // eat `(`
-    Type type = parseTypename();
-    consumeToken();  // eat `)`
-    declSpec.setTypeQual(DeclSpec::TypeQual::Atomic);
-  }
-
-  // Deal with _Alignas
-  if (currentToken().is<TokenKind::DashAlignas>()) {
-    jcc_unreachable();
-  }
-
-  // Handle user defined types
-  if (currentToken().isOneOf<Struct, Union, Typedef, Enum>()) {
-    jcc_unreachable();
-  }
-
-  // Handle builtin types
-
-  switch (currentToken().getKind()) {
-    case Void:
-      declSpec.setTypeSpecKind(DeclSpec::TSK_Void);
-      break;
-    case DashBool:
-      declSpec.setTypeSpecKind(DeclSpec::TSK_Bool);
-      break;
-    case Char:
-      declSpec.setTypeSpecKind(DeclSpec::TSK_Char);
-      break;
-    case Short:
-      declSpec.setTypeSpecWidth(DeclSpec::TypeSpecWidth::Short);
-      break;
-    case Int:
-      declSpec.setTypeSpecKind(DeclSpec::TSK_Int);
-      break;
-    case Long:
-      if (declSpec.getTypeSpecWidth() == DeclSpec::TypeSpecWidth::Long) {
-        declSpec.setTypeSpecWidth(DeclSpec::TypeSpecWidth::LongLong);
-      } else {
-        declSpec.setTypeSpecWidth(DeclSpec::TypeSpecWidth::Long);
-      }
-      break;
-    case Float:
-      declSpec.setTypeSpecKind(DeclSpec::TSK_Float);
-      break;
-    case Double:
-      declSpec.setTypeSpecKind(DeclSpec::TSK_Double);
-      break;
-    case Signed:
-      declSpec.setTypeSpecSign(DeclSpec::TypeSpecSign::Signed);
-      break;
-    case Unsigned:
-      declSpec.setTypeSpecSign(DeclSpec::TypeSpecSign::Unsigned);
-      break;
-    default:
-      jcc_unreachable();
-  }
-  consumeToken();
-	}
   return declSpec;
 }
 
-Type Parser::parsePointers(Declarator& declrator) {
+std::unique_ptr<Type> Parser::parsePointers(Declarator& declrator) {
   using enum TokenKind;
-  Type type;
+  std::unique_ptr<Type> type;
   while (currentToken().is<Star>()) {
     consumeToken();
-    type = Type::createPointerToType(declrator.getType());
+    type = Type::createPointerType(declrator.getBaseType());
     while (currentToken().isOneOf<Const, Volatile, Restrict>()) {
       consumeToken();
     }
@@ -147,15 +149,30 @@ Type Parser::parsePointers(Declarator& declrator) {
   return type;
 }
 
+std::unique_ptr<Type> Parser::parseTypeSuffix(std::unique_ptr<Type> type) {
+  return type;
+}
+
 Declarator Parser::parseDeclarator(const DeclSpec& declSpec) {
-  Declarator declrator(declSpec);
-  Type type = parsePointers(declrator);
+  Declarator declrator(declSpec, getASTContext());
+  std::unique_ptr<Type> type = parsePointers(declrator);
+  if (currentToken().is<TokenKind::LeftParen>()) {
+    DeclSpec dummy;
+    parseDeclarator(dummy);
+    consumeToken();  // Eat ')'
+    std::unique_ptr<Type> suffix = parseTypeSuffix(std::move(type));
+  }
+
+  Token name;
+  if (currentToken().is<TokenKind::Identifier>()) {
+    name = currentToken();
+  }
   return declrator;
 }
 
 std::vector<VarDecl*> Parser::parseParams() {
   std::vector<VarDecl*> params;
-  do { // To be implemented
+  do {  // To be implemented
   } while (currentToken().is<TokenKind::Comma>());
   return params;
 }
