@@ -27,80 +27,135 @@ bool Parser::tryConsumeToken(TokenKind expected) {
   return nextToken().getKind() == expected;
 }
 
-std::pair<Type, Attr> Parser::parseDeclSpec() {
+Type Parser::parseTypename() { DeclSpec declSpec = parseDeclSpec(); }
+
+DeclSpec Parser::parseDeclSpec() {
   using enum TokenKind;
-  Type type;
-  Attr attr;
+  DeclSpec declSpec;
   while (currentToken().isTypename()) {
     if (currentToken()
             .isOneOf<Typedef, Static, Extern, Inline, DashThreadLocal>()) {
       // Check if storage class specifier is allowed in this context.
-      if (currentToken().is<Typedef>()) {
-        attr.isTypedef = true;
-      } else if (currentToken().is<Static>()) {
-        attr.isStatic = true;
-      } else if (currentToken().is<Extern>()) {
-        attr.isExtern = true;
-      } else if (currentToken().is<Inline>()) {
-        attr.isInline = true;
-      } else {
-        attr.isTls = true;
+      switch (currentToken().getKind()) {
+        case Typedef:
+          declSpec.setStorageClassSpec(DeclSpec::StorageClassSpec::Typedef);
+          break;
+        case Static:
+          declSpec.setStorageClassSpec(DeclSpec::StorageClassSpec::Static);
+          break;
+        case Extern:
+          declSpec.setStorageClassSpec(DeclSpec::StorageClassSpec::Extern);
+          break;
+        case Inline:
+          declSpec.setFunctionSpec(DeclSpec::FunctionSpec::Inline);
+          break;
+        case DashThreadLocal:
+          declSpec.setStorageClassSpec(DeclSpec::StorageClassSpec::ThreadLocal);
+          break;
+        default:
+          jcc_unreachable();
       }
-      consumeToken();
-    }
-    // TODO(Jun):Throw an error if some keywords are combined incorrectly
-
-    // Ignore some keywords with no effects like `auto`
-    if (currentToken()
-            .isOneOf<Const, Auto, Volatile, Register, Restrict,
-                     DashNoReturn>()) {
-      consumeToken();
-    }
-
-    // Deal with _Atomic and _Alignas
-    if (currentToken().isOneOf<DashAtmoic, DashAlignas>()) {
-      jcc_unreachable();
-    }
-
-    // Handle user defined types
-    if (currentToken().isOneOf<Struct, Union, Typedef, Enum>()) {
-      jcc_unreachable();
-    }
-
-    // Handle builtin types
-    // FIXME: Some types can't be combined.
-    if (currentToken().is<Void>()) {
-      type.setKinds<Kind::Void>();
-    } else if (currentToken().is<DashBool>()) {
-      type.setKinds<Kind::Bool>();
-    } else if (currentToken().is<Char>()) {
-      type.setKinds<Kind::Char>();
-    } else if (currentToken().is<Short>()) {
-      type.setKinds<Kind::Short>();
-    } else if (currentToken().is<Int>()) {
-      type.setKinds<Kind::Int>();
-    } else if (currentToken().is<Long>()) {
-      type.setKinds<Kind::Long>();
-    } else if (currentToken().is<Float>()) {
-      type.setKinds<Kind::Float>();
-    } else if (currentToken().is<Double>()) {
-      type.setKinds<Kind::Double>();
-    } else if (currentToken().is<Signed>()) {
-      jcc_unreachable();
-    } else if (currentToken().is<Unsigned>()) {
-      jcc_unreachable();
-    } else {
-      jcc_unreachable();
     }
     consumeToken();
+
+	if (declSpec.isTypedef()) {
+		if (declSpec.isStatic() || declSpec.isExtern() || declSpec.isInline() || declSpec.isThreadLocal()) {
+			// TODO(Jun): Can you have a nice diag instead of panic?
+			jcc_unreachable();
+		}
+	}
+
+  // Ignore some keywords with no effects like `auto`
+  if (currentToken()
+          .isOneOf<Const, Auto, Volatile, Register, Restrict, DashNoReturn>()) {
+    consumeToken();
   }
-  return std::make_pair(std::move(type), attr);
+
+  // Deal with _Atomic
+  if (currentToken().isOneOf<DashAtmoic>()) {
+    consumeToken();  // eat `(`
+    Type type = parseTypename();
+    consumeToken();  // eat `)`
+    declSpec.setTypeQual(DeclSpec::TypeQual::Atomic);
+  }
+
+  // Deal with _Alignas
+  if (currentToken().is<TokenKind::DashAlignas>()) {
+    jcc_unreachable();
+  }
+
+  // Handle user defined types
+  if (currentToken().isOneOf<Struct, Union, Typedef, Enum>()) {
+    jcc_unreachable();
+  }
+
+  // Handle builtin types
+
+  switch (currentToken().getKind()) {
+    case Void:
+      declSpec.setTypeSpecKind(DeclSpec::TSK_Void);
+      break;
+    case DashBool:
+      declSpec.setTypeSpecKind(DeclSpec::TSK_Bool);
+      break;
+    case Char:
+      declSpec.setTypeSpecKind(DeclSpec::TSK_Char);
+      break;
+    case Short:
+      declSpec.setTypeSpecWidth(DeclSpec::TypeSpecWidth::Short);
+      break;
+    case Int:
+      declSpec.setTypeSpecKind(DeclSpec::TSK_Int);
+      break;
+    case Long:
+      if (declSpec.getTypeSpecWidth() == DeclSpec::TypeSpecWidth::Long) {
+        declSpec.setTypeSpecWidth(DeclSpec::TypeSpecWidth::LongLong);
+      } else {
+        declSpec.setTypeSpecWidth(DeclSpec::TypeSpecWidth::Long);
+      }
+      break;
+    case Float:
+      declSpec.setTypeSpecKind(DeclSpec::TSK_Float);
+      break;
+    case Double:
+      declSpec.setTypeSpecKind(DeclSpec::TSK_Double);
+      break;
+    case Signed:
+      declSpec.setTypeSpecSign(DeclSpec::TypeSpecSign::Signed);
+      break;
+    case Unsigned:
+      declSpec.setTypeSpecSign(DeclSpec::TypeSpecSign::Unsigned);
+      break;
+    default:
+      jcc_unreachable();
+  }
+  consumeToken();
+	}
+  return declSpec;
+}
+
+Type Parser::parsePointers(Declarator& declrator) {
+  using enum TokenKind;
+  Type type;
+  while (currentToken().is<Star>()) {
+    consumeToken();
+    type = Type::createPointerToType(declrator.getType());
+    while (currentToken().isOneOf<Const, Volatile, Restrict>()) {
+      consumeToken();
+    }
+  }
+  return type;
+}
+
+Declarator Parser::parseDeclarator(const DeclSpec& declSpec) {
+  Declarator declrator(declSpec);
+  Type type = parsePointers(declrator);
+  return declrator;
 }
 
 std::vector<VarDecl*> Parser::parseParams() {
   std::vector<VarDecl*> params;
-  do {
-    // To be implemented
+  do { // To be implemented
   } while (currentToken().is<TokenKind::Comma>());
   return params;
 }
@@ -108,54 +163,30 @@ std::vector<VarDecl*> Parser::parseParams() {
 // Create a new scope and parse
 Stmt* Parser::parseFunctionBody() { return nullptr; }
 
-Decl* Parser::parseFunction(Type type, const Attr& attr) {
-  Token name(currentToken());
-  // Parse function parameters
-  consumeToken();  // Eat `(`
-  std::vector<VarDecl*> parameters = parseParams();
-  consumeToken();  // Eat `)`
-  Stmt* body;
-  if (currentToken().is<TokenKind::Semi>()) {
-    consumeToken();  // Eat `;`
-    body = nullptr;  // It's a declaration
-  } else if (currentToken().is<TokenKind::LeftBracket>()) {
-    body = parseFunctionBody();
-    consumeToken();  // Eat `}`
-  } else {
-    jcc_unreachable();
-  }
-
-  // FIXME: Find a better approach to pass source loc
-  // What should we do if there're redefinition?
-  return FunctionDecl::create(ctx, {"Unknown", name.getLoc()}, name.getData(),
-                              std::move(parameters), std::move(type), body);
+Decl* Parser::parseFunction(const DeclSpec& declSpec) {
+  Declarator declrator = parseDeclarator(declSpec);
+  // Check redefinition
 }
 
 // Function or a simple declaration
-Decl* Parser::parseDeclaration(Type type, const Attr& attr) {
-  if (!currentToken().is<TokenKind::Identifier>()) {
-    jcc_unreachable();
+Decl* Parser::parseDeclaration(const DeclSpec& declSpec) {
+  // Handle struct-union identifier, like ` enum { X } ;`
+  if (currentToken().is<TokenKind::Semi>()) {
   }
-  if (tryConsumeToken(TokenKind::LeftParen)) {
-    return parseFunction(std::move(type), attr);
-  }
-
-  // FIXME: Is it right?
-  if (tryConsumeToken(TokenKind::Equal)) {
-    // To be implemented
-  }
-  jcc_unreachable();
+  Declarator declrator = parseDeclarator(declSpec);
 }
 
 std::vector<Decl*> Parser::parseTranslateUnit() {
   std::vector<Decl*> decls;
   while (!currentToken().is<TokenKind::Eof>()) {
-    auto [type, attr] = parseDeclSpec();
+    DeclSpec declSpec = parseDeclSpec();
     // TODO(Jun): Handle typedefs
-    if (attr.isTypedef) {
+    if (declSpec.isTypedef()) {
       jcc_unreachable();
     }
-    decls.push_back(parseDeclaration(std::move(type), attr));
+
+    // Parse functions
+    // Parse global variables
   }
 
   return decls;
