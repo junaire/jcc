@@ -36,21 +36,28 @@ enum class TypeKind {
 
 class Type {
   TypeKind kind_;
-  Token name_;
   Qualifiers quals_ = Qualifiers::Unspecified;
-
-  std::unique_ptr<Type> base_;
 
   int size_ = 0;
   int alignment_ = 0;
-
   bool unsigned_ = false;
+
+	Type* origin = nullptr;
+
+  Token name_;
+
+
 
  public:
   Type() = default;
 
   explicit Type(TypeKind kind, int size, int alignment)
       : kind_(kind), size_(size), alignment_(alignment) {}
+
+  template <typename Ty>
+  requires std::convertible_to<Ty, Type> Ty* asType() {
+    return static_cast<Ty*>(this);
+  }
 
   [[nodiscard]] bool hasQualifiers() const {
     return quals_ != Qualifiers::Unspecified;
@@ -74,6 +81,8 @@ class Type {
     return false;
   }
 
+	[[nodiscard]] TypeKind getKind() const { return kind_;}
+
   [[nodiscard]] bool isInteger() const {
     using enum TypeKind;
     return this->is<Bool, Char, Short, Int>();
@@ -95,7 +104,6 @@ class Type {
     alignment_ = alignment;
   }
 
-  void setBase(std::unique_ptr<Type> base) { base_ = std::move(base); }
 
   void setUnsigned(bool usg = true) { unsigned_ = usg; }
 
@@ -105,18 +113,58 @@ class Type {
 
   [[nodiscard]] int getAlignment() const { return alignment_; }
 
-  [[nodiscard]] Type* getBase() const { return base_.get(); }
-
   [[nodiscard]] bool isUnsigned() const { return unsigned_; }
 
-  static Type createPointerToType(std::unique_ptr<Type> base) {
-    Type type(TypeKind::Ptr, 8, 8);
-    type.setBase(std::move(base));
-    type.setUnsigned();
-    return type;
-  }
+  static std::unique_ptr<Type> createPointerType(Type* base);
 
-  static Type createEnumType() { return Type(TypeKind::Enum, 4, 4); }
+  static std::unique_ptr<Type> createEnumType();
 
-  static Type createStructType() { return Type(TypeKind::Struct, 0, 1); }
+  static std::unique_ptr<Type> createStructType();
+
+	static bool isCompatible(const Type& lhs, const Type& rhs);
 };
+
+class ArrayType : public Type {
+	unsigned len_ = 0;
+	Type* base_ = nullptr;
+public:
+	ArrayType() = default;
+	ArrayType(TypeKind kind, int size, int alignment) : Type(kind, size, alignment) {}
+
+	[[nodiscard]] unsigned getLength() const { return len_;} 
+
+  [[nodiscard]] Type* getBase() const { return base_; }
+
+  void setBase(Type* base) { base_ = base; }
+
+};
+
+class StructType : public Type {
+	class StructMember: public Type {
+		std::unique_ptr<Type> type_;
+  };
+
+	std::vector<std::unique_ptr<StructMember>> members_;
+public:
+	StructType() = default;
+
+	StructType(TypeKind kind, int size, int alignment) : Type(kind, size, alignment) {}
+
+
+};
+
+
+class FunctionType : public Type {
+	std::unique_ptr<Type> returnType_;
+	std::vector<std::unique_ptr<Type>> paramTypes_;
+public:
+	FunctionType() = default;
+	FunctionType(TypeKind kind, int size, int alignment) : Type(kind, size, alignment) {}
+
+	Type* getReturnType() { return returnType_.get();}
+
+	Type* getParamType(unsigned idx) { 
+		assert(idx < paramTypes_.size() && "No more params!");
+		return paramTypes_[idx].get();}
+};
+

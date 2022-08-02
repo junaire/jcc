@@ -3,6 +3,7 @@ SET(SOURCES
 	main.cc
 	lexer.cc
 	parser.cc
+	type.cc
 )
 
 add_executable(
