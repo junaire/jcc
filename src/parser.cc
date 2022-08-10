@@ -1,5 +1,7 @@
 #include "jcc/parser.h"
 
+#include <range/v3/view/concat.hpp>
+
 #include "jcc/common.h"
 #include "jcc/decl.h"
 #include "jcc/expr.h"
@@ -227,7 +229,7 @@ std::vector<Decl*> Parser::parseDeclaration(DeclSpec& declSpec) {
     decls.emplace_back(parseFunction(declSpec));
   } else {
     std::vector<Decl*> vars = parseGlobalVariables(declSpec);
-    decls.insert(decls.end(), vars.begin(), vars.end());
+    ranges::views::concat(decls, vars);
   }
   return decls;
 }
@@ -242,7 +244,7 @@ std::vector<Decl*> Parser::parseTranslateUnit() {
     }
 
     std::vector<Decl*> decls = parseDeclaration(declSpec);
-    topDecls.insert(topDecls.end(), decls.begin(), decls.end());
+    ranges::views::concat(topDecls, decls);
   }
 
   return topDecls;
