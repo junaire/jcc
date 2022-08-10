@@ -1,4 +1,5 @@
 #pragma once
+
 #include <memory>
 #include <optional>
 
@@ -6,21 +7,33 @@
 #include "jcc/decl.h"
 #include "jcc/lexer.h"
 #include "jcc/token.h"
+#include "jcc/declarator.h"
+
 
 class Parser {
  public:
   explicit Parser(Lexer& lexer) : lexer_(lexer) {}
 
   std::vector<Decl*> parseTranslateUnit();
-  Decl* parseFunction(const DeclSpec& declSpec);
-  Decl* parseDeclaration(const DeclSpec& declSpec);
-  Stmt* parseFunctionBody();
-  std::vector<VarDecl*> parseParams();
-  Declarator parseDeclarator(const DeclSpec& declSpec);
+
   DeclSpec parseDeclSpec();
+
+  Declarator parseDeclarator(DeclSpec& declSpec);
+
+  Decl* parseDeclaration(DeclSpec& declSpec);
+
+  std::vector<Decl*> parseGlobalVariables(DeclSpec& declSpec);
+
+  Decl* parseFunction(DeclSpec& declSpec);
+
+  Stmt* parseFunctionBody();
+
+  std::vector<VarDecl*> parseParams();
+
   std::unique_ptr<Type> parseTypeSuffix(std::unique_ptr<Type> type);
 
   std::unique_ptr<Type> parsePointers(Declarator& declrator);
+
   std::unique_ptr<Type> parseTypename();
 
   ASTContext& getASTContext() { return ctx_; }

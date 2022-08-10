@@ -27,7 +27,9 @@ bool Parser::tryConsumeToken(TokenKind expected) {
   return nextToken().getKind() == expected;
 }
 
-Type Parser::parseTypename() { DeclSpec declSpec = parseDeclSpec(); }
+std::unique_ptr<Type> Parser::parseTypename() {
+  DeclSpec declSpec = parseDeclSpec();
+}
 
 DeclSpec Parser::parseDeclSpec() {
   using enum TokenKind;
@@ -76,7 +78,7 @@ DeclSpec Parser::parseDeclSpec() {
     // Deal with _Atomic
     if (currentToken().isOneOf<DashAtmoic>()) {
       consumeToken();  // eat `(`
-      Type type = parseTypename();
+      declSpec.setType(parseTypename());
       consumeToken();  // eat `)`
       declSpec.setTypeQual(DeclSpec::TypeQual::Atomic);
     }
@@ -133,6 +135,8 @@ DeclSpec Parser::parseDeclSpec() {
     }
     consumeToken();
   }
+
+  declSpec.constructSelfType();
   return declSpec;
 }
 
@@ -150,24 +154,35 @@ std::unique_ptr<Type> Parser::parsePointers(Declarator& declrator) {
 }
 
 std::unique_ptr<Type> Parser::parseTypeSuffix(std::unique_ptr<Type> type) {
+  if (currentToken().is<TokenKind::LeftParen>()) {
+    return nullptr;
+  }
+  if (currentToken().is<TokenKind::LeftSquare>()) {
+    return nullptr;
+  }
   return type;
 }
 
-Declarator Parser::parseDeclarator(const DeclSpec& declSpec) {
-  Declarator declrator(declSpec, getASTContext());
-  std::unique_ptr<Type> type = parsePointers(declrator);
+Declarator Parser::parseDeclarator(DeclSpec& declSpec) {
+  Declarator declarator(declSpec);
+  std::unique_ptr<Type> type = parsePointers(declarator);
   if (currentToken().is<TokenKind::LeftParen>()) {
     DeclSpec dummy;
     parseDeclarator(dummy);
     consumeToken();  // Eat ')'
     std::unique_ptr<Type> suffix = parseTypeSuffix(std::move(type));
+    // FIXME
   }
 
   Token name;
   if (currentToken().is<TokenKind::Identifier>()) {
     name = currentToken();
   }
-  return declrator;
+  consumeToken();
+  std::unique_ptr<Type> suffixType = parseTypeSuffix(std::move(type));
+  declarator.name_ = name;
+  declarator.setType(std::move(suffixType));
+  return declarator;
 }
 
 std::vector<VarDecl*> Parser::parseParams() {
@@ -180,17 +195,38 @@ std::vector<VarDecl*> Parser::parseParams() {
 // Create a new scope and parse
 Stmt* Parser::parseFunctionBody() { return nullptr; }
 
-Decl* Parser::parseFunction(const DeclSpec& declSpec) {
-  Declarator declrator = parseDeclarator(declSpec);
+Decl* Parser::parseFunction(DeclSpec& declSpec) {
+  Declarator declarator = parseDeclarator(declSpec);
+  Token name = declarator.name_;
+  if (!name.isValid()) {
+    jcc_unreachable();
+  }
   // Check redefinition
+  FunctionDecl* function =
+      nullptr; /*FunctionDecl::create(ctx_, SourceRange(), name.getName(), );*/
+  return function;
+}
+
+std::vector<Decl*> Parser::parseGlobalVariables(DeclSpec& declSpec) {
+  std::vector<Decl*> vars;
+  while (!currentToken().is<TokenKind::Semi>()) {
+    Declarator declarator = parseDeclarator(declSpec);
+    vars.emplace_back(nullptr /*VarDecl::create(ctx_, SourceRange(), )*/);
+  }
+  return vars;
 }
 
 // Function or a simple declaration
-Decl* Parser::parseDeclaration(const DeclSpec& declSpec) {
+Decl* Parser::parseDeclaration(DeclSpec& declSpec) {
   // Handle struct-union identifier, like ` enum { X } ;`
   if (currentToken().is<TokenKind::Semi>()) {
   }
-  Declarator declrator = parseDeclarator(declSpec);
+  Declarator declarator = parseDeclarator(declSpec);
+  if (declarator.getTypeKind() == TypeKind::Func) {
+    return parseFunction(declSpec);
+  }
+  // What should we return?
+  return parseGlobalVariables(declSpec)[0];
 }
 
 std::vector<Decl*> Parser::parseTranslateUnit() {
@@ -201,9 +237,7 @@ std::vector<Decl*> Parser::parseTranslateUnit() {
     if (declSpec.isTypedef()) {
       jcc_unreachable();
     }
-
-    // Parse functions
-    // Parse global variables
+    decls.emplace_back(parseDeclaration(declSpec));
   }
 
   return decls;

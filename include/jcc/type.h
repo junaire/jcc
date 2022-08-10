@@ -112,18 +112,34 @@ class Type {
 
   [[nodiscard]] bool isUnsigned() const { return unsigned_; }
 
-  static std::unique_ptr<Type> createPointerType(Type* base);
+  static std::unique_ptr<Type> createPointerType(std::unique_ptr<Type> base);
 
   static std::unique_ptr<Type> createEnumType();
 
   static std::unique_ptr<Type> createStructType();
+
+  static std::unique_ptr<Type> createVoidType();
+
+  static std::unique_ptr<Type> createBoolType();
+
+  static std::unique_ptr<Type> createCharType(bool isUnsigned);
+
+  static std::unique_ptr<Type> createShortType(bool isUnsigned);
+
+  static std::unique_ptr<Type> createIntType(bool isUnsigned);
+
+  static std::unique_ptr<Type> createLongType(bool isUnsigned);
+
+  static std::unique_ptr<Type> createFloatType();
+
+  static std::unique_ptr<Type> createDoubleType(bool isLong);
 
   static bool isCompatible(const Type& lhs, const Type& rhs);
 };
 
 class ArrayType : public Type {
   unsigned len_ = 0;
-  Type* base_ = nullptr;
+  std::unique_ptr<Type> base_;
 
  public:
   ArrayType() = default;
@@ -132,9 +148,22 @@ class ArrayType : public Type {
 
   [[nodiscard]] unsigned getLength() const { return len_; }
 
-  [[nodiscard]] Type* getBase() const { return base_; }
+  [[nodiscard]] Type* getBase() const { return base_.get(); }
 
-  void setBase(Type* base) { base_ = base; }
+  void setBase(std::unique_ptr<Type> base) { base_ = std::move(base); }
+};
+
+class PointerType : public Type {
+  std::unique_ptr<Type> base_;
+
+ public:
+  PointerType() = default;
+  PointerType(TypeKind kind, int size, int alignment)
+      : Type(kind, size, alignment) {}
+
+  [[nodiscard]] Type* getBase() const { return base_.get(); }
+
+  void setBase(std::unique_ptr<Type> base) { base_ = std::move(base); }
 };
 
 class StructType : public Type {
