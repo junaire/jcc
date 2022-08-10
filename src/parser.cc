@@ -217,28 +217,33 @@ std::vector<Decl*> Parser::parseGlobalVariables(DeclSpec& declSpec) {
 }
 
 // Function or a simple declaration
-Decl* Parser::parseDeclaration(DeclSpec& declSpec) {
+std::vector<Decl*> Parser::parseDeclaration(DeclSpec& declSpec) {
+  std::vector<Decl*> decls;
   // Handle struct-union identifier, like ` enum { X } ;`
   if (currentToken().is<TokenKind::Semi>()) {
   }
   Declarator declarator = parseDeclarator(declSpec);
   if (declarator.getTypeKind() == TypeKind::Func) {
-    return parseFunction(declSpec);
+    decls.emplace_back(parseFunction(declSpec));
+  } else {
+    std::vector<Decl*> vars = parseGlobalVariables(declSpec);
+    decls.insert(decls.end(), vars.begin(), vars.end());
   }
-  // What should we return?
-  return parseGlobalVariables(declSpec)[0];
+  return decls;
 }
 
 std::vector<Decl*> Parser::parseTranslateUnit() {
-  std::vector<Decl*> decls;
+  std::vector<Decl*> topDecls;
   while (!currentToken().is<TokenKind::Eof>()) {
     DeclSpec declSpec = parseDeclSpec();
     // TODO(Jun): Handle typedefs
     if (declSpec.isTypedef()) {
       jcc_unreachable();
     }
-    decls.emplace_back(parseDeclaration(declSpec));
+
+    std::vector<Decl*> decls = parseDeclaration(declSpec);
+    topDecls.insert(topDecls.end(), decls.begin(), decls.end());
   }
 
-  return decls;
+  return topDecls;
 }

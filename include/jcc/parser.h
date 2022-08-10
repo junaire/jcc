@@ -20,7 +20,7 @@ class Parser {
 
   Declarator parseDeclarator(DeclSpec& declSpec);
 
-  Decl* parseDeclaration(DeclSpec& declSpec);
+  std::vector<Decl*> parseDeclaration(DeclSpec& declSpec);
 
   std::vector<Decl*> parseGlobalVariables(DeclSpec& declSpec);
 
