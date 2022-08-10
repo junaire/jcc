@@ -31,6 +31,7 @@ bool Parser::tryConsumeToken(TokenKind expected) {
 
 std::unique_ptr<Type> Parser::parseTypename() {
   DeclSpec declSpec = parseDeclSpec();
+	return nullptr;
 }
 
 DeclSpec Parser::parseDeclSpec() {
