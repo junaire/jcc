@@ -168,7 +168,7 @@ class PointerType : public Type {
   PointerType(TypeKind kind, int size, int alignment)
       : Type(kind, size, alignment) {}
 
-  std::unique_ptr<Type> getBase() { return base_; }
+  std::unique_ptr<Type> getBase() { return std::move(base_); }
 
   void setBase(std::unique_ptr<Type> base) { base_ = std::move(base); }
 };
