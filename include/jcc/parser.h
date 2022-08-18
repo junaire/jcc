@@ -28,7 +28,9 @@ class Parser {
 
   Stmt* parseFunctionBody();
 
-  std::vector<VarDecl*> parseParams();
+  std::unique_ptr<Type> parseParams(std::unique_ptr<Type> type);
+
+  std::unique_ptr<Type> parseArrayDimensions(std::unique_ptr<Type> type);
 
   std::unique_ptr<Type> parseTypeSuffix(std::unique_ptr<Type> type);
 

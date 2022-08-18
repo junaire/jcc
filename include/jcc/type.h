@@ -134,6 +134,11 @@ class Type {
 
   static std::unique_ptr<Type> createDoubleType(bool isLong);
 
+  static std::unique_ptr<Type> createFuncType(std::unique_ptr<Type> returnType);
+
+  static std::unique_ptr<Type> createArrayType(std::unique_ptr<Type> base,
+                                               std::size_t len);
+
   static bool isCompatible(const Type& lhs, const Type& rhs);
 };
 
@@ -151,6 +156,8 @@ class ArrayType : public Type {
   [[nodiscard]] Type* getBase() const { return base_.get(); }
 
   void setBase(std::unique_ptr<Type> base) { base_ = std::move(base); }
+
+  void setLength(std::size_t len) { len_ = len; }
 };
 
 class PointerType : public Type {
@@ -161,7 +168,7 @@ class PointerType : public Type {
   PointerType(TypeKind kind, int size, int alignment)
       : Type(kind, size, alignment) {}
 
-  [[nodiscard]] Type* getBase() const { return base_.get(); }
+  std::unique_ptr<Type> getBase() { return base_; }
 
   void setBase(std::unique_ptr<Type> base) { base_ = std::move(base); }
 };
@@ -191,8 +198,16 @@ class FunctionType : public Type {
 
   Type* getReturnType() { return returnType_.get(); }
 
+  void setReturnType(std::unique_ptr<Type> type) {
+    returnType_ = std::move(type);
+  }
+
   Type* getParamType(unsigned idx) {
     assert(idx < paramTypes_.size() && "No more params!");
     return paramTypes_[idx].get();
+  }
+
+  void setParams(std::vector<std::unique_ptr<Type>> params) {
+    paramTypes_ = std::move(params);
   }
 };

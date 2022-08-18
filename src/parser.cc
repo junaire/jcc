@@ -60,15 +60,15 @@ DeclSpec Parser::parseDeclSpec() {
         default:
           jcc_unreachable();
       }
-    }
-    consumeToken();
 
-    if (declSpec.isTypedef()) {
-      if (declSpec.isStatic() || declSpec.isExtern() || declSpec.isInline() ||
-          declSpec.isThreadLocal()) {
-        // TODO(Jun): Can you have a nice diag instead of panic?
-        jcc_unreachable();
+      if (declSpec.isTypedef()) {
+        if (declSpec.isStatic() || declSpec.isExtern() || declSpec.isInline() ||
+            declSpec.isThreadLocal()) {
+          // TODO(Jun): Can you have a nice diag instead of panic?
+          jcc_unreachable();
+        }
       }
+      consumeToken();
     }
 
     // Ignore some keywords with no effects like `auto`
@@ -158,10 +158,10 @@ std::unique_ptr<Type> Parser::parsePointers(Declarator& declrator) {
 
 std::unique_ptr<Type> Parser::parseTypeSuffix(std::unique_ptr<Type> type) {
   if (currentToken().is<TokenKind::LeftParen>()) {
-    return nullptr;
+    return parseParams(std::move(type));
   }
   if (currentToken().is<TokenKind::LeftSquare>()) {
-    return nullptr;
+    return parseArrayDimensions(std::move(type));
   }
   return type;
 }
@@ -170,11 +170,14 @@ Declarator Parser::parseDeclarator(DeclSpec& declSpec) {
   Declarator declarator(declSpec);
   std::unique_ptr<Type> type = parsePointers(declarator);
   if (currentToken().is<TokenKind::LeftParen>()) {
+    consumeToken();
     DeclSpec dummy;
     parseDeclarator(dummy);
     consumeToken();  // Eat ')'
-    std::unique_ptr<Type> suffix = parseTypeSuffix(std::move(type));
-    // FIXME
+    std::unique_ptr<Type> suffixType = parseTypeSuffix(std::move(type));
+    DeclSpec suffix;
+    suffix.setType(std::move(suffixType));
+    return parseDeclarator(suffix);
   }
 
   Token name;
@@ -188,11 +191,48 @@ Declarator Parser::parseDeclarator(DeclSpec& declSpec) {
   return declarator;
 }
 
-std::vector<VarDecl*> Parser::parseParams() {
-  std::vector<VarDecl*> params;
-  do {  // To be implemented
-  } while (currentToken().is<TokenKind::Comma>());
-  return params;
+std::unique_ptr<Type> Parser::parseParams(std::unique_ptr<Type> type) {
+  if (currentToken().is<TokenKind::Void>() &&
+      nextToken().is<TokenKind::RightParen>()) {
+    consumeToken();
+    return Type::createFuncType(std::move(type));
+  }
+
+  std::vector<std::unique_ptr<Type>> params;
+  while (!currentToken().is<TokenKind::RightParen>()) {
+    std::unique_ptr<Type> type;
+    DeclSpec declSpec = parseDeclSpec();
+    Declarator declarator = parseDeclarator(declSpec);
+
+    if (declarator.getTypeKind() == TypeKind::Array) {
+      type = Type::createPointerType(
+          declarator.getBaseType()->asType<PointerType>()->getBase());
+      // FIXME: set name to type.
+    } else if (declarator.getTypeKind() == TypeKind::Func) {
+      type = Type::createPointerType(declarator.getBaseType());
+    }
+    params.emplace_back(std::move(type));
+  }
+
+  std::unique_ptr<Type> funcType = Type::createFuncType(std::move(type));
+  funcType->asType<FunctionType>()->setParams(std::move(params));
+  return funcType;
+}
+
+std::unique_ptr<Type> Parser::parseArrayDimensions(std::unique_ptr<Type> type) {
+  while (currentToken().isOneOf<TokenKind::Static, TokenKind::Restrict>()) {
+    consumeToken();
+  }
+
+  if (currentToken().is<TokenKind::RightParen>()) {
+    consumeToken();
+    auto arrType = parseTypeSuffix(std::move(type));
+    return Type::createArrayType(std::move(arrType), -1);
+  }
+
+  // cond ? A : B
+  // vla
+  jcc_unreachable();
 }
 
 // Create a new scope and parse

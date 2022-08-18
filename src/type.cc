@@ -96,3 +96,19 @@ std::unique_ptr<Type> Type::createDoubleType(bool isLong) {
   return INIT_TYPE(TypeKind::Double, sizeAndAlignment, sizeAndAlignment);
 }
 #undef INIT_TYPE
+
+std::unique_ptr<Type> Type::createFuncType(std::unique_ptr<Type> returnType) {
+  std::unique_ptr<Type> type =
+      std::make_unique<FunctionType>(TypeKind::Func, 1, 1);
+  type->asType<FunctionType>()->setReturnType(std::move(returnType));
+  return type;
+}
+
+std::unique_ptr<Type> Type::createArrayType(std::unique_ptr<Type> base,
+                                            std::size_t len) {
+  std::unique_ptr<Type> type = std::make_unique<ArrayType>(
+      TypeKind::Array, base->getSize() * len, base->getAlignment());
+  type->asType<ArrayType>()->setBase(std::move(base));
+  type->asType<ArrayType>()->setLength(len);
+  return type;
+}
