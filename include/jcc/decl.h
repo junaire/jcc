@@ -25,10 +25,11 @@ class Decl {
 
 class VarDecl : public Decl {
   Stmt* init_{nullptr};
-  Type type_;
+  std::unique_ptr<Type> type_;
   std::string name_;
 
-  VarDecl(SourceRange loc, Stmt* init, Type type, std::string name)
+  VarDecl(SourceRange loc, Stmt* init, std::unique_ptr<Type> type,
+          std::string name)
       : Decl(std::move(loc)),
         init_(init),
         type_(std::move(type)),
@@ -36,11 +37,11 @@ class VarDecl : public Decl {
 
  public:
   static VarDecl* create(ASTContext& ctx, SourceRange loc, Stmt* init,
-                         Type type, std::string name);
+                         std::unique_ptr<Type> type, std::string name);
 
   [[nodiscard]] std::string_view getName() const { return name_; }
 
-  Type getType() { return type_; }
+  Type* getType() { return type_.get(); }
 
   Stmt* getInit() { return init_; }
 
@@ -50,11 +51,11 @@ class VarDecl : public Decl {
 class FunctionDecl : public Decl {
   std::string name_;
   std::vector<VarDecl*> args_;
-  Type returnTy_;
+  std::unique_ptr<Type> returnTy_;
   Stmt* body_{nullptr};
 
   FunctionDecl(SourceRange loc, std::string name, std::vector<VarDecl*> args,
-               Type returnTy, Stmt* body)
+               std::unique_ptr<Type> returnTy, Stmt* body)
       : Decl(std::move(loc)),
         name_(std::move(name)),
         args_(std::move(args)),
@@ -64,11 +65,11 @@ class FunctionDecl : public Decl {
  public:
   static FunctionDecl* create(ASTContext& ctx, SourceRange loc,
                               std::string name, std::vector<VarDecl*> args,
-                              Type returnTy, Stmt* body);
+                              std::unique_ptr<Type> returnTy, Stmt* body);
 
   [[nodiscard]] std::string_view getName() const { return name_; }
 
-  Type getType() { return returnTy_; }
+  Type* getType() { return returnTy_.get(); }
 
   Stmt* getBody() { return body_; }
 

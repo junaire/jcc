@@ -31,8 +31,12 @@ bool Parser::tryConsumeToken(TokenKind expected) {
 
 std::unique_ptr<Type> Parser::parseTypename() {
   DeclSpec declSpec = parseDeclSpec();
-	return nullptr;
+  return nullptr;
 }
+
+void Parser::enterScope() { scopes.emplace_back(*this); }
+
+void Parser::exitScope() {}
 
 DeclSpec Parser::parseDeclSpec() {
   using enum TokenKind;
@@ -235,8 +239,38 @@ std::unique_ptr<Type> Parser::parseArrayDimensions(std::unique_ptr<Type> type) {
   jcc_unreachable();
 }
 
+std::vector<VarDecl*> Parser::createParams(FunctionType* type) {
+  std::vector<VarDecl*> params;
+  for (std::size_t idx = 0; idx < type->getParamSize(); idx++) {
+    Type* paramTy = type->getParamType(idx);
+    params.emplace_back(VarDecl::create(ctx_, SourceRange(), nullptr, nullptr,
+                                        paramTy->getName()));
+  }
+  return params;
+}
+
 // Create a new scope and parse
-Stmt* Parser::parseFunctionBody() { return nullptr; }
+Stmt* Parser::parseFunctionBody() {
+  Stmt* body = nullptr;
+  assert(currentToken().is<TokenKind::LeftBracket>());
+  consumeToken();
+  ScopeRAII scopeRAII(*this);
+  while (!currentToken().is<TokenKind::RightBracket>()) {
+    if (currentToken().isTypename() && !nextToken().is<TokenKind::Colon>()) {
+      DeclSpec declSpec = parseDeclSpec();
+      if (declSpec.isTypedef()) {
+        jcc_unreachable();
+        continue;
+      }
+      // another function?
+      if (declSpec.isExtern()) {
+        jcc_unreachable();
+      }
+    } else {
+    }
+  }
+  return body;
+}
 
 Decl* Parser::parseFunction(DeclSpec& declSpec) {
   Declarator declarator = parseDeclarator(declSpec);
@@ -245,8 +279,16 @@ Decl* Parser::parseFunction(DeclSpec& declSpec) {
     jcc_unreachable();
   }
   // Check redefinition
+
+  ScopeRAII scopeRAII(*this);
+
+  auto* self = declarator.getBaseType()->asType<FunctionType>();
+
+  std::vector<VarDecl*> params = createParams(self);
+
   FunctionDecl* function =
-      nullptr; /*FunctionDecl::create(ctx_, SourceRange(), name.getName(), );*/
+      FunctionDecl::create(ctx_, SourceRange(), name.getAsString(),
+                           std::move(params), nullptr, nullptr);
   return function;
 }
 

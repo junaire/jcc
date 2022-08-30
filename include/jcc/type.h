@@ -104,7 +104,7 @@ class Type {
 
   void setUnsigned(bool usg = true) { unsigned_ = usg; }
 
-  [[nodiscard]] std::string_view getName() const { return name_.getName(); }
+  [[nodiscard]] std::string getName() const { return name_.getAsString(); }
 
   [[nodiscard]] int getSize() const { return size_; }
 
@@ -210,4 +210,6 @@ class FunctionType : public Type {
   void setParams(std::vector<std::unique_ptr<Type>> params) {
     paramTypes_ = std::move(params);
   }
+
+  [[nodiscard]] std::size_t getParamSize() const { return paramTypes_.size(); }
 };

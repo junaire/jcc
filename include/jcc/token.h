@@ -165,7 +165,7 @@ class Token {
     return {getData(), getLength()};
   }
 
-  [[nodiscard]] std::string_view getName() const {
+  [[nodiscard]] std::string_view getKindName() const {
     switch (getKind()) {
       case TokenKind::StringLiteral:
         return "StringLiteral";
@@ -359,6 +359,10 @@ class Token {
       default:
         jcc_unreachable();
     }
+  }
+
+  [[nodiscard]] std::string getAsString() const {
+    return {getData(), getLength()};
   }
 
   [[nodiscard]] std::size_t getLength() const { return length_; }

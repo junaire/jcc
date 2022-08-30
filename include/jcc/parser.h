@@ -2,13 +2,21 @@
 
 #include <memory>
 #include <optional>
+#include <unordered_map>
 
 #include "jcc/ast_context.h"
 #include "jcc/decl.h"
+#include "jcc/declarator.h"
 #include "jcc/lexer.h"
 #include "jcc/token.h"
-#include "jcc/declarator.h"
 
+class Parser;
+
+struct Scope {
+  explicit Scope(Parser& parser) : self(parser) {}
+  Parser& self;
+  std::unordered_map<std::string, std::string> D;
+};
 
 class Parser {
  public:
@@ -38,6 +46,8 @@ class Parser {
 
   std::unique_ptr<Type> parseTypename();
 
+  std::vector<VarDecl*> createParams(FunctionType* type);
+
   ASTContext& getASTContext() { return ctx_; }
 
  private:
@@ -49,4 +59,16 @@ class Parser {
   Token token_;
   std::optional<Token> cache_;
   ASTContext ctx_;
+  std::vector<Scope> scopes;
+
+  void enterScope();
+  void exitScope();
+
+  class ScopeRAII {
+    Parser& self_;
+
+   public:
+    explicit ScopeRAII(Parser& self) : self_(self) { self_.enterScope(); }
+    ~ScopeRAII() { self_.exitScope(); }
+  };
 };
