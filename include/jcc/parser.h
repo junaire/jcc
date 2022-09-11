@@ -27,6 +27,8 @@ class Parser {
 
   std::vector<Decl*> parseTranslateUnit();
 
+  void skipUntil(TokenKind kind);
+
   DeclSpec parseDeclSpec();
 
   Declarator parseDeclarator(DeclSpec& declSpec);
@@ -39,12 +41,13 @@ class Parser {
 
   Stmt* parseStatement();
 
-  Decl* parseFunction(DeclSpec& declSpec);
+  Stmt* parseCompoundStmt();
+
+  void addInitializer(VarDecl* var);
 
   Expr* parseExpr();
 
-
-  Stmt* parseFunctionBody();
+  Decl* parseFunction(DeclSpec& declSpec);
 
   std::unique_ptr<Type> parseParams(std::unique_ptr<Type> type);
 

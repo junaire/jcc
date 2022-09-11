@@ -45,6 +45,8 @@ class VarDecl : public Decl {
 
   Stmt* getInit() { return init_; }
 
+  void setInit(Stmt* init) { init_ = init; }
+
   [[nodiscard]] bool isDefinition() const { return init_ == nullptr; }
 };
 
@@ -103,4 +105,3 @@ class RecordDecl : public Decl {
 
   [[nodiscard]] std::size_t getMemberNum() const { return members_.size(); }
 };
-

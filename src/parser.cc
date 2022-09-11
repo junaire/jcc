@@ -34,6 +34,12 @@ std::unique_ptr<Type> Parser::parseTypename() {
   return nullptr;
 }
 
+void Parser::skipUntil(TokenKind kind) {
+  while (currentToken().getKind() != kind) {
+    consumeToken();
+  }
+}
+
 void Parser::enterScope() { scopes.emplace_back(*this); }
 
 void Parser::exitScope() {}
@@ -239,39 +245,37 @@ std::unique_ptr<Type> Parser::parseArrayDimensions(std::unique_ptr<Type> type) {
   jcc_unreachable();
 }
 
-Expr* Parser::parseExpr() {
-	return nullptr;
-}
+Expr* Parser::parseExpr() { return nullptr; }
 
 Stmt* Parser::parseStatement() {
   if (currentToken().is<TokenKind::Return>()) {
     consumeToken();
     Expr* returnExpr;
     if (currentToken().is<TokenKind::Semi>()) {
-			// Return nothing.
+      // Return nothing.
       returnExpr = nullptr;
     } else {
-			returnExpr = parseExpr();
-			// Assume only a semi left.
-			consumeToken();
-		}
+      returnExpr = parseExpr();
+      // Assume only a semi left.
+      consumeToken();
+    }
 
-		// Add type?
+    // Add type?
     return ReturnStatement::create(ctx_, SourceRange(), returnExpr);
   }
 
-	if (currentToken().is<TokenKind::If>()) {
-		consumeToken(); // Eat `(`.
-		Expr* condition = parseExpr();
-		consumeToken(); // Eat `)`.
-		Stmt* then = parseStatement();
-		Stmt* elseStmt = nullptr;
-		if (currentToken().is<TokenKind::Else>()) {
-			elseStmt = parseStatement();
-		}
-		return IfStatement::create(ctx_, SourceRange(), condition,then, elseStmt);
-	}
-	jcc_unreachable();
+  if (currentToken().is<TokenKind::If>()) {
+    consumeToken();  // Eat `(`.
+    Expr* condition = parseExpr();
+    consumeToken();  // Eat `)`.
+    Stmt* then = parseStatement();
+    Stmt* elseStmt = nullptr;
+    if (currentToken().is<TokenKind::Else>()) {
+      elseStmt = parseStatement();
+    }
+    return IfStatement::create(ctx_, SourceRange(), condition, then, elseStmt);
+  }
+  jcc_unreachable();
 }
 
 std::vector<VarDecl*> Parser::createParams(FunctionType* type) {
@@ -284,16 +288,15 @@ std::vector<VarDecl*> Parser::createParams(FunctionType* type) {
   return params;
 }
 
-// Create a new scope and parse
-Stmt* Parser::parseFunctionBody() {
-  Stmt* body = nullptr;
-  assert(currentToken().is<TokenKind::LeftBracket>());
-  consumeToken();
+Stmt* Parser::parseCompoundStmt() {
+  Stmt* stmt = nullptr;
   ScopeRAII scopeRAII(*this);
+
   while (!currentToken().is<TokenKind::RightBracket>()) {
     if (currentToken().isTypename() && !nextToken().is<TokenKind::Colon>()) {
       DeclSpec declSpec = parseDeclSpec();
       if (declSpec.isTypedef()) {
+        // Parse Typedef
         jcc_unreachable();
         continue;
       }
@@ -310,9 +313,11 @@ Stmt* Parser::parseFunctionBody() {
         continue;
       }
     } else {
+      stmt = parseStatement();
     }
+    // Add type?
   }
-  return body;
+  return stmt;
 }
 
 std::vector<Decl*> Parser::parseDeclarations(DeclSpec& declSpec) {
@@ -343,22 +348,47 @@ Decl* Parser::parseFunction(DeclSpec& declSpec) {
   auto* self = declarator.getBaseType()->asType<FunctionType>();
 
   std::vector<VarDecl*> params = createParams(self);
-  Stmt* body = parseFunctionBody();
+
+  Stmt* body;
+  if (currentToken().is<TokenKind::Semi>()) {
+    consumeToken();
+    body = nullptr;
+  } else if (currentToken().is<TokenKind::LeftBracket>()) {
+    consumeToken();
+    body = parseCompoundStmt();
+  } else {
+    jcc_unreachable();
+  }
 
   FunctionDecl* function =
       FunctionDecl::create(ctx_, SourceRange(), name.getAsString(),
-                           std::move(params), nullptr, body);
+                           std::move(params), self->getReturnType(), body);
   return function;
 }
 
 std::vector<Decl*> Parser::parseGlobalVariables(DeclSpec& declSpec) {
   std::vector<Decl*> vars;
+  bool isFirst = true;
   while (!currentToken().is<TokenKind::Semi>()) {
+    if (!isFirst) {
+      skipUntil(TokenKind::Comma);
+    }
+    isFirst = false;
+
     Declarator declarator = parseDeclarator(declSpec);
-    vars.emplace_back(nullptr /*VarDecl::create(ctx_, SourceRange(), )*/);
+    // propogate some flags from DeclSpec to VarDecl?
+    VarDecl* var =
+        VarDecl::create(ctx_, SourceRange(), nullptr, declarator.getBaseType(),
+                        declarator.getName());
+    if (currentToken().is<TokenKind::Equal>()) {
+      addInitializer(var);
+    }
+    vars.push_back(var);
   }
   return vars;
 }
+
+void Parser::addInitializer(VarDecl* var) { jcc_unreachable(); }
 
 // Function or a simple declaration
 std::vector<Decl*> Parser::parseFunctionOrVar(DeclSpec& declSpec) {

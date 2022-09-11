@@ -183,4 +183,6 @@ class Declarator {
   void setType(std::unique_ptr<Type> type) {
     declSpec_.setType(std::move(type));
   }
+
+  std::string getName() { return name_.getAsString(); }
 };

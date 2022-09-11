@@ -196,7 +196,7 @@ class FunctionType : public Type {
   FunctionType(TypeKind kind, int size, int alignment)
       : Type(kind, size, alignment) {}
 
-  Type* getReturnType() { return returnType_.get(); }
+  std::unique_ptr<Type> getReturnType() { return std::move(returnType_); }
 
   void setReturnType(std::unique_ptr<Type> type) {
     returnType_ = std::move(type);
