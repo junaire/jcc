@@ -143,7 +143,7 @@ class Type {
 };
 
 class ArrayType : public Type {
-  unsigned len_ = 0;
+  std::size_t len_ = 0;
   std::unique_ptr<Type> base_;
 
  public:
@@ -151,7 +151,7 @@ class ArrayType : public Type {
   ArrayType(TypeKind kind, int size, int alignment)
       : Type(kind, size, alignment) {}
 
-  [[nodiscard]] unsigned getLength() const { return len_; }
+  [[nodiscard]] std::size_t getLength() const { return len_; }
 
   [[nodiscard]] Type* getBase() const { return base_.get(); }
 
@@ -202,7 +202,7 @@ class FunctionType : public Type {
     returnType_ = std::move(type);
   }
 
-  Type* getParamType(unsigned idx) {
+  Type* getParamType(std::size_t idx) {
     assert(idx < paramTypes_.size() && "No more params!");
     return paramTypes_[idx].get();
   }
