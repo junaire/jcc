@@ -1,6 +1,7 @@
 #pragma once
 
 #include "jcc/type.h"
+
 class DeclSpec {
   friend class Declarator;
 
