@@ -94,3 +94,16 @@ DeclRefExpr* DeclRefExpr::create(ASTContext& ctx, SourceRange loc, Decl* decl) {
   void* mem = ctx.allocate<DeclRefExpr>();
   return new (mem) DeclRefExpr{std::move(loc), decl};
 }
+
+ReturnStatement* ReturnStatement::create(ASTContext& ctx, SourceRange loc,
+                                         Expr* returnExpr) {
+  void* mem = ctx.allocate<ReturnStatement>();
+  return new (mem) ReturnStatement(std::move(loc), returnExpr);
+}
+
+IfStatement* IfStatement::create(ASTContext& ctx, SourceRange loc,
+                                 Expr* condition, Stmt* thenStmt,
+                                 Stmt* elseStmt) {
+  void* mem = ctx.allocate<IfStatement>();
+  return new (mem) IfStatement(std::move(loc), condition, thenStmt, elseStmt);
+}

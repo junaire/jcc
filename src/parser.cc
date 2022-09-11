@@ -239,6 +239,41 @@ std::unique_ptr<Type> Parser::parseArrayDimensions(std::unique_ptr<Type> type) {
   jcc_unreachable();
 }
 
+Expr* Parser::parseExpr() {
+	return nullptr;
+}
+
+Stmt* Parser::parseStatement() {
+  if (currentToken().is<TokenKind::Return>()) {
+    consumeToken();
+    Expr* returnExpr;
+    if (currentToken().is<TokenKind::Semi>()) {
+			// Return nothing.
+      returnExpr = nullptr;
+    } else {
+			returnExpr = parseExpr();
+			// Assume only a semi left.
+			consumeToken();
+		}
+
+		// Add type?
+    return ReturnStatement::create(ctx_, SourceRange(), returnExpr);
+  }
+
+	if (currentToken().is<TokenKind::If>()) {
+		consumeToken(); // Eat `(`.
+		Expr* condition = parseExpr();
+		consumeToken(); // Eat `)`.
+		Stmt* then = parseStatement();
+		Stmt* elseStmt = nullptr;
+		if (currentToken().is<TokenKind::Else>()) {
+			elseStmt = parseStatement();
+		}
+		return IfStatement::create(ctx_, SourceRange(), condition,then, elseStmt);
+	}
+	jcc_unreachable();
+}
+
 std::vector<VarDecl*> Parser::createParams(FunctionType* type) {
   std::vector<VarDecl*> params;
   for (std::size_t idx = 0; idx < type->getParamSize(); idx++) {

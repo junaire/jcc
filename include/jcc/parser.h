@@ -5,12 +5,15 @@
 #include <unordered_map>
 
 #include "jcc/ast_context.h"
-#include "jcc/decl.h"
 #include "jcc/declarator.h"
 #include "jcc/lexer.h"
 #include "jcc/token.h"
 
+class Decl;
+class Expr;
 class Parser;
+class VarDecl;
+class Stmt;
 
 struct Scope {
   explicit Scope(Parser& parser) : self(parser) {}
@@ -37,6 +40,9 @@ class Parser {
   Stmt* parseStatement();
 
   Decl* parseFunction(DeclSpec& declSpec);
+
+  Expr* parseExpr();
+
 
   Stmt* parseFunctionBody();
 

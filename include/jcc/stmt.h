@@ -10,6 +10,7 @@
 class Expr;
 class Decl;
 class LabelDecl;
+class ASTContext;
 
 class Stmt {
   SourceRange range_;
@@ -61,12 +62,13 @@ class IfStatement : public Stmt {
   Stmt* thenStmt_{nullptr};
   Stmt* elseStmt_{nullptr};
 
- public:
   IfStatement(SourceRange loc, Expr* condition, Stmt* thenStmt, Stmt* elseStmt)
       : Stmt(std::move(loc)),
         condition_(condition),
         thenStmt_(thenStmt),
         elseStmt_(elseStmt) {}
+ public:
+	static IfStatement* create(ASTContext& ctx, SourceRange loc, Expr* condition, Stmt* thenStmt, Stmt* elseStmt);
 
   Expr* getCondition() { return condition_; }
   Stmt* getThen() { return thenStmt_; }
@@ -158,12 +160,14 @@ class BreakStatement : public Stmt {
 };
 
 class ReturnStatement : public Stmt {
-  Stmt* returnExpr_{nullptr};
+  Expr* returnExpr_ = nullptr;
+
+  ReturnStatement(SourceRange loc, Expr* returnExpr)
+      : Stmt(std::move(loc)), returnExpr_(returnExpr) {}
 
  public:
-  ReturnStatement(SourceRange loc, Stmt* returnExpr)
-      : Stmt(std::move(loc)), returnExpr_(returnExpr) {}
-  Stmt* getReturn() { return returnExpr_; }
+	static ReturnStatement* create(ASTContext& ctx, SourceRange loc, Expr* returnExpr);
+  Expr* getReturn() { return returnExpr_; }
 };
 
 class DeclStmt : public Stmt {
