@@ -262,14 +262,37 @@ Stmt* Parser::parseFunctionBody() {
         jcc_unreachable();
         continue;
       }
+      Declarator declarator = parseDeclarator(declSpec);
+      if (declarator.getTypeKind() == TypeKind::Func) {
+        Decl* funcDecl = parseFunction(declSpec);
+        // Add decl to stmt vector
+        continue;
+      }
       // another function?
       if (declSpec.isExtern()) {
-        jcc_unreachable();
+        std::vector<Decl*> globalVars = parseGlobalVariables(declSpec);
+        // Add decls to stmt vector
+        continue;
       }
     } else {
     }
   }
   return body;
+}
+
+std::vector<Decl*> Parser::parseDeclarations(DeclSpec& declSpec) {
+  while (!currentToken().is<TokenKind::Semi>()) {
+    Declarator declarator = parseDeclarator(declSpec);
+    if (declarator.getTypeKind() == TypeKind::Void) {
+      jcc_unreachable();
+    }
+    // Check if declarator doesn't has a name.
+
+    // We may don't have declSpec?
+    if (declSpec.isStatic()) {
+      // Static local variable.
+    }
+  }
 }
 
 Decl* Parser::parseFunction(DeclSpec& declSpec) {
@@ -285,10 +308,11 @@ Decl* Parser::parseFunction(DeclSpec& declSpec) {
   auto* self = declarator.getBaseType()->asType<FunctionType>();
 
   std::vector<VarDecl*> params = createParams(self);
+  Stmt* body = parseFunctionBody();
 
   FunctionDecl* function =
       FunctionDecl::create(ctx_, SourceRange(), name.getAsString(),
-                           std::move(params), nullptr, nullptr);
+                           std::move(params), nullptr, body);
   return function;
 }
 
@@ -302,7 +326,7 @@ std::vector<Decl*> Parser::parseGlobalVariables(DeclSpec& declSpec) {
 }
 
 // Function or a simple declaration
-std::vector<Decl*> Parser::parseDeclaration(DeclSpec& declSpec) {
+std::vector<Decl*> Parser::parseFunctionOrVar(DeclSpec& declSpec) {
   std::vector<Decl*> decls;
   // Handle struct-union identifier, like ` enum { X } ;`
   if (currentToken().is<TokenKind::Semi>()) {
@@ -326,7 +350,7 @@ std::vector<Decl*> Parser::parseTranslateUnit() {
       jcc_unreachable();
     }
 
-    std::vector<Decl*> decls = parseDeclaration(declSpec);
+    std::vector<Decl*> decls = parseFunctionOrVar(declSpec);
     ranges::views::concat(topDecls, decls);
   }
 
