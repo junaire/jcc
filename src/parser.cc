@@ -154,12 +154,13 @@ DeclSpec Parser::parseDeclSpec() {
   return declSpec;
 }
 
-std::unique_ptr<Type> Parser::parsePointers(Declarator& declrator) {
+std::unique_ptr<Type> Parser::parsePointers(Declarator& declarator) {
   using enum TokenKind;
-  std::unique_ptr<Type> type;
+  std::unique_ptr<Type> type = declarator.getBaseType();
+  ;
   while (currentToken().is<Star>()) {
     consumeToken();
-    type = Type::createPointerType(declrator.getBaseType());
+    type = Type::createPointerType(std::move(type));
     while (currentToken().isOneOf<Const, Volatile, Restrict>()) {
       consumeToken();
     }

@@ -54,7 +54,7 @@ class Parser {
 
   std::unique_ptr<Type> parseTypeSuffix(std::unique_ptr<Type> type);
 
-  std::unique_ptr<Type> parsePointers(Declarator& declrator);
+  std::unique_ptr<Type> parsePointers(Declarator& declarator);
 
   std::unique_ptr<Type> parseTypename();
 
