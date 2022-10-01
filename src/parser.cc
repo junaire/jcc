@@ -5,6 +5,7 @@
 #include "jcc/common.h"
 #include "jcc/decl.h"
 #include "jcc/expr.h"
+#include "jcc/lexer.h"
 #include "jcc/type.h"
 
 Token Parser::currentToken() { return token_; }

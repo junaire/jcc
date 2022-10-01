@@ -6,7 +6,6 @@
 
 #include "jcc/ast_context.h"
 #include "jcc/declarator.h"
-#include "jcc/lexer.h"
 #include "jcc/token.h"
 
 class Decl;
@@ -14,6 +13,7 @@ class Expr;
 class Parser;
 class VarDecl;
 class Stmt;
+class Lexer;
 
 struct Scope {
   explicit Scope(Parser& parser) : self(parser) {}
