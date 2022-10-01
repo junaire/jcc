@@ -20,6 +20,7 @@ class Decl {
 
  public:
   static Decl* create(ASTContext& ctx, SourceRange loc);
+  virtual void dump(int indent) const = 0;
   virtual ~Decl() = default;
 };
 
@@ -48,6 +49,8 @@ class VarDecl : public Decl {
   void setInit(Stmt* init) { init_ = init; }
 
   [[nodiscard]] bool isDefinition() const { return init_ == nullptr; }
+
+  void dump(int indent) const override;
 };
 
 class FunctionDecl : public Decl {
@@ -78,6 +81,8 @@ class FunctionDecl : public Decl {
   VarDecl* getParam(std::size_t index) { return args_[index]; }
 
   [[nodiscard]] std::size_t getParamNum() const { return args_.size(); }
+
+  void dump(int indent) const override;
 };
 
 class LabelDecl : public Decl {};
@@ -104,4 +109,6 @@ class RecordDecl : public Decl {
   VarDecl* getMember(std::size_t index) { return members_[index]; }
 
   [[nodiscard]] std::size_t getMemberNum() const { return members_.size(); }
+
+  void dump(int indent) const override;
 };

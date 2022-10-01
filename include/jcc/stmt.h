@@ -26,6 +26,8 @@ class Stmt {
   }
 
   virtual ~Stmt() = default;
+
+  virtual void dump(int indent) const = 0;
 };
 
 class LabeledStatement : public Stmt {
@@ -38,6 +40,7 @@ class LabeledStatement : public Stmt {
 
   Stmt* getSubStmt() { return subStmt_; }
   LabelDecl* getLabel() { return label_; }
+  void dump(int indent) const override;
 };
 
 class CompoundStatement : public Stmt {
@@ -55,6 +58,7 @@ class CompoundStatement : public Stmt {
   }
 
   void addStmt(Stmt* stmt) { stmts_.emplace_back(stmt); }
+  void dump(int indent) const override;
 };
 
 class ExpressionStatement : public Stmt {};
@@ -77,6 +81,7 @@ class IfStatement : public Stmt {
   Expr* getCondition() { return condition_; }
   Stmt* getThen() { return thenStmt_; }
   Stmt* getElse() { return elseStmt_; }
+  void dump(int indent) const override;
 };
 
 class SwitchStatement : public Stmt {
@@ -92,6 +97,7 @@ class SwitchStatement : public Stmt {
     assert(index < getSize());
     return cases_[index];
   }
+  void dump(int indent) const override;
 };
 
 class WhileStatement : public Stmt {
@@ -104,6 +110,7 @@ class WhileStatement : public Stmt {
 
   Expr* getCondition() { return condition_; }
   Stmt* getBody() { return body_; }
+  void dump(int indent) const override;
 };
 
 class DoStatement : public Stmt {
@@ -115,6 +122,7 @@ class DoStatement : public Stmt {
       : Stmt(std::move(loc)), condition_(condition), body_(body) {}
   Stmt* getBody() { return body_; }
   Expr* getCondition() { return condition_; }
+  void dump(int indent) const override;
 };
 
 class ForStatement : public Stmt {
@@ -136,6 +144,7 @@ class ForStatement : public Stmt {
   Stmt* getCondition() { return condition_; }
   Stmt* getIncrement() { return increment_; }
   Stmt* getBody() { return body_; }
+  void dump(int indent) const override;
 };
 
 class GotoStatement : public Stmt {
@@ -145,6 +154,7 @@ class GotoStatement : public Stmt {
  public:
   GotoStatement(SourceRange loc, LabelDecl* label, SourceRange gotoLoc)
       : Stmt(std::move(loc)), label_(label), gotoLoc_(std::move(gotoLoc)) {}
+  void dump(int indent) const override;
 };
 
 class ContinueStatement : public Stmt {
@@ -153,6 +163,7 @@ class ContinueStatement : public Stmt {
  public:
   ContinueStatement(SourceRange loc, SourceRange continueLoc)
       : Stmt(std::move(loc)), continueLoc_(std::move(continueLoc)) {}
+  void dump(int indent) const override;
 };
 
 class BreakStatement : public Stmt {
@@ -173,6 +184,7 @@ class ReturnStatement : public Stmt {
   static ReturnStatement* create(ASTContext& ctx, SourceRange loc,
                                  Expr* returnExpr);
   Expr* getReturn() { return returnExpr_; }
+  void dump(int indent) const override;
 };
 
 class DeclStatement : public Stmt {
@@ -196,4 +208,5 @@ class DeclStatement : public Stmt {
   }
 
   std::vector<Decl*> getDecls() { return decls_; }
+  void dump(int indent) const override;
 };

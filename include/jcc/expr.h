@@ -32,6 +32,8 @@ class Expr : public Stmt {
   // TODO(Jun): What's the signature?
   void setType() {}
 
+  virtual void dump(int indent) const = 0;
+
   virtual ~Expr() = default;
 };
 
@@ -44,6 +46,9 @@ class StringLiteral : public Expr {
  public:
   static StringLiteral* create(ASTContext& ctx, SourceRange loc,
                                const char* literal);
+
+  [[nodiscard]] std::string getValue() const { return literal_; }
+  void dump(int indent) const override;
 };
 
 class CharacterLiteral : public Expr {
@@ -57,6 +62,8 @@ class CharacterLiteral : public Expr {
   static CharacterLiteral* create(ASTContext& ctx, SourceRange loc, char value);
 
   [[nodiscard]] char getValue() const { return value_; }
+
+  void dump(int indent) const override;
 };
 
 class IntergerLiteral : public Expr {
@@ -69,6 +76,8 @@ class IntergerLiteral : public Expr {
   static IntergerLiteral* create(ASTContext& ctx, SourceRange loc, int value);
 
   [[nodiscard]] int getValue() const { return value_; }
+
+  void dump(int indent) const override;
 };
 
 class FloatingLiteral : public Expr {
@@ -82,6 +91,8 @@ class FloatingLiteral : public Expr {
                                  double value);
 
   [[nodiscard]] double getValue() const { return value_; };
+
+  void dump(int indent) const override;
 };
 
 class ConstantExpr : public Expr {
@@ -104,6 +115,8 @@ class CallExpr : public Expr {
   Expr* getArg(std::size_t index) { return args_[index]; }
 
   [[nodiscard]] std::size_t getArgNum() const { return args_.size(); }
+
+  void dump(int indent) const override;
 };
 
 class CastExpr : public Expr {
@@ -139,6 +152,8 @@ class UnaryExpr : public Expr {
                            UnaryOperatorKind kind, Stmt* value);
 
   [[nodiscard]] UnaryOperatorKind getKind() const { return kind_; }
+
+  void dump(int indent) const override;
 };
 
 // TODO(Jun): Add more kinds.
@@ -168,6 +183,8 @@ class BinaryExpr : public Expr {
   Expr* getLhs() { return lhs_; }
 
   Expr* getRhs() { return rhs_; }
+
+  void dump(int indent) const override;
 };
 
 class ArraySubscriptExpr : public Expr {
@@ -184,6 +201,8 @@ class ArraySubscriptExpr : public Expr {
   Expr* getLhs() { return lhs_; }
 
   Expr* getRhs() { return rhs_; }
+
+  void dump(int indent) const override;
 };
 
 class MemberExpr : public Expr {
@@ -200,6 +219,8 @@ class MemberExpr : public Expr {
   Stmt* getBase() { return base_; }
 
   Decl* getMember() { return member_; }
+
+  void dump(int indent) const override;
 };
 
 class DeclRefExpr : public Expr {
@@ -212,4 +233,6 @@ class DeclRefExpr : public Expr {
   static DeclRefExpr* create(ASTContext& ctx, SourceRange loc, Decl* decl);
 
   Decl* getRefDecl() { return decl_; }
+
+  void dump(int indent) const override;
 };
