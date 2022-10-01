@@ -38,8 +38,6 @@ class Parser {
 
   std::vector<Decl*> parseGlobalVariables(DeclSpec& declSpec);
 
-  std::vector<Decl*> parseDeclarations(DeclSpec& declSpec);
-
   Stmt* parseStatement();
 
   Stmt* parseCompoundStmt();

@@ -42,7 +42,7 @@ void Parser::skipUntil(TokenKind kind) {
 
 void Parser::enterScope() { scopes.emplace_back(*this); }
 
-void Parser::exitScope() {}
+void Parser::exitScope() { scopes.pop_back(); }
 
 DeclSpec Parser::parseDeclSpec() {
   using enum TokenKind;
@@ -318,21 +318,6 @@ Stmt* Parser::parseCompoundStmt() {
     // Add type?
   }
   return stmt;
-}
-
-std::vector<Decl*> Parser::parseDeclarations(DeclSpec& declSpec) {
-  while (!currentToken().is<TokenKind::Semi>()) {
-    Declarator declarator = parseDeclarator(declSpec);
-    if (declarator.getTypeKind() == TypeKind::Void) {
-      jcc_unreachable();
-    }
-    // Check if declarator doesn't has a name.
-
-    // We may don't have declSpec?
-    if (declSpec.isStatic()) {
-      // Static local variable.
-    }
-  }
 }
 
 Decl* Parser::parseFunction(Declarator& declarator) {
