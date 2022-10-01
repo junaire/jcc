@@ -417,7 +417,7 @@ std::vector<Decl*> Parser::parseFunctionOrVar(DeclSpec& declSpec) {
     decls.emplace_back(parseFunction(declarator));
   } else {
     std::vector<Decl*> vars = parseGlobalVariables(declarator);
-		decls.insert(decls.end(), vars.begin(), vars.end());
+    decls.insert(decls.end(), vars.begin(), vars.end());
   }
   return decls;
 }
@@ -432,7 +432,7 @@ std::vector<Decl*> Parser::parseTranslateUnit() {
     }
 
     std::vector<Decl*> decls = parseFunctionOrVar(declSpec);
-		topDecls.insert(topDecls.end(), decls.begin(), decls.end());
+    topDecls.insert(topDecls.end(), decls.begin(), decls.end());
   }
 
   return topDecls;
