@@ -146,10 +146,11 @@ DeclSpec Parser::parseDeclSpec() {
       default:
         jcc_unreachable();
     }
+
+    declSpec.constructSelfType();
     consumeToken();
   }
 
-  declSpec.constructSelfType();
   return declSpec;
 }
 
@@ -193,8 +194,8 @@ Declarator Parser::parseDeclarator(DeclSpec& declSpec) {
   Token name;
   if (currentToken().is<TokenKind::Identifier>()) {
     name = currentToken();
+    consumeToken();
   }
-  consumeToken();
   std::unique_ptr<Type> suffixType = parseTypeSuffix(std::move(type));
   declarator.name_ = name;
   declarator.setType(std::move(suffixType));
@@ -289,7 +290,7 @@ std::vector<VarDecl*> Parser::createParams(FunctionType* type) {
 }
 
 Stmt* Parser::parseCompoundStmt() {
-  Stmt* stmt = nullptr;
+  CompoundStatement* stmt = nullptr;
   ScopeRAII scopeRAII(*this);
 
   while (!currentToken().is<TokenKind::RightBracket>()) {
@@ -302,18 +303,17 @@ Stmt* Parser::parseCompoundStmt() {
       }
       Declarator declarator = parseDeclarator(declSpec);
       if (declarator.getTypeKind() == TypeKind::Func) {
-        Decl* funcDecl = parseFunction(declSpec);
-        // Add decl to stmt vector
+        stmt->addStmt(DeclStatement::create(ctx_, SourceRange(),
+                                            parseFunction(declarator)));
         continue;
       }
-      // another function?
       if (declSpec.isExtern()) {
-        std::vector<Decl*> globalVars = parseGlobalVariables(declSpec);
-        // Add decls to stmt vector
+        stmt->addStmt(DeclStatement::create(ctx_, SourceRange(),
+                                            parseGlobalVariables(declSpec)));
         continue;
       }
     } else {
-      stmt = parseStatement();
+      stmt->addStmt(parseStatement());
     }
     // Add type?
   }
@@ -335,24 +335,22 @@ std::vector<Decl*> Parser::parseDeclarations(DeclSpec& declSpec) {
   }
 }
 
-Decl* Parser::parseFunction(DeclSpec& declSpec) {
-  Declarator declarator = parseDeclarator(declSpec);
+Decl* Parser::parseFunction(Declarator& declarator) {
   Token name = declarator.name_;
   if (!name.isValid()) {
     jcc_unreachable();
   }
   // Check redefinition
 
-  ScopeRAII scopeRAII(*this);
-
   auto* self = declarator.getBaseType()->asType<FunctionType>();
+
+  ScopeRAII scopeRAII(*this);
 
   std::vector<VarDecl*> params = createParams(self);
 
-  Stmt* body;
+  Stmt* body = nullptr;
   if (currentToken().is<TokenKind::Semi>()) {
     consumeToken();
-    body = nullptr;
   } else if (currentToken().is<TokenKind::LeftBracket>()) {
     consumeToken();
     body = parseCompoundStmt();
@@ -393,12 +391,15 @@ void Parser::addInitializer(VarDecl* var) { jcc_unreachable(); }
 // Function or a simple declaration
 std::vector<Decl*> Parser::parseFunctionOrVar(DeclSpec& declSpec) {
   std::vector<Decl*> decls;
-  // Handle struct-union identifier, like ` enum { X } ;`
   if (currentToken().is<TokenKind::Semi>()) {
+    std::vector<Decl*> vars = parseGlobalVariables(declSpec);
+    ranges::views::concat(decls, vars);
+    return decls;
   }
+
   Declarator declarator = parseDeclarator(declSpec);
   if (declarator.getTypeKind() == TypeKind::Func) {
-    decls.emplace_back(parseFunction(declSpec));
+    decls.emplace_back(parseFunction(declarator));
   } else {
     std::vector<Decl*> vars = parseGlobalVariables(declSpec);
     ranges::views::concat(decls, vars);

@@ -107,3 +107,14 @@ IfStatement* IfStatement::create(ASTContext& ctx, SourceRange loc,
   void* mem = ctx.allocate<IfStatement>();
   return new (mem) IfStatement(std::move(loc), condition, thenStmt, elseStmt);
 }
+
+DeclStatement* DeclStatement::create(ASTContext& ctx, SourceRange loc,
+                                     std::vector<Decl*> decls) {
+  void* mem = ctx.allocate<IfStatement>();
+  return new (mem) DeclStatement(std::move(loc), std::move(decls));
+}
+DeclStatement* DeclStatement::create(ASTContext& ctx, SourceRange loc,
+                                     Decl* decl) {
+  void* mem = ctx.allocate<IfStatement>();
+  return new (mem) DeclStatement(std::move(loc), decl);
+}

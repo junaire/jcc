@@ -53,6 +53,8 @@ class CompoundStatement : public Stmt {
     assert(index < getSize());
     return stmts_[index];
   }
+
+  void addStmt(Stmt* stmt) { stmts_.emplace_back(stmt); }
 };
 
 class ExpressionStatement : public Stmt {};
@@ -67,8 +69,10 @@ class IfStatement : public Stmt {
         condition_(condition),
         thenStmt_(thenStmt),
         elseStmt_(elseStmt) {}
+
  public:
-	static IfStatement* create(ASTContext& ctx, SourceRange loc, Expr* condition, Stmt* thenStmt, Stmt* elseStmt);
+  static IfStatement* create(ASTContext& ctx, SourceRange loc, Expr* condition,
+                             Stmt* thenStmt, Stmt* elseStmt);
 
   Expr* getCondition() { return condition_; }
   Stmt* getThen() { return thenStmt_; }
@@ -166,15 +170,30 @@ class ReturnStatement : public Stmt {
       : Stmt(std::move(loc)), returnExpr_(returnExpr) {}
 
  public:
-	static ReturnStatement* create(ASTContext& ctx, SourceRange loc, Expr* returnExpr);
+  static ReturnStatement* create(ASTContext& ctx, SourceRange loc,
+                                 Expr* returnExpr);
   Expr* getReturn() { return returnExpr_; }
 };
 
-class DeclStmt : public Stmt {
-  Decl* decl_{nullptr};
+class DeclStatement : public Stmt {
+  std::vector<Decl*> decls_{nullptr};
+  DeclStatement(SourceRange loc, std::vector<Decl*> decls)
+      : Stmt(std::move(loc)), decls_(std::move(decls)) {}
+  DeclStatement(SourceRange loc, Decl* decl) : Stmt(std::move(loc)) {
+    decls_.emplace_back(decl);
+  }
 
  public:
-  DeclStmt(SourceRange loc, Decl* decl) : Stmt(std::move(loc)), decl_(decl) {}
+  static DeclStatement* create(ASTContext& ctx, SourceRange loc,
+                               std::vector<Decl*> decls);
+  static DeclStatement* create(ASTContext& ctx, SourceRange loc, Decl* decl);
 
-  Decl* getDecl() { return decl_; }
+  [[nodiscard]] bool isSingleDecl() const { return decls_.size() == 1; }
+
+  Decl* getSingleDecl() {
+    assert(isSingleDecl() && "Not a single decl!");
+    return decls_[0];
+  }
+
+  std::vector<Decl*> getDecls() { return decls_; }
 };

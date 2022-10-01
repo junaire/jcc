@@ -18,7 +18,8 @@ class Stmt;
 struct Scope {
   explicit Scope(Parser& parser) : self(parser) {}
   Parser& self;
-  std::unordered_map<std::string, std::string> D;
+  std::unordered_map<std::string, Decl*> Vars;
+  std::unordered_map<std::string, Decl*> Tags;
 };
 
 class Parser {
@@ -47,7 +48,7 @@ class Parser {
 
   Expr* parseExpr();
 
-  Decl* parseFunction(DeclSpec& declSpec);
+  Decl* parseFunction(Declarator& declarator);
 
   std::unique_ptr<Type> parseParams(std::unique_ptr<Type> type);
 
