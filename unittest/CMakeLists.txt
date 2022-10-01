@@ -1,6 +1,6 @@
 add_executable(
 	test_lexer
-	${PROJECT_SOURCE_DIR}/test/test_lexer.cc
+	${PROJECT_SOURCE_DIR}/unittest/test_lexer.cc
 	${PROJECT_SOURCE_DIR}/src/lexer.cc
 )
 
