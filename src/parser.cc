@@ -365,7 +365,7 @@ std::vector<Decl*> Parser::parseGlobalVariables(DeclSpec& declSpec) {
         VarDecl::create(ctx_, SourceRange(), nullptr, declarator.getBaseType(),
                         declarator.getName());
     if (currentToken().is<TokenKind::Equal>()) {
-      addInitializer(var);
+      var->setInit(parseAssignmentExpr());
     }
     vars.push_back(var);
   }
@@ -373,6 +373,33 @@ std::vector<Decl*> Parser::parseGlobalVariables(DeclSpec& declSpec) {
 }
 
 void Parser::addInitializer(VarDecl* var) { jcc_unreachable(); }
+
+Expr* Parser::parseAssignmentExpr() {
+  Expr* lhs = parseCastExpr();
+
+  return parseRhsOfBinaryExpr(lhs);
+}
+
+Expr* Parser::parseCastExpr() {
+  TokenKind kind = currentToken().getKind();
+  Expr* result;
+
+  switch (kind) {
+    case TokenKind::NumericConstant: {
+      int value = std::stoi(currentToken().getData());
+      result = IntergerLiteral::create(ctx_, SourceRange(), value);
+      break;
+    }
+    default:
+      jcc_unreachable();
+  }
+  return result;
+}
+
+Expr* Parser::parseRhsOfBinaryExpr(Expr* lhs) {
+  // TODO(Jun): Not fully implemented!
+  return lhs;
+}
 
 // Function or a simple declaration
 std::vector<Decl*> Parser::parseFunctionOrVar(DeclSpec& declSpec) {

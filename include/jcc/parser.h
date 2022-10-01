@@ -46,6 +46,12 @@ class Parser {
 
   Expr* parseExpr();
 
+  Expr* parseAssignmentExpr();
+
+  Expr* parseCastExpr();
+
+  Expr* parseRhsOfBinaryExpr(Expr* lhs);
+
   Decl* parseFunction(Declarator& declarator);
 
   std::unique_ptr<Type> parseParams(std::unique_ptr<Type> type);
