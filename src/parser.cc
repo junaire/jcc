@@ -8,6 +8,8 @@
 #include "jcc/lexer.h"
 #include "jcc/type.h"
 
+Parser::Parser(Lexer& lexer) : lexer_(lexer) { token_ = lexer_.lex(); }
+
 Token Parser::currentToken() { return token_; }
 
 void Parser::consumeToken() {
@@ -311,7 +313,7 @@ Stmt* Parser::parseCompoundStmt() {
       }
       if (declSpec.isExtern()) {
         stmt->addStmt(DeclStatement::create(ctx_, SourceRange(),
-                                            parseGlobalVariables(declSpec)));
+                                            parseGlobalVariables(declarator)));
         continue;
       }
     } else {
@@ -351,7 +353,7 @@ Decl* Parser::parseFunction(Declarator& declarator) {
   return function;
 }
 
-std::vector<Decl*> Parser::parseGlobalVariables(DeclSpec& declSpec) {
+std::vector<Decl*> Parser::parseGlobalVariables(Declarator& declarator) {
   std::vector<Decl*> vars;
   bool isFirst = true;
   while (!currentToken().is<TokenKind::Semi>()) {
@@ -360,16 +362,16 @@ std::vector<Decl*> Parser::parseGlobalVariables(DeclSpec& declSpec) {
     }
     isFirst = false;
 
-    Declarator declarator = parseDeclarator(declSpec);
-    // propogate some flags from DeclSpec to VarDecl?
     VarDecl* var =
         VarDecl::create(ctx_, SourceRange(), nullptr, declarator.getBaseType(),
                         declarator.getName());
     if (currentToken().is<TokenKind::Equal>()) {
+      consumeToken();
       var->setInit(parseAssignmentExpr());
     }
     vars.push_back(var);
   }
+  consumeToken();  // Eat ';'
   return vars;
 }
 
@@ -388,6 +390,7 @@ Expr* Parser::parseCastExpr() {
   switch (kind) {
     case TokenKind::NumericConstant: {
       int value = std::stoi(currentToken().getData());
+      consumeToken();
       result = IntergerLiteral::create(ctx_, SourceRange(), value);
       break;
     }
@@ -406,17 +409,15 @@ Expr* Parser::parseRhsOfBinaryExpr(Expr* lhs) {
 std::vector<Decl*> Parser::parseFunctionOrVar(DeclSpec& declSpec) {
   std::vector<Decl*> decls;
   if (currentToken().is<TokenKind::Semi>()) {
-    std::vector<Decl*> vars = parseGlobalVariables(declSpec);
-    ranges::views::concat(decls, vars);
-    return decls;
+    jcc_unreachable();
   }
 
   Declarator declarator = parseDeclarator(declSpec);
   if (declarator.getTypeKind() == TypeKind::Func) {
     decls.emplace_back(parseFunction(declarator));
   } else {
-    std::vector<Decl*> vars = parseGlobalVariables(declSpec);
-    ranges::views::concat(decls, vars);
+    std::vector<Decl*> vars = parseGlobalVariables(declarator);
+		decls.insert(decls.end(), vars.begin(), vars.end());
   }
   return decls;
 }
@@ -431,7 +432,7 @@ std::vector<Decl*> Parser::parseTranslateUnit() {
     }
 
     std::vector<Decl*> decls = parseFunctionOrVar(declSpec);
-    ranges::views::concat(topDecls, decls);
+		topDecls.insert(topDecls.end(), decls.begin(), decls.end());
   }
 
   return topDecls;

@@ -24,7 +24,7 @@ struct Scope {
 
 class Parser {
  public:
-  explicit Parser(Lexer& lexer) : lexer_(lexer) {}
+  explicit Parser(Lexer& lexer);
 
   std::vector<Decl*> parseTranslateUnit();
 
@@ -36,7 +36,7 @@ class Parser {
 
   std::vector<Decl*> parseFunctionOrVar(DeclSpec& declSpec);
 
-  std::vector<Decl*> parseGlobalVariables(DeclSpec& declSpec);
+  std::vector<Decl*> parseGlobalVariables(Declarator& declarator);
 
   Stmt* parseStatement();
 
