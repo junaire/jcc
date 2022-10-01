@@ -157,7 +157,7 @@ class Token {
     return false;
   }
 
-  [[nodiscard]] bool isValid() const { return kind_ == TokenKind::Unspecified; }
+  [[nodiscard]] bool isValid() const { return kind_ != TokenKind::Unspecified; }
 
   [[nodiscard]] std::string_view getValue() const {
     assert(getLength() != 0 &&

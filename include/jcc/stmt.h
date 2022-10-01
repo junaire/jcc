@@ -46,9 +46,10 @@ class LabeledStatement : public Stmt {
 class CompoundStatement : public Stmt {
   std::vector<Stmt*> stmts_;
 
+  explicit CompoundStatement(SourceRange loc) : Stmt(std::move(loc)) {}
+
  public:
-  explicit CompoundStatement(SourceRange loc, std::vector<Stmt*> stmts)
-      : Stmt(std::move(loc)), stmts_(std::move(stmts)) {}
+  static CompoundStatement* create(ASTContext& ctx, SourceRange loc);
 
   [[nodiscard]] auto getSize() const { return stmts_.size(); }
 

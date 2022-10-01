@@ -173,6 +173,7 @@ std::unique_ptr<Type> Parser::parsePointers(Declarator& declarator) {
 
 std::unique_ptr<Type> Parser::parseTypeSuffix(std::unique_ptr<Type> type) {
   if (currentToken().is<TokenKind::LeftParen>()) {
+    consumeToken();  // Eat '('
     return parseParams(std::move(type));
   }
   if (currentToken().is<TokenKind::LeftSquare>()) {
@@ -200,6 +201,8 @@ Declarator Parser::parseDeclarator(DeclSpec& declSpec) {
     name = currentToken();
     consumeToken();
   }
+  // FIXME: Looks like we'll gonna screw up here if the token is not an
+  // identifier.
   std::unique_ptr<Type> suffixType = parseTypeSuffix(std::move(type));
   declarator.name_ = name;
   declarator.setType(std::move(suffixType));
@@ -209,7 +212,8 @@ Declarator Parser::parseDeclarator(DeclSpec& declSpec) {
 std::unique_ptr<Type> Parser::parseParams(std::unique_ptr<Type> type) {
   if (currentToken().is<TokenKind::Void>() &&
       nextToken().is<TokenKind::RightParen>()) {
-    consumeToken();
+    consumeToken();  // Eat 'void'
+    consumeToken();  // Eat ')'
     return Type::createFuncType(std::move(type));
   }
 
@@ -294,7 +298,8 @@ std::vector<VarDecl*> Parser::createParams(FunctionType* type) {
 }
 
 Stmt* Parser::parseCompoundStmt() {
-  CompoundStatement* stmt = nullptr;
+  CompoundStatement* stmt =
+      CompoundStatement::create(getASTContext(), SourceRange());
   ScopeRAII scopeRAII(*this);
 
   while (!currentToken().is<TokenKind::RightBracket>()) {
@@ -321,6 +326,7 @@ Stmt* Parser::parseCompoundStmt() {
     }
     // Add type?
   }
+  consumeToken();  // Eat '}'
   return stmt;
 }
 
@@ -331,7 +337,8 @@ Decl* Parser::parseFunction(Declarator& declarator) {
   }
   // Check redefinition
 
-  auto* self = declarator.getBaseType()->asType<FunctionType>();
+  std::unique_ptr<Type> baseType = declarator.getBaseType();
+  auto* self = baseType->asType<FunctionType>();
 
   ScopeRAII scopeRAII(*this);
 

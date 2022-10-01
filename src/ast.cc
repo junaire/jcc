@@ -171,13 +171,20 @@ void IfStatement::dump(int indent) const { jcc_unreachable(); }
 
 DeclStatement* DeclStatement::create(ASTContext& ctx, SourceRange loc,
                                      std::vector<Decl*> decls) {
-  void* mem = ctx.allocate<IfStatement>();
+  void* mem = ctx.allocate<DeclStatement>();
   return new (mem) DeclStatement(std::move(loc), std::move(decls));
 }
 DeclStatement* DeclStatement::create(ASTContext& ctx, SourceRange loc,
                                      Decl* decl) {
-  void* mem = ctx.allocate<IfStatement>();
+  void* mem = ctx.allocate<DeclStatement>();
   return new (mem) DeclStatement(std::move(loc), decl);
 }
 
 void DeclStatement::dump(int indent) const { jcc_unreachable(); }
+
+CompoundStatement* CompoundStatement::create(ASTContext& ctx, SourceRange loc) {
+  void* mem = ctx.allocate<CompoundStatement>();
+  return new (mem) CompoundStatement(std::move(loc));
+}
+
+void CompoundStatement::dump(int indent) const {}
