@@ -25,5 +25,11 @@ conan_basic_setup()
 
 add_subdirectory(src)
 
+option(JCC_USE_ASAN "Build jcc with AddressSanitizer" OFF)
+if(JCC_USE_ASAN)
+  target_compile_options(jcc PRIVATE -fsanitize=address -fsanitize=undefined)
+  target_link_options(jcc PRIVATE -fsanitize=address -fsanitize=undefined)
+endif()
+
 enable_testing()
 add_subdirectory(unittest)
