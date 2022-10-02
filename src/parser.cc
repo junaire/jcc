@@ -4,6 +4,7 @@
 #include "jcc/decl.h"
 #include "jcc/expr.h"
 #include "jcc/lexer.h"
+#include "jcc/token.h"
 #include "jcc/type.h"
 
 Parser::Parser(Lexer& lexer) : lexer_(lexer) { token_ = lexer_.Lex(); }
@@ -19,15 +20,26 @@ void Parser::ConsumeToken() {
   }
 }
 
+void Parser::MustConsumeToken(TokenKind expected) {
+  if (CurrentToken().GetKind() == expected) {
+    ConsumeToken();
+    return;
+  }
+  jcc_unreachable();
+}
+
 Token Parser::NextToken() {
   Token next_tok = lexer_.Lex();
   cache_ = next_tok;
   return next_tok;
 }
 
-// Returns true if the next token is expected kind, doesn't really consume it.
-bool Parser::tryConsumeToken(TokenKind expected) {
-  return NextToken().GetKind() == expected;
+bool Parser::TryConsumeToken(TokenKind expected) {
+  if (CurrentToken().GetKind() == expected) {
+    ConsumeToken();
+    return true;
+  }
+  return false;
 }
 
 std::unique_ptr<Type> Parser::ParseTypename() {
@@ -35,8 +47,11 @@ std::unique_ptr<Type> Parser::ParseTypename() {
   return nullptr;
 }
 
-void Parser::SkipUntil(TokenKind kind) {
+void Parser::SkipUntil(TokenKind kind, bool skip_match) {
   while (CurrentToken().GetKind() != kind) {
+    ConsumeToken();
+  }
+  if (skip_match && CurrentToken().GetKind() == kind) {
     ConsumeToken();
   }
 }
@@ -160,8 +175,7 @@ std::unique_ptr<Type> Parser::ParsePointers(Declarator& declarator) {
   using enum TokenKind;
   std::unique_ptr<Type> type = declarator.GetBaseType();
   ;
-  while (CurrentToken().Is<Star>()) {
-    ConsumeToken();
+  while (TryConsumeToken(Star)) {
     type = Type::CreatePointerType(std::move(type));
     while (CurrentToken().IsOneOf<Const, Volatile, Restrict>()) {
       ConsumeToken();
@@ -171,11 +185,10 @@ std::unique_ptr<Type> Parser::ParsePointers(Declarator& declarator) {
 }
 
 std::unique_ptr<Type> Parser::ParseTypeSuffix(std::unique_ptr<Type> type) {
-  if (CurrentToken().Is<TokenKind::LeftParen>()) {
-    ConsumeToken();  // Eat '('
+  if (TryConsumeToken(TokenKind::LeftParen)) {
     return ParseParams(std::move(type));
   }
-  if (CurrentToken().Is<TokenKind::LeftSquare>()) {
+  if (TryConsumeToken(TokenKind::LeftSquare)) {
     return ParseArrayDimensions(std::move(type));
   }
   return type;
@@ -184,8 +197,7 @@ std::unique_ptr<Type> Parser::ParseTypeSuffix(std::unique_ptr<Type> type) {
 Declarator Parser::ParseDeclarator(DeclSpec& decl_spec) {
   Declarator declarator(decl_spec);
   std::unique_ptr<Type> type = ParsePointers(declarator);
-  if (CurrentToken().Is<TokenKind::LeftParen>()) {
-    ConsumeToken();
+  if (TryConsumeToken(TokenKind::LeftParen)) {
     DeclSpec dummy;
     ParseDeclarator(dummy);
     ConsumeToken();  // Eat ')'
@@ -211,8 +223,7 @@ Declarator Parser::ParseDeclarator(DeclSpec& decl_spec) {
 std::unique_ptr<Type> Parser::ParseParams(std::unique_ptr<Type> type) {
   if (CurrentToken().Is<TokenKind::Void>() &&
       NextToken().Is<TokenKind::RightParen>()) {
-    ConsumeToken();  // Eat 'void'
-    ConsumeToken();  // Eat ')'
+    SkipUntil(TokenKind::RightParen, /*skip_match=*/true);
     return Type::CreateFuncType(std::move(type));
   }
 
@@ -242,10 +253,9 @@ std::unique_ptr<Type> Parser::ParseArrayDimensions(std::unique_ptr<Type> type) {
     ConsumeToken();
   }
 
-  if (CurrentToken().Is<TokenKind::RightParen>()) {
-    ConsumeToken();
-    auto arrType = ParseTypeSuffix(std::move(type));
-    return Type::CreateArrayType(std::move(arrType), -1);
+  if (TryConsumeToken(TokenKind::RightParen)) {
+    std::unique_ptr<Type> arr_type = ParseTypeSuffix(std::move(type));
+    return Type::CreateArrayType(std::move(arr_type), -1);
   }
 
   // cond ? A : B
@@ -260,25 +270,20 @@ Expr* Parser::ParseExpr() {
 
 Stmt* Parser::ParseReturnStmt() {
   Expr* return_expr = nullptr;
-  if (CurrentToken().Is<TokenKind::Semi>()) {
-    ConsumeToken();
-  } else {
+  if (!TryConsumeToken(TokenKind::Semi)) {
     return_expr = ParseExpr();
-    assert(CurrentToken().Is<TokenKind::Semi>());
-    ConsumeToken();
+    SkipUntil(TokenKind::Semi, /*skip_match=*/true);
   }
   return ReturnStatement::Create(GetASTContext(), SourceRange(), return_expr);
 }
 Stmt* Parser::ParseStatement() {
-  if (CurrentToken().Is<TokenKind::Return>()) {
-    ConsumeToken();
+  if (TryConsumeToken(TokenKind::Return)) {
     return ParseReturnStmt();
   }
 
-  if (CurrentToken().Is<TokenKind::If>()) {
-    ConsumeToken();  // Eat `(`.
+  if (TryConsumeToken(TokenKind::If)) {
+    MustConsumeToken(TokenKind::LeftParen);
     Expr* condition = ParseExpr();
-    ConsumeToken();  // Eat `)`.
     Stmt* then = ParseStatement();
     Stmt* else_stmt = nullptr;
     if (CurrentToken().Is<TokenKind::Else>()) {
@@ -349,11 +354,10 @@ Decl* Parser::ParseFunction(Declarator& declarator) {
   std::vector<VarDecl*> params = CreateParams(self);
 
   Stmt* body = nullptr;
-  if (CurrentToken().Is<TokenKind::Semi>()) {
-    ConsumeToken();
-  } else if (CurrentToken().Is<TokenKind::LeftBracket>()) {
-    ConsumeToken();
+  if (TryConsumeToken(TokenKind::LeftBracket)) {
     body = ParseCompoundStmt();
+  } else if (CurrentToken().Is<TokenKind::Semi>()) {
+    // this function doesn't have a body, nothing to do.
   } else {
     jcc_unreachable();
   }
@@ -376,13 +380,12 @@ std::vector<Decl*> Parser::ParseGlobalVariables(Declarator& declarator) {
     VarDecl* var =
         VarDecl::Create(GetASTContext(), SourceRange(), nullptr,
                         declarator.GetBaseType(), declarator.GetName());
-    if (CurrentToken().Is<TokenKind::Equal>()) {
-      ConsumeToken();
+    if (TryConsumeToken(TokenKind::Equal)) {
       var->SetInit(ParseAssignmentExpr());
     }
     vars.push_back(var);
   }
-  ConsumeToken();  // Eat ';'
+  MustConsumeToken(TokenKind::Semi);  // Eat ';'
   return vars;
 }
 

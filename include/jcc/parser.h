@@ -28,7 +28,7 @@ class Parser {
 
   std::vector<Decl*> ParseTranslateUnit();
 
-  void SkipUntil(TokenKind kind);
+  void SkipUntil(TokenKind kind, bool skip_match = false);
 
   DeclSpec ParseDeclSpec();
 
@@ -43,8 +43,6 @@ class Parser {
   Stmt* ParseCompoundStmt();
 
   Stmt* ParseReturnStmt();
-
-  void addInitializer(VarDecl* var);
 
   Expr* ParseExpr();
 
@@ -73,7 +71,8 @@ class Parser {
  private:
   Token CurrentToken();
   void ConsumeToken();
-  bool tryConsumeToken(TokenKind expected);
+  void MustConsumeToken(TokenKind expected);
+  bool TryConsumeToken(TokenKind expected);
   Token NextToken();
   Lexer& lexer_;
   Token token_;
