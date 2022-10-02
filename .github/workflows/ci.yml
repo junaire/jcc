@@ -1,38 +1,78 @@
 name: CI
-
 on:
   push:
-    branches: [master]
+    branches: [ master ]
   pull_request:
-
 env:
-  BUILD_TYPE : Release
-
+  UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
+  build-Clang-Linux:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-2019]
-
+        target:
+        - ''
+        - '-DJCC_USE_ASAN=ON'
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Configure conan
-        run: |
-          pip3 install conan
-          pip3 install conan_package_tools
-      - name: Configure CMake
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
-
-      - name: Upgrade Linux compiler
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt install gcc-11 g++-11
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100 --slave /usr/bin/g++ g++ /usr/bin/g++-11 --slave /usr/bin/gcov gcov /usr/bin/gcov-11
-          sudo update-alternatives --set gcc /usr/bin/gcc-11
-      - name: Build
-        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel
-      - name: Test
-        run: |
-          cd ${{github.workspace}}/build
-          ctest --verbose -C ${{env.BUILD_TYPE}}
+    - uses: actions/checkout@v2
+    - name: install clang
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh 14 all
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1
+    - name: setup conan
+      run: |
+        pip3 install conan
+        pip3 install conan_package_tools
+    - name: build and test
+      run: |
+        echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+        mkdir build
+        cd build
+        cmake -DCMAKE_C_COMPILER=clang-14 -DCMAKE_CXX_COMPILER=clang++-14 -DCMAKE_BUILD_TYPE=Release ${{ matrix.target }} ..
+        cmake --build . -j$(nproc)
+        ctest . -j$(nproc)
+  build-GCC-Linux:
+    strategy:
+      matrix:
+        target:
+        - 'Debug'
+        - 'Release'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: install GCC
+      run: |
+        sudo apt install build-essential manpages-dev software-properties-common
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        sudo apt update && sudo apt install gcc-11 g++-11
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1
+    - name: setup conan
+      run: |
+        pip3 install conan
+        pip3 install conan_package_tools
+    - name: build and test
+      run: |
+        echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+        mkdir build
+        cd build
+        cmake -DCMAKE_C_COMPILER=gcc-11 -DCMAKE_CXX_COMPILER=g++-11 -DCMAKE_BUILD_TYPE=${{ matrix.target }} ..
+        cmake --build . -j$(nproc)
+        ctest . -j$(nproc)
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: setup conan
+      run: |
+        pip install conan
+        pip install conan_package_tools
+    - name: build
+      run: |
+        mkdir build
+        cd build
+        cmake -T clangcl ..
+        cmake --build . -j $Env:NUMBER_OF_PROCESSORS
