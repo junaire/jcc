@@ -9,7 +9,7 @@
 #include "jcc/lexer.h"
 #include "jcc/parser.h"
 
-static std::string readFile(std::string_view name) {
+static std::string ReadFile(std::string_view name) {
   std::ifstream file{name.data()};
   std::string contents{std::istreambuf_iterator<char>(file),
                        std::istreambuf_iterator<char>()};
@@ -23,12 +23,12 @@ int main(int argc, char** argv) {
   }
 
   std::string fileName = argv[1];
-  std::string content = readFile(fileName);
+  std::string content = ReadFile(fileName);
 
   Lexer lexer(content, fileName);
   Parser parser(lexer);
 
-  std::vector<Decl*> decls = parser.parseTranslateUnit();
+  std::vector<Decl*> decls = parser.ParseTranslateUnit();
   for (const auto* decl : decls) {
     decl->dump(0);
   }

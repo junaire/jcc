@@ -53,66 +53,66 @@ class Type {
       : kind_(kind), size_(size), alignment_(alignment) {}
 
   template <typename Ty>
-  requires std::convertible_to<Ty, Type> Ty* asType() {
+  requires std::convertible_to<Ty, Type> Ty* AsType() {
     return static_cast<Ty*>(this);
   }
 
-  [[nodiscard]] bool hasQualifiers() const {
+  [[nodiscard]] bool HasQualifiers() const {
     return quals_ != Qualifiers::Unspecified;
   }
 
-  [[nodiscard]] bool isConst() const { return quals_ == Qualifiers::Const; }
+  [[nodiscard]] bool IsConst() const { return quals_ == Qualifiers::Const; }
 
-  [[nodiscard]] bool isRestrict() const {
+  [[nodiscard]] bool IsRestrict() const {
     return quals_ == Qualifiers::Restrict;
   }
 
-  [[nodiscard]] bool isVolatile() const {
+  [[nodiscard]] bool IsVolatile() const {
     return quals_ == Qualifiers::Volatile;
   }
 
   template <TypeKind ty, TypeKind... tyKinds>
-  [[nodiscard]] bool is() const {
+  [[nodiscard]] bool Is() const {
     if constexpr (sizeof...(tyKinds) != 0) {
-      return kind_ == ty || is<tyKinds...>();
+      return kind_ == ty || Is<tyKinds...>();
     }
     return false;
   }
 
-  [[nodiscard]] TypeKind getKind() const { return kind_; }
+  [[nodiscard]] TypeKind GetKind() const { return kind_; }
 
-  [[nodiscard]] bool isInteger() const {
+  [[nodiscard]] bool IsInteger() const {
     using enum TypeKind;
-    return this->is<Bool, Char, Short, Int>();
+    return this->Is<Bool, Char, Short, Int>();
   }
 
-  [[nodiscard]] bool isFloating() const {
+  [[nodiscard]] bool IsFloating() const {
     using enum TypeKind;
-    return this->is<Double, Ldouble, Float>();
+    return this->Is<Double, Ldouble, Float>();
   }
 
-  [[nodiscard]] bool isNumeric() const { return isInteger() || isFloating(); }
+  [[nodiscard]] bool IsNumeric() const { return IsInteger() || IsFloating(); }
 
-  [[nodiscard]] bool isPointer() const { return this->is<TypeKind::Ptr>(); }
+  [[nodiscard]] bool IsPointer() const { return this->Is<TypeKind::Ptr>(); }
 
-  void setName(Token name) { name_ = name; }
+  void SetName(Token name) { name_ = name; }
 
-  void setSizeAlign(int size, int alignment) {
+  void SetSizeAlign(int size, int alignment) {
     size_ = size;
     alignment_ = alignment;
   }
 
-  void setUnsigned(bool usg = true) { unsigned_ = usg; }
+  void SetUnsigned(bool usg = true) { unsigned_ = usg; }
 
-  [[nodiscard]] std::string getName() const { return name_.getAsString(); }
+  [[nodiscard]] std::string GetName() const { return name_.GetAsString(); }
 
-  [[nodiscard]] int getSize() const { return size_; }
+  [[nodiscard]] int GetSize() const { return size_; }
 
-  [[nodiscard]] int getAlignment() const { return alignment_; }
+  [[nodiscard]] int GetAlignment() const { return alignment_; }
 
-  [[nodiscard]] bool isUnsigned() const { return unsigned_; }
+  [[nodiscard]] bool IsUnsigned() const { return unsigned_; }
 
-  static std::unique_ptr<Type> createPointerType(std::unique_ptr<Type> base);
+  static std::unique_ptr<Type> CreatePointerType(std::unique_ptr<Type> base);
 
   static std::unique_ptr<Type> createEnumType();
 
@@ -122,24 +122,25 @@ class Type {
 
   static std::unique_ptr<Type> createBoolType();
 
-  static std::unique_ptr<Type> createCharType(bool isUnsigned);
+  static std::unique_ptr<Type> createCharType(bool is_unsigned);
 
-  static std::unique_ptr<Type> createShortType(bool isUnsigned);
+  static std::unique_ptr<Type> createShortType(bool is_unsigned);
 
-  static std::unique_ptr<Type> createIntType(bool isUnsigned);
+  static std::unique_ptr<Type> createIntType(bool is_unsigned);
 
-  static std::unique_ptr<Type> createLongType(bool isUnsigned);
+  static std::unique_ptr<Type> createLongType(bool is_unsigned);
 
   static std::unique_ptr<Type> createFloatType();
 
-  static std::unique_ptr<Type> createDoubleType(bool isLong);
+  static std::unique_ptr<Type> createDoubleType(bool is_long);
 
-  static std::unique_ptr<Type> createFuncType(std::unique_ptr<Type> returnType);
+  static std::unique_ptr<Type> CreateFuncType(
+      std::unique_ptr<Type> return_type);
 
-  static std::unique_ptr<Type> createArrayType(std::unique_ptr<Type> base,
+  static std::unique_ptr<Type> CreateArrayType(std::unique_ptr<Type> base,
                                                std::size_t len);
 
-  static bool isCompatible(const Type& lhs, const Type& rhs);
+  static bool IsCompatible(const Type& lhs, const Type& rhs);
 };
 
 class ArrayType : public Type {
@@ -151,13 +152,13 @@ class ArrayType : public Type {
   ArrayType(TypeKind kind, int size, int alignment)
       : Type(kind, size, alignment) {}
 
-  [[nodiscard]] std::size_t getLength() const { return len_; }
+  [[nodiscard]] std::size_t GetLength() const { return len_; }
 
-  [[nodiscard]] Type* getBase() const { return base_.get(); }
+  [[nodiscard]] Type* GetBase() const { return base_.get(); }
 
-  void setBase(std::unique_ptr<Type> base) { base_ = std::move(base); }
+  void SetBase(std::unique_ptr<Type> base) { base_ = std::move(base); }
 
-  void setLength(std::size_t len) { len_ = len; }
+  void SetLength(std::size_t len) { len_ = len; }
 };
 
 class PointerType : public Type {
@@ -168,9 +169,9 @@ class PointerType : public Type {
   PointerType(TypeKind kind, int size, int alignment)
       : Type(kind, size, alignment) {}
 
-  std::unique_ptr<Type> getBase() { return std::move(base_); }
+  std::unique_ptr<Type> GetBase() { return std::move(base_); }
 
-  void setBase(std::unique_ptr<Type> base) { base_ = std::move(base); }
+  void SetBase(std::unique_ptr<Type> base) { base_ = std::move(base); }
 };
 
 class StructType : public Type {
@@ -196,20 +197,20 @@ class FunctionType : public Type {
   FunctionType(TypeKind kind, int size, int alignment)
       : Type(kind, size, alignment) {}
 
-  std::unique_ptr<Type> getReturnType() { return std::move(returnType_); }
+  std::unique_ptr<Type> GetReturnType() { return std::move(returnType_); }
 
   void setReturnType(std::unique_ptr<Type> type) {
     returnType_ = std::move(type);
   }
 
-  Type* getParamType(std::size_t idx) {
+  Type* GetParamType(std::size_t idx) {
     assert(idx < paramTypes_.size() && "No more params!");
     return paramTypes_[idx].get();
   }
 
-  void setParams(std::vector<std::unique_ptr<Type>> params) {
+  void SetParams(std::vector<std::unique_ptr<Type>> params) {
     paramTypes_ = std::move(params);
   }
 
-  [[nodiscard]] std::size_t getParamSize() const { return paramTypes_.size(); }
+  [[nodiscard]] std::size_t GetParamSize() const { return paramTypes_.size(); }
 };

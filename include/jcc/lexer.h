@@ -20,10 +20,10 @@ class Keywords {
 // the lexer is not responsible for managing the buffer, instead it's an
 // observer.
 class Lexer {
-  std::string fileName_;
-  const char* bufferStart;
-  const char* bufferEnd;
-  const char* bufferPtr;
+  std::string file_name_;
+  const char* buffer_start_;
+  const char* buffer_end_;
+  const char* buffer_ptr_;
 
   std::size_t line_ = 1;
   std::size_t column_ = 1;
@@ -32,31 +32,31 @@ class Lexer {
 
  public:
   explicit Lexer(std::string_view source, std::string name = "<Buffer>")
-      : fileName_(std::move(name)),
+      : file_name_(std::move(name)),
         // FIXME: we can't initialize const char* with string_view::begin() in
         // MSVC, not sure it's a bug :(
-        bufferStart(source.data()),
-        bufferEnd(source.data() + source.length()),
-        bufferPtr(source.data()) {}
+        buffer_start_(source.data()),
+        buffer_end_(source.data() + source.length()),
+        buffer_ptr_(source.data()) {}
 
-  Token lex();
+  Token Lex();
 
-  [[nodiscard]] bool done() const;
+  [[nodiscard]] bool HasDone() const;
 
  private:
-  Token lexAtom(TokenKind kind);
-  Token lexAtom(TokenKind kind, SourceLocation loc);
-  Token lexStringLiteral();
-  Token lexIdentifierOrKeyword();
-  Token lexNumericConstant();
+  Token LexAtom(TokenKind kind);
+  Token LexAtom(TokenKind kind, SourceLocation loc);
+  Token LexStringLiteral();
+  Token LexIdentifierOrKeyword();
+  Token LexNumericConstant();
 
-  void skipWhitespace();
-  void skipUntil(char ch, bool skipItself = false);
-  void advance();
-  char peek() const;
-  char peekAhead(int offset = 1) const;
-  bool tryConsume(char ch);
-  std::size_t getOffset() const;
-  [[nodiscard]] bool isValidChar() const;
-  [[nodiscard]] bool isLineTerminator() const;
+  void SkipWhitespace();
+  void SkipUntil(char cha, bool skipItself = false);
+  void Advance();
+  char Peek() const;
+  char PeekAhead(int offset = 1) const;
+  bool TryConsume(char cha);
+  std::size_t GetOffset() const;
+  [[nodiscard]] bool IsValidChar() const;
+  [[nodiscard]] bool IsLineTerminator() const;
 };

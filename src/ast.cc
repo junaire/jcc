@@ -11,9 +11,9 @@ static void insertIndent(int n) {
   }
 }
 
-VarDecl* VarDecl::create(ASTContext& ctx, SourceRange loc, Stmt* init,
+VarDecl* VarDecl::Create(ASTContext& ctx, SourceRange loc, Stmt* init,
                          std::unique_ptr<Type> type, std::string name) {
-  void* mem = ctx.allocate<VarDecl>();
+  void* mem = ctx.Allocate<VarDecl>();
   return new (mem)
       VarDecl{std::move(loc), init, std::move(type), std::move(name)};
 }
@@ -21,14 +21,14 @@ VarDecl* VarDecl::create(ASTContext& ctx, SourceRange loc, Stmt* init,
 void VarDecl::dump(int indent) const {
   insertIndent(indent);
   fmt::print("VarDecl\n");
-  fmt::print("  {}\n", getName());
+  fmt::print("  {}\n", GetName());
   init_->dump(indent + 2);
 }
 
-FunctionDecl* FunctionDecl::create(ASTContext& ctx, SourceRange loc,
+FunctionDecl* FunctionDecl::Create(ASTContext& ctx, SourceRange loc,
                                    std::string name, std::vector<VarDecl*> args,
                                    std::unique_ptr<Type> returnTy, Stmt* body) {
-  void* mem = ctx.allocate<FunctionDecl>();
+  void* mem = ctx.Allocate<FunctionDecl>();
   return new (mem) FunctionDecl{std::move(loc), std::move(name),
                                 std::move(args), std::move(returnTy), body};
 }
@@ -36,18 +36,18 @@ FunctionDecl* FunctionDecl::create(ASTContext& ctx, SourceRange loc,
 void FunctionDecl::dump(int indent) const {
   insertIndent(indent);
   fmt::print("FunctionDecl\n");
-  fmt::print("  {}\n", getName());
-  fmt::print("  Args({})\n", getParamNum());
+  fmt::print("  {}\n", GetName());
+  fmt::print("  Args({})\n", GetParamNum());
   for (const auto* arg : args_) {
     arg->dump(indent + 2);
   }
   body_->dump(indent + 2);
 }
 
-RecordDecl* RecordDecl::create(ASTContext& ctx, SourceRange loc,
+RecordDecl* RecordDecl::Create(ASTContext& ctx, SourceRange loc,
                                std::string name,
                                std::vector<VarDecl*> members) {
-  void* mem = ctx.allocate<RecordDecl>();
+  void* mem = ctx.Allocate<RecordDecl>();
   return new (mem)
       RecordDecl{std::move(loc), std::move(name), std::move(members)};
 }
@@ -55,59 +55,59 @@ RecordDecl* RecordDecl::create(ASTContext& ctx, SourceRange loc,
 void RecordDecl::dump(int indent) const {
   insertIndent(indent);
   fmt::print("RecordDecl\n");
-  fmt::print("  {}\n", getName());
-  fmt::print("  Args({})\n", getMemberNum());
+  fmt::print("  {}\n", GetName());
+  fmt::print("  Args({})\n", GetMemberNum());
   for (const auto* member : members_) {
     member->dump(indent + 2);
   }
 }
-StringLiteral* StringLiteral::create(ASTContext& ctx, SourceRange loc,
+StringLiteral* StringLiteral::Create(ASTContext& ctx, SourceRange loc,
                                      const char* literal) {
-  void* mem = ctx.allocate<StringLiteral>();
+  void* mem = ctx.Allocate<StringLiteral>();
   return new (mem) StringLiteral{std::move(loc), literal};
 }
 
 void StringLiteral::dump(int indent) const {
   insertIndent(indent);
-  fmt::print("StringLiteral: {}\n", getValue());
+  fmt::print("StringLiteral: {}\n", GetValue());
 }
 
-CharacterLiteral* CharacterLiteral::create(ASTContext& ctx, SourceRange loc,
+CharacterLiteral* CharacterLiteral::Create(ASTContext& ctx, SourceRange loc,
                                            char value) {
-  void* mem = ctx.allocate<CharacterLiteral>();
+  void* mem = ctx.Allocate<CharacterLiteral>();
   return new (mem) CharacterLiteral{std::move(loc), value};
 }
 
 void CharacterLiteral::dump(int indent) const {
   insertIndent(indent);
-  fmt::print("CharacterLiteral: {}\n", getValue());
+  fmt::print("CharacterLiteral: {}\n", GetValue());
 }
 
-IntergerLiteral* IntergerLiteral::create(ASTContext& ctx, SourceRange loc,
+IntergerLiteral* IntergerLiteral::Create(ASTContext& ctx, SourceRange loc,
                                          int value) {
-  void* mem = ctx.allocate<IntergerLiteral>();
+  void* mem = ctx.Allocate<IntergerLiteral>();
   return new (mem) IntergerLiteral{std::move(loc), value};
 }
 
 void IntergerLiteral::dump(int indent) const {
   insertIndent(indent);
-  fmt::print("IntergerLiteral: {}\n", getValue());
+  fmt::print("IntergerLiteral: {}\n", GetValue());
 }
 
-FloatingLiteral* FloatingLiteral::create(ASTContext& ctx, SourceRange loc,
+FloatingLiteral* FloatingLiteral::Create(ASTContext& ctx, SourceRange loc,
                                          double value) {
-  void* mem = ctx.allocate<FloatingLiteral>();
+  void* mem = ctx.Allocate<FloatingLiteral>();
   return new (mem) FloatingLiteral{std::move(loc), value};
 }
 
 void FloatingLiteral::dump(int indent) const {
   insertIndent(indent);
-  fmt::print("FloatingLiteral: {}\n", getValue());
+  fmt::print("FloatingLiteral: {}\n", GetValue());
 }
 
-CallExpr* CallExpr::create(ASTContext& ctx, SourceRange loc, Expr* callee,
+CallExpr* CallExpr::Create(ASTContext& ctx, SourceRange loc, Expr* callee,
                            std::vector<Expr*> args) {
-  void* mem = ctx.allocate<CallExpr>();
+  void* mem = ctx.Allocate<CallExpr>();
   return new (mem) CallExpr{std::move(loc), callee, std::move(args)};
 }
 
@@ -115,7 +115,7 @@ void CallExpr::dump(int indent) const { jcc_unreachable(); }
 
 UnaryExpr* UnaryExpr::create(ASTContext& ctx, SourceRange loc,
                              UnaryOperatorKind kind, Stmt* value) {
-  void* mem = ctx.allocate<UnaryExpr>();
+  void* mem = ctx.Allocate<UnaryExpr>();
   return new (mem) UnaryExpr{std::move(loc), kind, value};
 }
 
@@ -123,7 +123,7 @@ void UnaryExpr::dump(int indent) const { jcc_unreachable(); }
 
 BinaryExpr* BinaryExpr::create(ASTContext& ctx, SourceRange loc,
                                BinaryOperatorKind kind, Expr* lhs, Expr* rhs) {
-  void* mem = ctx.allocate<BinaryExpr>();
+  void* mem = ctx.Allocate<BinaryExpr>();
   return new (mem) BinaryExpr{std::move(loc), kind, lhs, rhs};
 }
 
@@ -131,7 +131,7 @@ void BinaryExpr::dump(int indent) const { jcc_unreachable(); }
 
 ArraySubscriptExpr* ArraySubscriptExpr::create(ASTContext& ctx, SourceRange loc,
                                                Expr* lhs, Expr* rhs) {
-  void* mem = ctx.allocate<ArraySubscriptExpr>();
+  void* mem = ctx.Allocate<ArraySubscriptExpr>();
   return new (mem) ArraySubscriptExpr{std::move(loc), lhs, rhs};
 }
 
@@ -139,51 +139,51 @@ void ArraySubscriptExpr::dump(int indent) const { jcc_unreachable(); }
 
 MemberExpr* MemberExpr::create(ASTContext& ctx, SourceRange loc, Stmt* base,
                                Decl* member) {
-  void* mem = ctx.allocate<MemberExpr>();
+  void* mem = ctx.Allocate<MemberExpr>();
   return new (mem) MemberExpr{std::move(loc), base, member};
 }
 
 void MemberExpr::dump(int indent) const { jcc_unreachable(); }
 
 DeclRefExpr* DeclRefExpr::create(ASTContext& ctx, SourceRange loc, Decl* decl) {
-  void* mem = ctx.allocate<DeclRefExpr>();
+  void* mem = ctx.Allocate<DeclRefExpr>();
   return new (mem) DeclRefExpr{std::move(loc), decl};
 }
 
 void DeclRefExpr::dump(int indent) const { jcc_unreachable(); }
 
-ReturnStatement* ReturnStatement::create(ASTContext& ctx, SourceRange loc,
-                                         Expr* returnExpr) {
-  void* mem = ctx.allocate<ReturnStatement>();
-  return new (mem) ReturnStatement(std::move(loc), returnExpr);
+ReturnStatement* ReturnStatement::Create(ASTContext& ctx, SourceRange loc,
+                                         Expr* return_expr) {
+  void* mem = ctx.Allocate<ReturnStatement>();
+  return new (mem) ReturnStatement(std::move(loc), return_expr);
 }
 
 void ReturnStatement::dump(int indent) const { jcc_unreachable(); }
 
-IfStatement* IfStatement::create(ASTContext& ctx, SourceRange loc,
+IfStatement* IfStatement::Create(ASTContext& ctx, SourceRange loc,
                                  Expr* condition, Stmt* thenStmt,
                                  Stmt* elseStmt) {
-  void* mem = ctx.allocate<IfStatement>();
+  void* mem = ctx.Allocate<IfStatement>();
   return new (mem) IfStatement(std::move(loc), condition, thenStmt, elseStmt);
 }
 
 void IfStatement::dump(int indent) const { jcc_unreachable(); }
 
-DeclStatement* DeclStatement::create(ASTContext& ctx, SourceRange loc,
+DeclStatement* DeclStatement::Create(ASTContext& ctx, SourceRange loc,
                                      std::vector<Decl*> decls) {
-  void* mem = ctx.allocate<DeclStatement>();
+  void* mem = ctx.Allocate<DeclStatement>();
   return new (mem) DeclStatement(std::move(loc), std::move(decls));
 }
-DeclStatement* DeclStatement::create(ASTContext& ctx, SourceRange loc,
+DeclStatement* DeclStatement::Create(ASTContext& ctx, SourceRange loc,
                                      Decl* decl) {
-  void* mem = ctx.allocate<DeclStatement>();
+  void* mem = ctx.Allocate<DeclStatement>();
   return new (mem) DeclStatement(std::move(loc), decl);
 }
 
 void DeclStatement::dump(int indent) const { jcc_unreachable(); }
 
-CompoundStatement* CompoundStatement::create(ASTContext& ctx, SourceRange loc) {
-  void* mem = ctx.allocate<CompoundStatement>();
+CompoundStatement* CompoundStatement::Create(ASTContext& ctx, SourceRange loc) {
+  void* mem = ctx.Allocate<CompoundStatement>();
   return new (mem) CompoundStatement(std::move(loc));
 }
 

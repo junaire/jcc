@@ -11,17 +11,17 @@ class ASTContext {
   ASTContext() = default;
 
   template <typename T>
-  void* allocate() {
+  void* Allocate() {
     void* mem = malloc(sizeof(T));
     slabs_.push_back(mem);
     return mem;
   }
 
-  static void deallocate(void* mem) { free(mem); }
+  static void Deallocate(void* mem) { free(mem); }
 
   ~ASTContext() {
     for (auto& slab : slabs_) {
-      deallocate(slab);
+      Deallocate(slab);
     }
   }
 };

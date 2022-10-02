@@ -14,23 +14,21 @@ class ASTContext;
 // computation of a value, or that designates an object or a function, or that
 // generates side effects, or that performs a combination thereof.
 class Expr : public Stmt {
-  std::unique_ptr<Type> type_{nullptr};
+  std::unique_ptr<Type> type_ = nullptr;
 
  protected:
   explicit Expr(SourceRange loc) : Stmt(std::move(loc)) {}
 
  public:
-  static Expr* create(ASTContext& ctx, SourceRange loc);
-
   template <typename Ty>
-  requires std::convertible_to<Ty, Expr> Ty* asExpr() {
+  requires std::convertible_to<Ty, Expr> Ty* AsExpr() {
     return static_cast<Ty*>(this);
   }
 
-  Type* getType() { return type_.get(); }
+  Type* GetType() { return type_.get(); }
 
   // TODO(Jun): What's the signature?
-  void setType() {}
+  void SetType() {}
 
   virtual void dump(int indent) const = 0;
 
@@ -44,10 +42,10 @@ class StringLiteral : public Expr {
       : Expr(std::move(loc)), literal_(literal) {}
 
  public:
-  static StringLiteral* create(ASTContext& ctx, SourceRange loc,
+  static StringLiteral* Create(ASTContext& ctx, SourceRange loc,
                                const char* literal);
 
-  [[nodiscard]] std::string getValue() const { return literal_; }
+  [[nodiscard]] std::string GetValue() const { return literal_; }
   void dump(int indent) const override;
 };
 
@@ -59,9 +57,9 @@ class CharacterLiteral : public Expr {
       : Expr(std::move(loc)), value_(value) {}
 
  public:
-  static CharacterLiteral* create(ASTContext& ctx, SourceRange loc, char value);
+  static CharacterLiteral* Create(ASTContext& ctx, SourceRange loc, char value);
 
-  [[nodiscard]] char getValue() const { return value_; }
+  [[nodiscard]] char GetValue() const { return value_; }
 
   void dump(int indent) const override;
 };
@@ -73,9 +71,9 @@ class IntergerLiteral : public Expr {
       : Expr(std::move(loc)), value_(value) {}
 
  public:
-  static IntergerLiteral* create(ASTContext& ctx, SourceRange loc, int value);
+  static IntergerLiteral* Create(ASTContext& ctx, SourceRange loc, int value);
 
-  [[nodiscard]] int getValue() const { return value_; }
+  [[nodiscard]] int GetValue() const { return value_; }
 
   void dump(int indent) const override;
 };
@@ -87,10 +85,10 @@ class FloatingLiteral : public Expr {
       : Expr(std::move(loc)), value_(value) {}
 
  public:
-  static FloatingLiteral* create(ASTContext& ctx, SourceRange loc,
+  static FloatingLiteral* Create(ASTContext& ctx, SourceRange loc,
                                  double value);
 
-  [[nodiscard]] double getValue() const { return value_; };
+  [[nodiscard]] double GetValue() const { return value_; };
 
   void dump(int indent) const override;
 };
@@ -107,14 +105,14 @@ class CallExpr : public Expr {
       : Expr(std::move(loc)), callee_(callee), args_(std::move(args)) {}
 
  public:
-  static CallExpr* create(ASTContext& ctx, SourceRange loc, Expr* callee,
+  static CallExpr* Create(ASTContext& ctx, SourceRange loc, Expr* callee,
                           std::vector<Expr*> args);
 
-  Expr* getCallee() { return callee_; }
+  Expr* GetCallee() { return callee_; }
 
-  Expr* getArg(std::size_t index) { return args_[index]; }
+  Expr* GetArg(std::size_t index) { return args_[index]; }
 
-  [[nodiscard]] std::size_t getArgNum() const { return args_.size(); }
+  [[nodiscard]] std::size_t GetArgNum() const { return args_.size(); }
 
   void dump(int indent) const override;
 };

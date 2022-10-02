@@ -139,34 +139,34 @@ class Token {
         const SourceLocation& loc)
       : kind_(kind), data_(data), length_(len), loc_(loc) {}
 
-  [[nodiscard]] TokenKind getKind() const { return kind_; }
+  [[nodiscard]] TokenKind GetKind() const { return kind_; }
 
   template <TokenKind kind>
-  [[nodiscard]] bool is() const {
+  [[nodiscard]] bool Is() const {
     return kind_ == kind;
   }
 
   template <TokenKind kind, TokenKind... kinds>
-  [[nodiscard]] bool isOneOf() {
-    if (is<kind>()) {
+  [[nodiscard]] bool IsOneOf() {
+    if (Is<kind>()) {
       return true;
     }
     if constexpr (sizeof...(kinds) > 0) {
-      return isOneOf<kinds...>();
+      return IsOneOf<kinds...>();
     }
     return false;
   }
 
-  [[nodiscard]] bool isValid() const { return kind_ != TokenKind::Unspecified; }
+  [[nodiscard]] bool IsValid() const { return kind_ != TokenKind::Unspecified; }
 
-  [[nodiscard]] std::string_view getValue() const {
+  [[nodiscard]] std::string_view GetValue() const {
     assert(getLength() != 0 &&
            "Cannot get value from tokens that have no value!");
-    return {getData(), getLength()};
+    return {GetData(), getLength()};
   }
 
   [[nodiscard]] std::string_view getKindName() const {
-    switch (getKind()) {
+    switch (GetKind()) {
       case TokenKind::StringLiteral:
         return "StringLiteral";
       case TokenKind::NumericConstant:
@@ -361,19 +361,19 @@ class Token {
     }
   }
 
-  [[nodiscard]] std::string getAsString() const {
-    return {getData(), getLength()};
+  [[nodiscard]] std::string GetAsString() const {
+    return {GetData(), getLength()};
   }
 
   [[nodiscard]] std::size_t getLength() const { return length_; }
 
-  [[nodiscard]] const char* getData() const { return data_; }
+  [[nodiscard]] const char* GetData() const { return data_; }
 
   SourceLocation getLoc() { return loc_; }
 
-  [[nodiscard]] bool isTypename() const {
+  [[nodiscard]] bool IsTypename() const {
     // FIXME: the list seems to be not complete.
-    switch (getKind()) {
+    switch (GetKind()) {
       case TokenKind::Auto:
       case TokenKind::Char:
       case TokenKind::Const:

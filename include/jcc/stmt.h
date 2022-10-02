@@ -18,10 +18,10 @@ class Stmt {
  public:
   explicit Stmt(SourceRange rng) : range_(std::move(rng)) {}
 
-  SourceRange getSourceRange() { return range_; }
+  SourceRange GetSourceRange() { return range_; }
 
   template <typename Ty>
-  requires std::convertible_to<Ty, Stmt> Ty* asStmt() {
+  requires std::convertible_to<Ty, Stmt> Ty* AsStmt() {
     return static_cast<Ty*>(this);
   }
 
@@ -32,14 +32,14 @@ class Stmt {
 
 class LabeledStatement : public Stmt {
   LabelDecl* label_;
-  Stmt* subStmt_{nullptr};
+  Stmt* sub_stmt_ = nullptr;
 
  public:
   explicit LabeledStatement(SourceRange loc, LabelDecl* label, Stmt* subStmt)
-      : Stmt(std::move(loc)), label_(label), subStmt_(subStmt) {}
+      : Stmt(std::move(loc)), label_(label), sub_stmt_(subStmt) {}
 
-  Stmt* getSubStmt() { return subStmt_; }
-  LabelDecl* getLabel() { return label_; }
+  Stmt* GetSubStmt() { return sub_stmt_; }
+  LabelDecl* GetLabel() { return label_; }
   void dump(int indent) const override;
 };
 
@@ -49,39 +49,40 @@ class CompoundStatement : public Stmt {
   explicit CompoundStatement(SourceRange loc) : Stmt(std::move(loc)) {}
 
  public:
-  static CompoundStatement* create(ASTContext& ctx, SourceRange loc);
+  static CompoundStatement* Create(ASTContext& ctx, SourceRange loc);
 
-  [[nodiscard]] auto getSize() const { return stmts_.size(); }
+  [[nodiscard]] auto GetSize() const { return stmts_.size(); }
 
-  Stmt* getStmt(std::size_t index) {
-    assert(index < getSize());
+  Stmt* GetStmt(std::size_t index) {
+    assert(index < GetSize());
     return stmts_[index];
   }
 
-  void addStmt(Stmt* stmt) { stmts_.emplace_back(stmt); }
+  void AddStmt(Stmt* stmt) { stmts_.emplace_back(stmt); }
   void dump(int indent) const override;
 };
 
 class ExpressionStatement : public Stmt {};
 
 class IfStatement : public Stmt {
-  Expr* condition_{nullptr};
-  Stmt* thenStmt_{nullptr};
-  Stmt* elseStmt_{nullptr};
+  Expr* condition_ = nullptr;
+  Stmt* then_stmt_ = nullptr;
+  Stmt* else_stmt_ = nullptr;
 
-  IfStatement(SourceRange loc, Expr* condition, Stmt* thenStmt, Stmt* elseStmt)
+  IfStatement(SourceRange loc, Expr* condition, Stmt* then_stmt,
+              Stmt* else_stmt)
       : Stmt(std::move(loc)),
         condition_(condition),
-        thenStmt_(thenStmt),
-        elseStmt_(elseStmt) {}
+        then_stmt_(then_stmt),
+        else_stmt_(else_stmt) {}
 
  public:
-  static IfStatement* create(ASTContext& ctx, SourceRange loc, Expr* condition,
+  static IfStatement* Create(ASTContext& ctx, SourceRange loc, Expr* condition,
                              Stmt* thenStmt, Stmt* elseStmt);
 
-  Expr* getCondition() { return condition_; }
-  Stmt* getThen() { return thenStmt_; }
-  Stmt* getElse() { return elseStmt_; }
+  Expr* GetCondition() { return condition_; }
+  Stmt* GetThen() { return then_stmt_; }
+  Stmt* GetElse() { return else_stmt_; }
   void dump(int indent) const override;
 };
 
@@ -92,10 +93,10 @@ class SwitchStatement : public Stmt {
   explicit SwitchStatement(SourceRange loc, std::vector<Stmt*> cases)
       : Stmt(std::move(loc)), cases_(std::move(cases)) {}
 
-  [[nodiscard]] auto getSize() const { return cases_.size(); }
+  [[nodiscard]] auto GetSize() const { return cases_.size(); }
 
-  Stmt* getStmt(std::size_t index) {
-    assert(index < getSize());
+  Stmt* GetStmt(std::size_t index) {
+    assert(index < GetSize());
     return cases_[index];
   }
   void dump(int indent) const override;
@@ -109,8 +110,8 @@ class WhileStatement : public Stmt {
   explicit WhileStatement(SourceRange loc, Expr* condition, Stmt* body)
       : Stmt(std::move(loc)), condition_(condition), body_(body) {}
 
-  Expr* getCondition() { return condition_; }
-  Stmt* getBody() { return body_; }
+  Expr* GetCondition() { return condition_; }
+  Stmt* GetBody() { return body_; }
   void dump(int indent) const override;
 };
 
@@ -121,8 +122,8 @@ class DoStatement : public Stmt {
  public:
   explicit DoStatement(SourceRange loc, Expr* condition, Stmt* body)
       : Stmt(std::move(loc)), condition_(condition), body_(body) {}
-  Stmt* getBody() { return body_; }
-  Expr* getCondition() { return condition_; }
+  Stmt* GetBody() { return body_; }
+  Expr* GetCondition() { return condition_; }
   void dump(int indent) const override;
 };
 
@@ -141,29 +142,29 @@ class ForStatement : public Stmt {
         increment_(increment),
         body_(body) {}
 
-  Stmt* getInit() { return init_; }
-  Stmt* getCondition() { return condition_; }
-  Stmt* getIncrement() { return increment_; }
-  Stmt* getBody() { return body_; }
+  Stmt* GetInit() { return init_; }
+  Stmt* GetCondition() { return condition_; }
+  Stmt* GetIncrement() { return increment_; }
+  Stmt* GetBody() { return body_; }
   void dump(int indent) const override;
 };
 
 class GotoStatement : public Stmt {
   LabelDecl* label_{nullptr};
-  SourceRange gotoLoc_;
+  SourceRange goto_loc_;
 
  public:
-  GotoStatement(SourceRange loc, LabelDecl* label, SourceRange gotoLoc)
-      : Stmt(std::move(loc)), label_(label), gotoLoc_(std::move(gotoLoc)) {}
+  GotoStatement(SourceRange loc, LabelDecl* label, SourceRange goto_loc)
+      : Stmt(std::move(loc)), label_(label), goto_loc_(std::move(goto_loc)) {}
   void dump(int indent) const override;
 };
 
 class ContinueStatement : public Stmt {
-  SourceRange continueLoc_;
+  SourceRange continue_loc_;
 
  public:
-  ContinueStatement(SourceRange loc, SourceRange continueLoc)
-      : Stmt(std::move(loc)), continueLoc_(std::move(continueLoc)) {}
+  ContinueStatement(SourceRange loc, SourceRange continue_loc)
+      : Stmt(std::move(loc)), continue_loc_(std::move(continue_loc)) {}
   void dump(int indent) const override;
 };
 
@@ -176,15 +177,15 @@ class BreakStatement : public Stmt {
 };
 
 class ReturnStatement : public Stmt {
-  Expr* returnExpr_ = nullptr;
+  Expr* return_expr_ = nullptr;
 
-  ReturnStatement(SourceRange loc, Expr* returnExpr)
-      : Stmt(std::move(loc)), returnExpr_(returnExpr) {}
+  ReturnStatement(SourceRange loc, Expr* return_expr)
+      : Stmt(std::move(loc)), return_expr_(return_expr) {}
 
  public:
-  static ReturnStatement* create(ASTContext& ctx, SourceRange loc,
-                                 Expr* returnExpr);
-  Expr* getReturn() { return returnExpr_; }
+  static ReturnStatement* Create(ASTContext& ctx, SourceRange loc,
+                                 Expr* return_expr);
+  Expr* GetReturn() { return return_expr_; }
   void dump(int indent) const override;
 };
 
@@ -197,17 +198,17 @@ class DeclStatement : public Stmt {
   }
 
  public:
-  static DeclStatement* create(ASTContext& ctx, SourceRange loc,
+  static DeclStatement* Create(ASTContext& ctx, SourceRange loc,
                                std::vector<Decl*> decls);
-  static DeclStatement* create(ASTContext& ctx, SourceRange loc, Decl* decl);
+  static DeclStatement* Create(ASTContext& ctx, SourceRange loc, Decl* decl);
 
-  [[nodiscard]] bool isSingleDecl() const { return decls_.size() == 1; }
+  [[nodiscard]] bool IsSingleDecl() const { return decls_.size() == 1; }
 
-  Decl* getSingleDecl() {
-    assert(isSingleDecl() && "Not a single decl!");
+  Decl* GetSingleDecl() {
+    assert(IsSingleDecl() && "Not a single decl!");
     return decls_[0];
   }
 
-  std::vector<Decl*> getDecls() { return decls_; }
+  std::vector<Decl*> GetDecls() { return decls_; }
   void dump(int indent) const override;
 };

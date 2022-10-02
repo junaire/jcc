@@ -14,15 +14,15 @@ class SourceLocation {
   SourceLocation(std::size_t line, std::size_t column, std::size_t offset)
       : line_(line), column_(column), offset_(offset) {}
 
-  [[nodiscard]] std::size_t getOffset() const { return offset_; }
+  [[nodiscard]] std::size_t GetOffset() const { return offset_; }
 
-  [[nodiscard]] std::size_t getLine() const { return line_; }
+  [[nodiscard]] std::size_t GetLine() const { return line_; }
 
-  [[nodiscard]] std::size_t getColumn() const { return column_; }
+  [[nodiscard]] std::size_t GetColumn() const { return column_; }
 };
 
 class SourceRange {
-  std::string fileName_;
+  std::string file_name_;
   SourceLocation begin_;
   SourceLocation end_;
 
@@ -30,21 +30,21 @@ class SourceRange {
   SourceRange() = default;
 
   SourceRange(std::string name, const SourceLocation& loc)
-      : fileName_(std::move(name)), begin_(loc), end_(loc) {}
+      : file_name_(std::move(name)), begin_(loc), end_(loc) {}
 
   SourceRange(std::string name, const SourceLocation& beg,
               const SourceLocation& end)
-      : fileName_(std::move(name)), begin_(beg), end_(end) {}
+      : file_name_(std::move(name)), begin_(beg), end_(end) {}
 
-  void setBegin(const SourceLocation& loc) { begin_ = loc; }
+  void SetBegin(const SourceLocation& loc) { begin_ = loc; }
 
-  void setEnd(const SourceLocation& loc) { begin_ = loc; }
+  void SetEnd(const SourceLocation& loc) { begin_ = loc; }
 
-  SourceLocation getBegin() { return begin_; }
+  SourceLocation GetBegin() { return begin_; }
 
-  SourceLocation getEnd() { return end_; }
+  SourceLocation GetEnd() { return end_; }
 
-  void setFileName(std::string name) { fileName_ = std::move(name); }
+  void SetFileName(std::string name) { file_name_ = std::move(name); }
 
-  [[nodiscard]] std::string_view getFileName() const { return fileName_; }
+  [[nodiscard]] std::string_view GetFileName() const { return file_name_; }
 };

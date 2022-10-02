@@ -12,4 +12,7 @@ Checks: '-*,
     -cppcoreguidelines-pro-type-*,
     -cppcoreguidelines-owning-memory,
     -google-runtime-*,
-    -google-objc-*'
+    -google-objc-*,
+    -readability-magic-numbers,
+    -readability-function-cognitive-complexity,
+    -bugprone-easily-swappable-parameters'

@@ -18,77 +18,77 @@ class Lexer;
 struct Scope {
   explicit Scope(Parser& parser) : self(parser) {}
   Parser& self;
-  std::unordered_map<std::string, Decl*> Vars;
-  std::unordered_map<std::string, Decl*> Tags;
+  std::unordered_map<std::string, Decl*> vars;
+  std::unordered_map<std::string, Decl*> tags;
 };
 
 class Parser {
  public:
   explicit Parser(Lexer& lexer);
 
-  std::vector<Decl*> parseTranslateUnit();
+  std::vector<Decl*> ParseTranslateUnit();
 
-  void skipUntil(TokenKind kind);
+  void SkipUntil(TokenKind kind);
 
-  DeclSpec parseDeclSpec();
+  DeclSpec ParseDeclSpec();
 
-  Declarator parseDeclarator(DeclSpec& declSpec);
+  Declarator ParseDeclarator(DeclSpec& decl_spec);
 
-  std::vector<Decl*> parseFunctionOrVar(DeclSpec& declSpec);
+  std::vector<Decl*> ParseFunctionOrVar(DeclSpec& decl_spec);
 
-  std::vector<Decl*> parseGlobalVariables(Declarator& declarator);
+  std::vector<Decl*> ParseGlobalVariables(Declarator& declarator);
 
-  Stmt* parseStatement();
+  Stmt* ParseStatement();
 
-  Stmt* parseCompoundStmt();
+  Stmt* ParseCompoundStmt();
 
-  Stmt* parseReturnStmt();
+  Stmt* ParseReturnStmt();
 
   void addInitializer(VarDecl* var);
 
-  Expr* parseExpr();
+  Expr* ParseExpr();
 
-  Expr* parseAssignmentExpr();
+  Expr* ParseAssignmentExpr();
 
-  Expr* parseCastExpr();
+  Expr* ParseCastExpr();
 
-  Expr* parseRhsOfBinaryExpr(Expr* lhs);
+  Expr* ParseRhsOfBinaryExpr(Expr* lhs);
 
-  Decl* parseFunction(Declarator& declarator);
+  Decl* ParseFunction(Declarator& declarator);
 
-  std::unique_ptr<Type> parseParams(std::unique_ptr<Type> type);
+  std::unique_ptr<Type> ParseParams(std::unique_ptr<Type> type);
 
-  std::unique_ptr<Type> parseArrayDimensions(std::unique_ptr<Type> type);
+  std::unique_ptr<Type> ParseArrayDimensions(std::unique_ptr<Type> type);
 
-  std::unique_ptr<Type> parseTypeSuffix(std::unique_ptr<Type> type);
+  std::unique_ptr<Type> ParseTypeSuffix(std::unique_ptr<Type> type);
 
-  std::unique_ptr<Type> parsePointers(Declarator& declarator);
+  std::unique_ptr<Type> ParsePointers(Declarator& declarator);
 
-  std::unique_ptr<Type> parseTypename();
+  std::unique_ptr<Type> ParseTypename();
 
-  std::vector<VarDecl*> createParams(FunctionType* type);
+  std::vector<VarDecl*> CreateParams(FunctionType* type);
 
-  ASTContext& getASTContext() { return ctx_; }
+  ASTContext& GetASTContext() { return ctx_; }
 
  private:
-  Token currentToken();
-  void consumeToken();
+  Token CurrentToken();
+  void ConsumeToken();
   bool tryConsumeToken(TokenKind expected);
-  Token nextToken();
+  Token NextToken();
   Lexer& lexer_;
   Token token_;
   std::optional<Token> cache_;
   ASTContext ctx_;
-  std::vector<Scope> scopes;
+  std::vector<Scope> scopes_;
 
-  void enterScope();
-  void exitScope();
+  void EnterScope();
+  void ExitScope();
 
   class ScopeRAII {
     Parser& self_;
 
    public:
-    explicit ScopeRAII(Parser& self) : self_(self) { self_.enterScope(); }
-    ~ScopeRAII() { self_.exitScope(); }
+    explicit ScopeRAII(Parser& self) : self_(self) { self_.EnterScope(); }
+    ~ScopeRAII() { self_.ExitScope(); }
   };
 };

@@ -6,245 +6,246 @@
 #include "jcc/lexer.h"
 #include "jcc/type.h"
 
-Parser::Parser(Lexer& lexer) : lexer_(lexer) { token_ = lexer_.lex(); }
+Parser::Parser(Lexer& lexer) : lexer_(lexer) { token_ = lexer_.Lex(); }
 
-Token Parser::currentToken() { return token_; }
+Token Parser::CurrentToken() { return token_; }
 
-void Parser::consumeToken() {
+void Parser::ConsumeToken() {
   if (cache_) {
     token_ = *cache_;
     cache_ = std::nullopt;
   } else {
-    token_ = lexer_.lex();
+    token_ = lexer_.Lex();
   }
 }
 
-Token Parser::nextToken() {
-  Token nextTok = lexer_.lex();
-  cache_ = nextTok;
-  return nextTok;
+Token Parser::NextToken() {
+  Token next_tok = lexer_.Lex();
+  cache_ = next_tok;
+  return next_tok;
 }
 
 // Returns true if the next token is expected kind, doesn't really consume it.
 bool Parser::tryConsumeToken(TokenKind expected) {
-  return nextToken().getKind() == expected;
+  return NextToken().GetKind() == expected;
 }
 
-std::unique_ptr<Type> Parser::parseTypename() {
-  DeclSpec declSpec = parseDeclSpec();
+std::unique_ptr<Type> Parser::ParseTypename() {
+  DeclSpec declSpec = ParseDeclSpec();
   return nullptr;
 }
 
-void Parser::skipUntil(TokenKind kind) {
-  while (currentToken().getKind() != kind) {
-    consumeToken();
+void Parser::SkipUntil(TokenKind kind) {
+  while (CurrentToken().GetKind() != kind) {
+    ConsumeToken();
   }
 }
 
-void Parser::enterScope() { scopes.emplace_back(*this); }
+void Parser::EnterScope() { scopes_.emplace_back(*this); }
 
-void Parser::exitScope() { scopes.pop_back(); }
+void Parser::ExitScope() { scopes_.pop_back(); }
 
-DeclSpec Parser::parseDeclSpec() {
+DeclSpec Parser::ParseDeclSpec() {
   using enum TokenKind;
-  DeclSpec declSpec;
-  while (currentToken().isTypename()) {
-    if (currentToken()
-            .isOneOf<Typedef, Static, Extern, Inline, DashThreadLocal>()) {
+  DeclSpec decl_spec;
+  while (CurrentToken().IsTypename()) {
+    if (CurrentToken()
+            .IsOneOf<Typedef, Static, Extern, Inline, DashThreadLocal>()) {
       // Check if storage class specifier is allowed in this context.
-      switch (currentToken().getKind()) {
+      switch (CurrentToken().GetKind()) {
         case Typedef:
-          declSpec.setStorageClassSpec(DeclSpec::StorageClassSpec::Typedef);
+          decl_spec.SetStorageClassSpec(DeclSpec::StorageClassSpec::Typedef);
           break;
         case Static:
-          declSpec.setStorageClassSpec(DeclSpec::StorageClassSpec::Static);
+          decl_spec.SetStorageClassSpec(DeclSpec::StorageClassSpec::Static);
           break;
         case Extern:
-          declSpec.setStorageClassSpec(DeclSpec::StorageClassSpec::Extern);
+          decl_spec.SetStorageClassSpec(DeclSpec::StorageClassSpec::Extern);
           break;
         case Inline:
-          declSpec.setFunctionSpec(DeclSpec::FunctionSpec::Inline);
+          decl_spec.SetFunctionSpec(DeclSpec::FunctionSpec::Inline);
           break;
         case DashThreadLocal:
-          declSpec.setStorageClassSpec(DeclSpec::StorageClassSpec::ThreadLocal);
+          decl_spec.SetStorageClassSpec(
+              DeclSpec::StorageClassSpec::ThreadLocal);
           break;
         default:
           jcc_unreachable();
       }
 
-      if (declSpec.isTypedef()) {
-        if (declSpec.isStatic() || declSpec.isExtern() || declSpec.isInline() ||
-            declSpec.isThreadLocal()) {
+      if (decl_spec.IsTypedef()) {
+        if (decl_spec.IsStatic() || decl_spec.IsExtern() ||
+            decl_spec.IsInline() || decl_spec.IsThreadLocal()) {
           // TODO(Jun): Can you have a nice diag instead of panic?
           jcc_unreachable();
         }
       }
-      consumeToken();
+      ConsumeToken();
     }
 
     // Ignore some keywords with no effects like `auto`
-    if (currentToken()
-            .isOneOf<Const, Auto, Volatile, Register, Restrict,
+    if (CurrentToken()
+            .IsOneOf<Const, Auto, Volatile, Register, Restrict,
                      DashNoReturn>()) {
-      consumeToken();
+      ConsumeToken();
     }
 
     // Deal with _Atomic
-    if (currentToken().isOneOf<DashAtmoic>()) {
-      consumeToken();  // eat `(`
-      declSpec.setType(parseTypename());
-      consumeToken();  // eat `)`
-      declSpec.setTypeQual(DeclSpec::TypeQual::Atomic);
+    if (CurrentToken().IsOneOf<DashAtmoic>()) {
+      ConsumeToken();  // eat `(`
+      decl_spec.SetType(ParseTypename());
+      ConsumeToken();  // eat `)`
+      decl_spec.SetTypeQual(DeclSpec::TypeQual::Atomic);
     }
 
     // Deal with _Alignas
-    if (currentToken().is<TokenKind::DashAlignas>()) {
+    if (CurrentToken().Is<TokenKind::DashAlignas>()) {
       jcc_unreachable();
     }
 
     // Handle user defined types
-    if (currentToken().isOneOf<Struct, Union, Typedef, Enum>()) {
+    if (CurrentToken().IsOneOf<Struct, Union, Typedef, Enum>()) {
       jcc_unreachable();
     }
 
     // Handle builtin types
 
-    switch (currentToken().getKind()) {
+    switch (CurrentToken().GetKind()) {
       case Void:
-        declSpec.setTypeSpecKind(DeclSpec::TSK_Void);
+        decl_spec.SetTypeSpecKind(DeclSpec::TSK_Void);
         break;
       case DashBool:
-        declSpec.setTypeSpecKind(DeclSpec::TSK_Bool);
+        decl_spec.SetTypeSpecKind(DeclSpec::TSK_Bool);
         break;
       case Char:
-        declSpec.setTypeSpecKind(DeclSpec::TSK_Char);
+        decl_spec.SetTypeSpecKind(DeclSpec::TSK_Char);
         break;
       case Short:
-        declSpec.setTypeSpecWidth(DeclSpec::TypeSpecWidth::Short);
+        decl_spec.setTypeSpecWidth(DeclSpec::TypeSpecWidth::Short);
         break;
       case Int:
-        declSpec.setTypeSpecKind(DeclSpec::TSK_Int);
+        decl_spec.SetTypeSpecKind(DeclSpec::TSK_Int);
         break;
       case Long:
-        if (declSpec.getTypeSpecWidth() == DeclSpec::TypeSpecWidth::Long) {
-          declSpec.setTypeSpecWidth(DeclSpec::TypeSpecWidth::LongLong);
+        if (decl_spec.GetTypeSpecWidth() == DeclSpec::TypeSpecWidth::Long) {
+          decl_spec.setTypeSpecWidth(DeclSpec::TypeSpecWidth::LongLong);
         } else {
-          declSpec.setTypeSpecWidth(DeclSpec::TypeSpecWidth::Long);
+          decl_spec.setTypeSpecWidth(DeclSpec::TypeSpecWidth::Long);
         }
         break;
       case Float:
-        declSpec.setTypeSpecKind(DeclSpec::TSK_Float);
+        decl_spec.SetTypeSpecKind(DeclSpec::TSK_Float);
         break;
       case Double:
-        declSpec.setTypeSpecKind(DeclSpec::TSK_Double);
+        decl_spec.SetTypeSpecKind(DeclSpec::TSK_Double);
         break;
       case Signed:
-        declSpec.setTypeSpecSign(DeclSpec::TypeSpecSign::Signed);
+        decl_spec.setTypeSpecSign(DeclSpec::TypeSpecSign::Signed);
         break;
       case Unsigned:
-        declSpec.setTypeSpecSign(DeclSpec::TypeSpecSign::Unsigned);
+        decl_spec.setTypeSpecSign(DeclSpec::TypeSpecSign::Unsigned);
         break;
       default:
         jcc_unreachable();
     }
 
-    declSpec.constructSelfType();
-    consumeToken();
+    decl_spec.GenerateType();
+    ConsumeToken();
   }
 
-  return declSpec;
+  return decl_spec;
 }
 
-std::unique_ptr<Type> Parser::parsePointers(Declarator& declarator) {
+std::unique_ptr<Type> Parser::ParsePointers(Declarator& declarator) {
   using enum TokenKind;
-  std::unique_ptr<Type> type = declarator.getBaseType();
+  std::unique_ptr<Type> type = declarator.GetBaseType();
   ;
-  while (currentToken().is<Star>()) {
-    consumeToken();
-    type = Type::createPointerType(std::move(type));
-    while (currentToken().isOneOf<Const, Volatile, Restrict>()) {
-      consumeToken();
+  while (CurrentToken().Is<Star>()) {
+    ConsumeToken();
+    type = Type::CreatePointerType(std::move(type));
+    while (CurrentToken().IsOneOf<Const, Volatile, Restrict>()) {
+      ConsumeToken();
     }
   }
   return type;
 }
 
-std::unique_ptr<Type> Parser::parseTypeSuffix(std::unique_ptr<Type> type) {
-  if (currentToken().is<TokenKind::LeftParen>()) {
-    consumeToken();  // Eat '('
-    return parseParams(std::move(type));
+std::unique_ptr<Type> Parser::ParseTypeSuffix(std::unique_ptr<Type> type) {
+  if (CurrentToken().Is<TokenKind::LeftParen>()) {
+    ConsumeToken();  // Eat '('
+    return ParseParams(std::move(type));
   }
-  if (currentToken().is<TokenKind::LeftSquare>()) {
-    return parseArrayDimensions(std::move(type));
+  if (CurrentToken().Is<TokenKind::LeftSquare>()) {
+    return ParseArrayDimensions(std::move(type));
   }
   return type;
 }
 
-Declarator Parser::parseDeclarator(DeclSpec& declSpec) {
-  Declarator declarator(declSpec);
-  std::unique_ptr<Type> type = parsePointers(declarator);
-  if (currentToken().is<TokenKind::LeftParen>()) {
-    consumeToken();
+Declarator Parser::ParseDeclarator(DeclSpec& decl_spec) {
+  Declarator declarator(decl_spec);
+  std::unique_ptr<Type> type = ParsePointers(declarator);
+  if (CurrentToken().Is<TokenKind::LeftParen>()) {
+    ConsumeToken();
     DeclSpec dummy;
-    parseDeclarator(dummy);
-    consumeToken();  // Eat ')'
-    std::unique_ptr<Type> suffixType = parseTypeSuffix(std::move(type));
+    ParseDeclarator(dummy);
+    ConsumeToken();  // Eat ')'
+    std::unique_ptr<Type> suffixType = ParseTypeSuffix(std::move(type));
     DeclSpec suffix;
-    suffix.setType(std::move(suffixType));
-    return parseDeclarator(suffix);
+    suffix.SetType(std::move(suffixType));
+    return ParseDeclarator(suffix);
   }
 
   Token name;
-  if (currentToken().is<TokenKind::Identifier>()) {
-    name = currentToken();
-    consumeToken();
+  if (CurrentToken().Is<TokenKind::Identifier>()) {
+    name = CurrentToken();
+    ConsumeToken();
   }
   // FIXME: Looks like we'll gonna screw up here if the token is not an
   // identifier.
-  std::unique_ptr<Type> suffixType = parseTypeSuffix(std::move(type));
+  std::unique_ptr<Type> suffixType = ParseTypeSuffix(std::move(type));
   declarator.name_ = name;
   declarator.setType(std::move(suffixType));
   return declarator;
 }
 
-std::unique_ptr<Type> Parser::parseParams(std::unique_ptr<Type> type) {
-  if (currentToken().is<TokenKind::Void>() &&
-      nextToken().is<TokenKind::RightParen>()) {
-    consumeToken();  // Eat 'void'
-    consumeToken();  // Eat ')'
-    return Type::createFuncType(std::move(type));
+std::unique_ptr<Type> Parser::ParseParams(std::unique_ptr<Type> type) {
+  if (CurrentToken().Is<TokenKind::Void>() &&
+      NextToken().Is<TokenKind::RightParen>()) {
+    ConsumeToken();  // Eat 'void'
+    ConsumeToken();  // Eat ')'
+    return Type::CreateFuncType(std::move(type));
   }
 
   std::vector<std::unique_ptr<Type>> params;
-  while (!currentToken().is<TokenKind::RightParen>()) {
+  while (!CurrentToken().Is<TokenKind::RightParen>()) {
     std::unique_ptr<Type> type;
-    DeclSpec declSpec = parseDeclSpec();
-    Declarator declarator = parseDeclarator(declSpec);
+    DeclSpec decl_spec = ParseDeclSpec();
+    Declarator declarator = ParseDeclarator(decl_spec);
 
-    if (declarator.getTypeKind() == TypeKind::Array) {
-      type = Type::createPointerType(
-          declarator.getBaseType()->asType<PointerType>()->getBase());
+    if (declarator.GetTypeKind() == TypeKind::Array) {
+      type = Type::CreatePointerType(
+          declarator.GetBaseType()->AsType<PointerType>()->GetBase());
       // FIXME: set name to type.
-    } else if (declarator.getTypeKind() == TypeKind::Func) {
-      type = Type::createPointerType(declarator.getBaseType());
+    } else if (declarator.GetTypeKind() == TypeKind::Func) {
+      type = Type::CreatePointerType(declarator.GetBaseType());
     }
     params.emplace_back(std::move(type));
   }
 
-  std::unique_ptr<Type> funcType = Type::createFuncType(std::move(type));
-  funcType->asType<FunctionType>()->setParams(std::move(params));
-  return funcType;
+  std::unique_ptr<Type> function_type = Type::CreateFuncType(std::move(type));
+  function_type->AsType<FunctionType>()->SetParams(std::move(params));
+  return function_type;
 }
 
-std::unique_ptr<Type> Parser::parseArrayDimensions(std::unique_ptr<Type> type) {
-  while (currentToken().isOneOf<TokenKind::Static, TokenKind::Restrict>()) {
-    consumeToken();
+std::unique_ptr<Type> Parser::ParseArrayDimensions(std::unique_ptr<Type> type) {
+  while (CurrentToken().IsOneOf<TokenKind::Static, TokenKind::Restrict>()) {
+    ConsumeToken();
   }
 
-  if (currentToken().is<TokenKind::RightParen>()) {
-    consumeToken();
-    auto arrType = parseTypeSuffix(std::move(type));
-    return Type::createArrayType(std::move(arrType), -1);
+  if (CurrentToken().Is<TokenKind::RightParen>()) {
+    ConsumeToken();
+    auto arrType = ParseTypeSuffix(std::move(type));
+    return Type::CreateArrayType(std::move(arrType), -1);
   }
 
   // cond ? A : B
@@ -252,154 +253,154 @@ std::unique_ptr<Type> Parser::parseArrayDimensions(std::unique_ptr<Type> type) {
   jcc_unreachable();
 }
 
-Expr* Parser::parseExpr() {
-  Expr* expr = parseAssignmentExpr();
-  return parseRhsOfBinaryExpr(expr);
+Expr* Parser::ParseExpr() {
+  Expr* expr = ParseAssignmentExpr();
+  return ParseRhsOfBinaryExpr(expr);
 }
 
-Stmt* Parser::parseReturnStmt() {
-  Expr* returnExpr = nullptr;
-  if (currentToken().is<TokenKind::Semi>()) {
-    consumeToken();
+Stmt* Parser::ParseReturnStmt() {
+  Expr* return_expr = nullptr;
+  if (CurrentToken().Is<TokenKind::Semi>()) {
+    ConsumeToken();
   } else {
-    returnExpr = parseExpr();
-    assert(currentToken().is<TokenKind::Semi>());
-    consumeToken();
+    return_expr = ParseExpr();
+    assert(CurrentToken().Is<TokenKind::Semi>());
+    ConsumeToken();
   }
-  return ReturnStatement::create(getASTContext(), SourceRange(), returnExpr);
+  return ReturnStatement::Create(GetASTContext(), SourceRange(), return_expr);
 }
-Stmt* Parser::parseStatement() {
-  if (currentToken().is<TokenKind::Return>()) {
-    consumeToken();
-    return parseReturnStmt();
+Stmt* Parser::ParseStatement() {
+  if (CurrentToken().Is<TokenKind::Return>()) {
+    ConsumeToken();
+    return ParseReturnStmt();
   }
 
-  if (currentToken().is<TokenKind::If>()) {
-    consumeToken();  // Eat `(`.
-    Expr* condition = parseExpr();
-    consumeToken();  // Eat `)`.
-    Stmt* then = parseStatement();
-    Stmt* elseStmt = nullptr;
-    if (currentToken().is<TokenKind::Else>()) {
-      elseStmt = parseStatement();
+  if (CurrentToken().Is<TokenKind::If>()) {
+    ConsumeToken();  // Eat `(`.
+    Expr* condition = ParseExpr();
+    ConsumeToken();  // Eat `)`.
+    Stmt* then = ParseStatement();
+    Stmt* else_stmt = nullptr;
+    if (CurrentToken().Is<TokenKind::Else>()) {
+      else_stmt = ParseStatement();
     }
-    return IfStatement::create(ctx_, SourceRange(), condition, then, elseStmt);
+    return IfStatement::Create(GetASTContext(), SourceRange(), condition, then,
+                               else_stmt);
   }
   jcc_unreachable();
 }
 
-std::vector<VarDecl*> Parser::createParams(FunctionType* type) {
+std::vector<VarDecl*> Parser::CreateParams(FunctionType* type) {
   std::vector<VarDecl*> params;
-  for (std::size_t idx = 0; idx < type->getParamSize(); idx++) {
-    Type* paramTy = type->getParamType(idx);
-    params.emplace_back(VarDecl::create(ctx_, SourceRange(), nullptr, nullptr,
-                                        paramTy->getName()));
+  for (std::size_t idx = 0; idx < type->GetParamSize(); idx++) {
+    Type* param_type = type->GetParamType(idx);
+    params.emplace_back(VarDecl::Create(GetASTContext(), SourceRange(), nullptr,
+                                        nullptr, param_type->GetName()));
   }
   return params;
 }
 
-Stmt* Parser::parseCompoundStmt() {
+Stmt* Parser::ParseCompoundStmt() {
   CompoundStatement* stmt =
-      CompoundStatement::create(getASTContext(), SourceRange());
-  ScopeRAII scopeRAII(*this);
+      CompoundStatement::Create(GetASTContext(), SourceRange());
+  ScopeRAII scope_guard(*this);
 
-  while (!currentToken().is<TokenKind::RightBracket>()) {
-    if (currentToken().isTypename() && !nextToken().is<TokenKind::Colon>()) {
-      DeclSpec declSpec = parseDeclSpec();
-      if (declSpec.isTypedef()) {
+  while (!CurrentToken().Is<TokenKind::RightBracket>()) {
+    if (CurrentToken().IsTypename() && !NextToken().Is<TokenKind::Colon>()) {
+      DeclSpec decl_spec = ParseDeclSpec();
+      if (decl_spec.IsTypedef()) {
         // Parse Typedef
         jcc_unreachable();
         continue;
       }
-      Declarator declarator = parseDeclarator(declSpec);
-      if (declarator.getTypeKind() == TypeKind::Func) {
-        stmt->addStmt(DeclStatement::create(ctx_, SourceRange(),
-                                            parseFunction(declarator)));
+      Declarator declarator = ParseDeclarator(decl_spec);
+      if (declarator.GetTypeKind() == TypeKind::Func) {
+        stmt->AddStmt(DeclStatement::Create(GetASTContext(), SourceRange(),
+                                            ParseFunction(declarator)));
         continue;
       }
-      if (declSpec.isExtern()) {
-        stmt->addStmt(DeclStatement::create(ctx_, SourceRange(),
-                                            parseGlobalVariables(declarator)));
+      if (decl_spec.IsExtern()) {
+        stmt->AddStmt(DeclStatement::Create(GetASTContext(), SourceRange(),
+                                            ParseGlobalVariables(declarator)));
         continue;
       }
     } else {
-      stmt->addStmt(parseStatement());
+      stmt->AddStmt(ParseStatement());
     }
     // Add type?
   }
-  consumeToken();  // Eat '}'
+  ConsumeToken();  // Eat '}'
   return stmt;
 }
 
-Decl* Parser::parseFunction(Declarator& declarator) {
+Decl* Parser::ParseFunction(Declarator& declarator) {
   Token name = declarator.name_;
-  if (!name.isValid()) {
+  if (!name.IsValid()) {
     jcc_unreachable();
   }
   // Check redefinition
 
-  std::unique_ptr<Type> baseType = declarator.getBaseType();
-  auto* self = baseType->asType<FunctionType>();
+  // FIXME: must capture the type first, or UAF happens!
+  std::unique_ptr<Type> base_type = declarator.GetBaseType();
+  auto* self = base_type->AsType<FunctionType>();
 
   ScopeRAII scopeRAII(*this);
 
-  std::vector<VarDecl*> params = createParams(self);
+  std::vector<VarDecl*> params = CreateParams(self);
 
   Stmt* body = nullptr;
-  if (currentToken().is<TokenKind::Semi>()) {
-    consumeToken();
-  } else if (currentToken().is<TokenKind::LeftBracket>()) {
-    consumeToken();
-    body = parseCompoundStmt();
+  if (CurrentToken().Is<TokenKind::Semi>()) {
+    ConsumeToken();
+  } else if (CurrentToken().Is<TokenKind::LeftBracket>()) {
+    ConsumeToken();
+    body = ParseCompoundStmt();
   } else {
     jcc_unreachable();
   }
 
   FunctionDecl* function =
-      FunctionDecl::create(ctx_, SourceRange(), name.getAsString(),
-                           std::move(params), self->getReturnType(), body);
+      FunctionDecl::Create(GetASTContext(), SourceRange(), name.GetAsString(),
+                           std::move(params), self->GetReturnType(), body);
   return function;
 }
 
-std::vector<Decl*> Parser::parseGlobalVariables(Declarator& declarator) {
+std::vector<Decl*> Parser::ParseGlobalVariables(Declarator& declarator) {
   std::vector<Decl*> vars;
-  bool isFirst = true;
-  while (!currentToken().is<TokenKind::Semi>()) {
-    if (!isFirst) {
-      skipUntil(TokenKind::Comma);
+  bool is_first = true;
+  while (!CurrentToken().Is<TokenKind::Semi>()) {
+    if (!is_first) {
+      SkipUntil(TokenKind::Comma);
     }
-    isFirst = false;
+    is_first = false;
 
     VarDecl* var =
-        VarDecl::create(ctx_, SourceRange(), nullptr, declarator.getBaseType(),
-                        declarator.getName());
-    if (currentToken().is<TokenKind::Equal>()) {
-      consumeToken();
-      var->setInit(parseAssignmentExpr());
+        VarDecl::Create(GetASTContext(), SourceRange(), nullptr,
+                        declarator.GetBaseType(), declarator.GetName());
+    if (CurrentToken().Is<TokenKind::Equal>()) {
+      ConsumeToken();
+      var->SetInit(ParseAssignmentExpr());
     }
     vars.push_back(var);
   }
-  consumeToken();  // Eat ';'
+  ConsumeToken();  // Eat ';'
   return vars;
 }
 
-void Parser::addInitializer(VarDecl* var) { jcc_unreachable(); }
+Expr* Parser::ParseAssignmentExpr() {
+  Expr* lhs = ParseCastExpr();
 
-Expr* Parser::parseAssignmentExpr() {
-  Expr* lhs = parseCastExpr();
-
-  return parseRhsOfBinaryExpr(lhs);
+  return ParseRhsOfBinaryExpr(lhs);
 }
 
-Expr* Parser::parseCastExpr() {
-  TokenKind kind = currentToken().getKind();
+Expr* Parser::ParseCastExpr() {
+  TokenKind kind = CurrentToken().GetKind();
   Expr* result;
 
   switch (kind) {
     case TokenKind::NumericConstant: {
-      int value = std::stoi(currentToken().getData());
-      consumeToken();
-      result = IntergerLiteral::create(ctx_, SourceRange(), value);
+      int value = std::stoi(CurrentToken().GetData());
+      ConsumeToken();
+      result = IntergerLiteral::Create(GetASTContext(), SourceRange(), value);
       break;
     }
     default:
@@ -408,38 +409,38 @@ Expr* Parser::parseCastExpr() {
   return result;
 }
 
-Expr* Parser::parseRhsOfBinaryExpr(Expr* lhs) {
+Expr* Parser::ParseRhsOfBinaryExpr(Expr* lhs) {
   // TODO(Jun): Not fully implemented!
   return lhs;
 }
 
 // Function or a simple declaration
-std::vector<Decl*> Parser::parseFunctionOrVar(DeclSpec& declSpec) {
+std::vector<Decl*> Parser::ParseFunctionOrVar(DeclSpec& decl_spec) {
   std::vector<Decl*> decls;
-  if (currentToken().is<TokenKind::Semi>()) {
+  if (CurrentToken().Is<TokenKind::Semi>()) {
     jcc_unreachable();
   }
 
-  Declarator declarator = parseDeclarator(declSpec);
-  if (declarator.getTypeKind() == TypeKind::Func) {
-    decls.emplace_back(parseFunction(declarator));
+  Declarator declarator = ParseDeclarator(decl_spec);
+  if (declarator.GetTypeKind() == TypeKind::Func) {
+    decls.emplace_back(ParseFunction(declarator));
   } else {
-    std::vector<Decl*> vars = parseGlobalVariables(declarator);
+    std::vector<Decl*> vars = ParseGlobalVariables(declarator);
     decls.insert(decls.end(), vars.begin(), vars.end());
   }
   return decls;
 }
 
-std::vector<Decl*> Parser::parseTranslateUnit() {
+std::vector<Decl*> Parser::ParseTranslateUnit() {
   std::vector<Decl*> topDecls;
-  while (!currentToken().is<TokenKind::Eof>()) {
-    DeclSpec declSpec = parseDeclSpec();
+  while (!CurrentToken().Is<TokenKind::Eof>()) {
+    DeclSpec decl_spec = ParseDeclSpec();
     // TODO(Jun): Handle typedefs
-    if (declSpec.isTypedef()) {
+    if (decl_spec.IsTypedef()) {
       jcc_unreachable();
     }
 
-    std::vector<Decl*> decls = parseFunctionOrVar(declSpec);
+    std::vector<Decl*> decls = ParseFunctionOrVar(decl_spec);
     topDecls.insert(topDecls.end(), decls.begin(), decls.end());
   }
 
