@@ -35,4 +35,4 @@ jobs:
       - name: Test
         run: |
           cd ${{github.workspace}}/build
-          ctest --verbose
+          ctest --verbose -C ${{env.BUILD_TYPE}}
