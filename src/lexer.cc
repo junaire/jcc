@@ -283,10 +283,7 @@ Token Lexer::lex() {
 }
 
 void Lexer::skipWhitespace() {
-  while (true) {
-    if (std::isspace(peek()) == 0) {
-      return;
-    }
+  while (std::isspace(peek()) != 0) {
     advance();
   }
 }
@@ -387,9 +384,10 @@ Token Lexer::lexIdentifierOrKeyword() {
   // the token may be a keyword.
   std::string_view tok{data, len};
   if (auto [isMatch, keyword] = keywords_.matchKeyword({data, len}); isMatch) {
-    return lexAtom(keyword, loc);
+    return {keyword, data, len, loc};
   }
-  return Token{TokenKind::Identifier, data, len, loc};
+
+  return {TokenKind::Identifier, data, len, loc};
 }
 
 Token Lexer::lexStringLiteral() {

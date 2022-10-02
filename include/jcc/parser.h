@@ -42,6 +42,8 @@ class Parser {
 
   Stmt* parseCompoundStmt();
 
+  Stmt* parseReturnStmt();
+
   void addInitializer(VarDecl* var);
 
   Expr* parseExpr();

@@ -1,7 +1,5 @@
 #include "jcc/parser.h"
 
-#include <range/v3/view/concat.hpp>
-
 #include "jcc/common.h"
 #include "jcc/decl.h"
 #include "jcc/expr.h"
@@ -254,23 +252,26 @@ std::unique_ptr<Type> Parser::parseArrayDimensions(std::unique_ptr<Type> type) {
   jcc_unreachable();
 }
 
-Expr* Parser::parseExpr() { return nullptr; }
+Expr* Parser::parseExpr() {
+  Expr* expr = parseAssignmentExpr();
+  return parseRhsOfBinaryExpr(expr);
+}
 
+Stmt* Parser::parseReturnStmt() {
+  Expr* returnExpr = nullptr;
+  if (currentToken().is<TokenKind::Semi>()) {
+    consumeToken();
+  } else {
+    returnExpr = parseExpr();
+    assert(currentToken().is<TokenKind::Semi>());
+    consumeToken();
+  }
+  return ReturnStatement::create(getASTContext(), SourceRange(), returnExpr);
+}
 Stmt* Parser::parseStatement() {
   if (currentToken().is<TokenKind::Return>()) {
     consumeToken();
-    Expr* returnExpr;
-    if (currentToken().is<TokenKind::Semi>()) {
-      // Return nothing.
-      returnExpr = nullptr;
-    } else {
-      returnExpr = parseExpr();
-      // Assume only a semi left.
-      consumeToken();
-    }
-
-    // Add type?
-    return ReturnStatement::create(ctx_, SourceRange(), returnExpr);
+    return parseReturnStmt();
   }
 
   if (currentToken().is<TokenKind::If>()) {
