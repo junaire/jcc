@@ -14,3 +14,5 @@ target_link_libraries(
     test_lexer
     ${CONAN_LIBS}
 )
+
+add_test(NAME test_lexer COMMAND  ${CMAKE_BINARY_DIR}/bin/test_lexer)
