@@ -391,15 +391,19 @@ Token Lexer::LexIdentifierOrKeyword() {
 }
 
 Token Lexer::LexStringLiteral() {
-  Advance();
+  Advance();  // Eat the begin '"'
   SourceLocation loc{line_, column_, GetOffset()};
   const char* data = buffer_ptr_;
-  Token::TokenSize len = 1;
+  Token::TokenSize len = 0;
 
-  while (!TryConsume('"')) {
+  while (true) {
+    if (Peek() == '"') {
+      Advance();  // Eat the end '"'
+      break;
+    }
     len++;
+    Advance();
   }
-  Advance();
 
   return Token{TokenKind::StringLiteral, data, len, loc};
 }

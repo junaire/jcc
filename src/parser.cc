@@ -4,6 +4,7 @@
 #include "jcc/decl.h"
 #include "jcc/expr.h"
 #include "jcc/lexer.h"
+#include "jcc/source_location.h"
 #include "jcc/token.h"
 #include "jcc/type.h"
 
@@ -324,11 +325,8 @@ Stmt* Parser::ParseCompoundStmt() {
                                             ParseFunction(declarator)));
         continue;
       }
-      if (decl_spec.IsExtern()) {
-        stmt->AddStmt(DeclStatement::Create(GetASTContext(), SourceRange(),
-                                            ParseGlobalVariables(declarator)));
-        continue;
-      }
+      stmt->AddStmt(DeclStatement::Create(GetASTContext(), SourceRange(),
+                                          ParseGlobalVariables(declarator)));
     } else {
       stmt->AddStmt(ParseStatement());
     }
@@ -404,6 +402,12 @@ Expr* Parser::ParseCastExpr() {
       int value = std::stoi(CurrentToken().GetData());
       ConsumeToken();
       result = IntergerLiteral::Create(GetASTContext(), SourceRange(), value);
+      break;
+    }
+    case TokenKind::StringLiteral: {
+      result = StringLiteral::Create(GetASTContext(), SourceRange(),
+                                     CurrentToken().GetAsString());
+      ConsumeToken();
       break;
     }
     default:

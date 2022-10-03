@@ -56,7 +56,7 @@ class FunctionDecl : public Decl {
   std::string name_;
   std::vector<VarDecl*> args_;
   std::unique_ptr<Type> return_type_;
-  Stmt* body_{nullptr};
+  Stmt* body_ = nullptr;
 
   FunctionDecl(SourceRange loc, std::string name, std::vector<VarDecl*> args,
                std::unique_ptr<Type> returnTy, Stmt* body)

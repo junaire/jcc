@@ -38,12 +38,12 @@ class Expr : public Stmt {
 class StringLiteral : public Expr {
   std::string literal_;
 
-  StringLiteral(SourceRange loc, const char* literal)
-      : Expr(std::move(loc)), literal_(literal) {}
+  StringLiteral(SourceRange loc, std::string literal)
+      : Expr(std::move(loc)), literal_(std::move(literal)) {}
 
  public:
   static StringLiteral* Create(ASTContext& ctx, SourceRange loc,
-                               const char* literal);
+                               std::string literal);
 
   [[nodiscard]] std::string GetValue() const { return literal_; }
   void dump(int indent) const override;
