@@ -166,21 +166,21 @@ enum class BinaryOperatorKind {
 
 class BinaryExpr : public Expr {
   BinaryOperatorKind kind_;
-  Expr* lhs_{nullptr};
-  Expr* rhs_{nullptr};
+  Expr* lhs_ = nullptr;
+  Expr* rhs_ = nullptr;
 
   BinaryExpr(SourceRange loc, BinaryOperatorKind kind, Expr* lhs, Expr* rhs)
       : Expr(std::move(loc)), kind_(kind), lhs_(lhs), rhs_(rhs) {}
 
  public:
-  static BinaryExpr* create(ASTContext& ctx, SourceRange loc,
+  static BinaryExpr* Create(ASTContext& ctx, SourceRange loc,
                             BinaryOperatorKind kind, Expr* lhs, Expr* rhs);
 
-  [[nodiscard]] BinaryOperatorKind getKind() const { return kind_; }
+  [[nodiscard]] BinaryOperatorKind GetKind() const { return kind_; }
 
-  Expr* getLhs() { return lhs_; }
+  Expr* GetLhs() { return lhs_; }
 
-  Expr* getRhs() { return rhs_; }
+  Expr* GetRhs() { return rhs_; }
 
   void dump(int indent) const override;
 };

@@ -1,5 +1,7 @@
 #include <fmt/format.h>
 
+#include <string_view>
+
 #include "jcc/ast_context.h"
 #include "jcc/decl.h"
 #include "jcc/expr.h"
@@ -124,13 +126,34 @@ UnaryExpr* UnaryExpr::create(ASTContext& ctx, SourceRange loc,
 
 void UnaryExpr::dump(int indent) const { jcc_unreachable(); }
 
-BinaryExpr* BinaryExpr::create(ASTContext& ctx, SourceRange loc,
+BinaryExpr* BinaryExpr::Create(ASTContext& ctx, SourceRange loc,
                                BinaryOperatorKind kind, Expr* lhs, Expr* rhs) {
   void* mem = ctx.Allocate<BinaryExpr>();
   return new (mem) BinaryExpr{std::move(loc), kind, lhs, rhs};
 }
 
-void BinaryExpr::dump(int indent) const { jcc_unreachable(); }
+static std::string_view PrintBinaryOpKind(BinaryOperatorKind kind) {
+  switch (kind) {
+    case BinaryOperatorKind::Plus:
+      return "+";
+    case BinaryOperatorKind::Minus:
+      return "-";
+    case BinaryOperatorKind::Multiply:
+      return "*";
+    case BinaryOperatorKind::Divide:
+      return "/";
+    case BinaryOperatorKind::Greater:
+      return ">";
+    case BinaryOperatorKind::Less:
+      return "<";
+  }
+}
+void BinaryExpr::dump(int indent) const {
+  InsertIndent(indent);
+  fmt::print("BinaryExpr({}):\n", PrintBinaryOpKind(kind_));
+  lhs_->dump(indent + 2);
+  rhs_->dump(indent + 2);
+}
 
 ArraySubscriptExpr* ArraySubscriptExpr::create(ASTContext& ctx, SourceRange loc,
                                                Expr* lhs, Expr* rhs) {

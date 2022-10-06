@@ -6,6 +6,7 @@
 
 #include "jcc/ast_context.h"
 #include "jcc/declarator.h"
+#include "jcc/expr.h"
 #include "jcc/token.h"
 
 class Decl;
@@ -20,6 +21,24 @@ struct Scope {
   Parser& self;
   std::unordered_map<std::string, Decl*> vars;
   std::unordered_map<std::string, Decl*> tags;
+};
+
+enum class BinOpPreLevel {
+  Unknown = 0,          // Not binary operator.
+  Comma = 1,            // ,
+  Assignment = 2,       // =, *=, /=, %=, +=, -=, <<=, >>=, &=, ^=, |=
+  Conditional = 3,      // ?
+  LogicalOr = 4,        // ||
+  LogicalAnd = 5,       // &&
+  InclusiveOr = 6,      // |
+  ExclusiveOr = 7,      // ^
+  And = 8,              // &
+  Equality = 9,         // ==, !=
+  Relational = 10,      //  >=, <=, >, <
+  Spaceship = 11,       // <=>
+  Shift = 12,           // <<, >>
+  Additive = 13,        // -, +
+  Multiplicative = 14,  // *, /, %
 };
 
 class Parser {
@@ -50,7 +69,7 @@ class Parser {
 
   Expr* ParseCastExpr();
 
-  Expr* ParseRhsOfBinaryExpr(Expr* lhs);
+  Expr* ParseRhsOfBinaryExpr(Expr* lhs, BinOpPreLevel min_prec);
 
   Decl* ParseFunction(Declarator& declarator);
 
@@ -70,7 +89,7 @@ class Parser {
 
  private:
   Token CurrentToken();
-  void ConsumeToken();
+  Token ConsumeToken();
   void MustConsumeToken(TokenKind expected);
   bool TryConsumeToken(TokenKind expected);
   Token NextToken();

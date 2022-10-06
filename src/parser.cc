@@ -8,17 +8,67 @@
 #include "jcc/token.h"
 #include "jcc/type.h"
 
+static BinOpPreLevel GetBinOpPrecedence(TokenKind Kind) {
+  switch (Kind) {
+    default:
+    case TokenKind::Greater:
+      return BinOpPreLevel::Unknown;
+    case TokenKind::Comma:
+      return BinOpPreLevel::Comma;
+    case TokenKind::Equal:
+    case TokenKind::StarEqual:
+    case TokenKind::SlashEqual:
+    case TokenKind::PercentEqual:
+    case TokenKind::PlusEqual:
+    case TokenKind::MinusEqual:
+    case TokenKind::LeftShiftEqual:
+    case TokenKind::RightShiftEqual:
+    case TokenKind::AmpersandEqual:
+    case TokenKind::CarretEqual:
+    case TokenKind::PipeEqual:
+      return BinOpPreLevel::Assignment;
+    case TokenKind::Question:
+      return BinOpPreLevel::Conditional;
+    case TokenKind::PipePipe:
+      return BinOpPreLevel::LogicalOr;
+    // case TokenKind::CarretCarret:
+    case TokenKind::AmpersandAmpersand:
+      return BinOpPreLevel::LogicalAnd;
+    case TokenKind::Pipe:
+      return BinOpPreLevel::InclusiveOr;
+    case TokenKind::Carret:
+      return BinOpPreLevel::ExclusiveOr;
+    case TokenKind::Ampersand:
+      return BinOpPreLevel::And;
+    case TokenKind::EqualEqual:
+      return BinOpPreLevel::Equality;
+    case TokenKind::LessEqual:
+    case TokenKind::Less:
+    case TokenKind::GreaterEqual:
+      return BinOpPreLevel::Relational;
+    case TokenKind::LeftShift:
+      return BinOpPreLevel::Shift;
+    case TokenKind::Plus:
+    case TokenKind::Minus:
+      return BinOpPreLevel::Additive;
+    case TokenKind::Percent:
+    case TokenKind::Slash:
+    case TokenKind::Star:
+      return BinOpPreLevel::Multiplicative;
+  }
+}
 Parser::Parser(Lexer& lexer) : lexer_(lexer) { token_ = lexer_.Lex(); }
 
 Token Parser::CurrentToken() { return token_; }
 
-void Parser::ConsumeToken() {
+Token Parser::ConsumeToken() {
   if (cache_) {
     token_ = *cache_;
     cache_ = std::nullopt;
   } else {
     token_ = lexer_.Lex();
   }
+  return token_;
 }
 
 void Parser::MustConsumeToken(TokenKind expected) {
@@ -266,7 +316,7 @@ std::unique_ptr<Type> Parser::ParseArrayDimensions(std::unique_ptr<Type> type) {
 
 Expr* Parser::ParseExpr() {
   Expr* expr = ParseAssignmentExpr();
-  return ParseRhsOfBinaryExpr(expr);
+  return ParseRhsOfBinaryExpr(expr, BinOpPreLevel::Assignment);
 }
 
 Stmt* Parser::ParseReturnStmt() {
@@ -390,13 +440,16 @@ std::vector<Decl*> Parser::ParseGlobalVariables(Declarator& declarator) {
 Expr* Parser::ParseAssignmentExpr() {
   Expr* lhs = ParseCastExpr();
 
-  return ParseRhsOfBinaryExpr(lhs);
+  return ParseRhsOfBinaryExpr(lhs, BinOpPreLevel::Assignment);
 }
 
 Expr* Parser::ParseCastExpr() {
   TokenKind kind = CurrentToken().GetKind();
   Expr* result;
 
+  // TODO(Jun): It doesn't really parse a cast expression for now.
+  // TO do that, we need a flag to indicate the parsing kind, like:
+  // UnaryExpr, CastExpr, PrimaryExpr...
   switch (kind) {
     case TokenKind::NumericConstant: {
       int value = std::stoi(CurrentToken().GetData());
@@ -416,8 +469,48 @@ Expr* Parser::ParseCastExpr() {
   return result;
 }
 
-Expr* Parser::ParseRhsOfBinaryExpr(Expr* lhs) {
-  // TODO(Jun): Not fully implemented!
+static BinaryOperatorKind ConvertOpToKind(TokenKind kind) {
+  switch (kind) {
+    case TokenKind::Plus:
+      return BinaryOperatorKind::Plus;
+    case TokenKind::Minus:
+      return BinaryOperatorKind::Minus;
+    case TokenKind::Star:
+      return BinaryOperatorKind::Multiply;
+    case TokenKind::Slash:
+      return BinaryOperatorKind::Divide;
+    case TokenKind::Greater:
+      return BinaryOperatorKind::Greater;
+    case TokenKind::Less:
+      return BinaryOperatorKind::Less;
+    default:
+      jcc_unreachable();
+  }
+}
+
+Expr* Parser::ParseRhsOfBinaryExpr(Expr* lhs, BinOpPreLevel min_prec) {
+  BinOpPreLevel next_tok_prec = GetBinOpPrecedence(CurrentToken().GetKind());
+  while (true) {
+    if (next_tok_prec < min_prec) {
+      return lhs;
+    }
+    Token op_tok = CurrentToken();  // Save the operator.
+    ConsumeToken();
+    // FIXME: deal with cond ? a : b
+    Expr* rhs;
+    rhs = ParseCastExpr();
+
+    BinOpPreLevel this_tok_prec = next_tok_prec;  // Save this.
+    next_tok_prec = GetBinOpPrecedence(CurrentToken().GetKind());
+
+    bool is_right_assoc = this_tok_prec == BinOpPreLevel::Conditional ||
+                          this_tok_prec == BinOpPreLevel::Assignment;
+
+    Expr* binary_expr =
+        BinaryExpr::Create(GetASTContext(), SourceRange(),
+                           ConvertOpToKind(op_tok.GetKind()), lhs, rhs);
+    lhs = binary_expr;
+  }
   return lhs;
 }
 
@@ -439,7 +532,7 @@ std::vector<Decl*> Parser::ParseFunctionOrVar(DeclSpec& decl_spec) {
 }
 
 std::vector<Decl*> Parser::ParseTranslateUnit() {
-  std::vector<Decl*> topDecls;
+  std::vector<Decl*> top_decls;
   while (!CurrentToken().Is<TokenKind::Eof>()) {
     DeclSpec decl_spec = ParseDeclSpec();
     // TODO(Jun): Handle typedefs
@@ -448,8 +541,8 @@ std::vector<Decl*> Parser::ParseTranslateUnit() {
     }
 
     std::vector<Decl*> decls = ParseFunctionOrVar(decl_spec);
-    topDecls.insert(topDecls.end(), decls.begin(), decls.end());
+    top_decls.insert(top_decls.end(), decls.begin(), decls.end());
   }
 
-  return topDecls;
+  return top_decls;
 }
