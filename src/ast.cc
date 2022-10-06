@@ -3,6 +3,7 @@
 #include <string_view>
 
 #include "jcc/ast_context.h"
+#include "jcc/common.h"
 #include "jcc/decl.h"
 #include "jcc/expr.h"
 #include "jcc/stmt.h"
@@ -14,10 +15,9 @@ static void InsertIndent(int n) {
 }
 
 VarDecl* VarDecl::Create(ASTContext& ctx, SourceRange loc, Stmt* init,
-                         std::unique_ptr<Type> type, std::string name) {
+                         Type* type, std::string name) {
   void* mem = ctx.Allocate<VarDecl>();
-  return new (mem)
-      VarDecl{std::move(loc), init, std::move(type), std::move(name)};
+  return new (mem) VarDecl{std::move(loc), init, type, std::move(name)};
 }
 
 void VarDecl::dump(int indent) const {
@@ -28,10 +28,10 @@ void VarDecl::dump(int indent) const {
 
 FunctionDecl* FunctionDecl::Create(ASTContext& ctx, SourceRange loc,
                                    std::string name, std::vector<VarDecl*> args,
-                                   std::unique_ptr<Type> returnTy, Stmt* body) {
+                                   Type* return_type, Stmt* body) {
   void* mem = ctx.Allocate<FunctionDecl>();
   return new (mem) FunctionDecl{std::move(loc), std::move(name),
-                                std::move(args), std::move(returnTy), body};
+                                std::move(args), return_type, body};
 }
 
 void FunctionDecl::dump(int indent) const {

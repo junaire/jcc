@@ -1,5 +1,6 @@
 #pragma once
 
+#include "jcc/ast_context.h"
 #include "jcc/type.h"
 
 class DeclSpec {
@@ -35,7 +36,7 @@ class DeclSpec {
 
   enum class TypeSpecSign { Unspecified, Signed, Unsigned };
 
-  DeclSpec() = default;
+  explicit DeclSpec(ASTContext& ctx) : ctx_(ctx) {}
 
   [[nodiscard]] StorageClassSpec GetStorageClassSpec() const { return SCS; }
 
@@ -63,20 +64,20 @@ class DeclSpec {
 
   void setTypeSpecSign(TypeSpecSign sign) { TSS = sign; }
 
-  void SetType(std::unique_ptr<Type> type) { type_ = std::move(type); }
+  void SetType(Type* type) { type_ = type; }
 
   void GenerateType() {
     // What if it's a user-defined type?
     switch (GetTypeSpecWidth()) {
       case TypeSpecWidth::Short: {
-        bool isUnsigned = (GetTypeSpecSign() == TypeSpecSign::Unsigned);
-        type_ = Type::createShortType(isUnsigned);
+        bool is_unsigned = (GetTypeSpecSign() == TypeSpecSign::Unsigned);
+        type_ = is_unsigned ? ctx_.GetUShortType() : ctx_.GetShortType();
         return;
       }
       case TypeSpecWidth::Long:
       case TypeSpecWidth::LongLong: {
-        bool isUnsigned = (GetTypeSpecSign() == TypeSpecSign::Unsigned);
-        type_ = Type::createLongType(isUnsigned);
+        bool is_unsigned = GetTypeSpecSign() == TypeSpecSign::Unsigned;
+        type_ = is_unsigned ? ctx_.GetULongType() : ctx_.GetLongType();
         return;
       }
       default:
@@ -85,27 +86,27 @@ class DeclSpec {
 
     switch (GetTypeSpecKind()) {
       case TSK_Void:
-        type_ = Type::createVoidType();
+        type_ = ctx_.GetVoidType();
         return;
       case TSK_Bool:
-        type_ = Type::createBoolType();
+        type_ = ctx_.GetBoolType();
         return;
       case TSK_Char: {
-        bool isUnsigned = (GetTypeSpecSign() == TypeSpecSign::Unsigned);
-        type_ = Type::createCharType(isUnsigned);
+        bool is_unsigned = GetTypeSpecSign() == TypeSpecSign::Unsigned;
+        type_ = is_unsigned ? ctx_.GetUCharType() : ctx_.GetCharType();
         return;
       }
       case TSK_Int: {
-        bool isUnsigned = (GetTypeSpecSign() == TypeSpecSign::Unsigned);
-        type_ = Type::createIntType(isUnsigned);
+        bool is_unsigned = GetTypeSpecSign() == TypeSpecSign::Unsigned;
+        type_ = is_unsigned ? ctx_.GetUIntType() : ctx_.GetIntType();
         break;
       }
       case TSK_Float:
-        type_ = Type::createFloatType();
+        type_ = ctx_.GetFloatType();
         break;
       case TSK_Double: {
-        bool isLong = (GetTypeSpecWidth() == TypeSpecWidth::Long);
-        type_ = Type::createDoubleType(isLong);
+        bool is_long = GetTypeSpecWidth() == TypeSpecWidth::Long;
+        type_ = is_long ? ctx_.GetULongType() : ctx_.GetLongType();
         break;
       }
       default:
@@ -113,7 +114,7 @@ class DeclSpec {
     }
   }
 
-  std::unique_ptr<Type> GetType() { return std::move(type_); }
+  Type* GetType() { return type_; }
 
   [[nodiscard]] bool IsTypedef() const {
     return SCS == StorageClassSpec::Typedef;
@@ -149,14 +150,15 @@ class DeclSpec {
 
   [[nodiscard]] bool IsVolatile() const { return TQ == TypeQual::Volatile; }
 
- private:
+  // FIXME: Naming conversion?
   StorageClassSpec SCS;
   TypeQual TQ;
   FunctionSpec FS;
   TypeSpecKind TSK = TSK_Int;  // Yeah, implicit int, so evil
   TypeSpecWidth TSW = TypeSpecWidth::Unspecified;
   TypeSpecSign TSS = TypeSpecSign::Unspecified;
-  std::unique_ptr<Type> type_;
+  Type* type_ = nullptr;
+  ASTContext& ctx_;
 };
 
 class Declarator {
@@ -168,9 +170,9 @@ class Declarator {
  public:
   explicit Declarator(DeclSpec& decl_spec) : decl_spec_(decl_spec) {}
 
-  DeclSpec& getDeclSpec() { return decl_spec_; }
+  DeclSpec& GetDeclSpec() { return decl_spec_; }
 
-  std::unique_ptr<Type> GetBaseType() {
+  Type* GetBaseType() {
     return decl_spec_.GetType();
     ;
   }
@@ -179,9 +181,7 @@ class Declarator {
     return decl_spec_.type_->GetKind();
   }
 
-  void setType(std::unique_ptr<Type> type) {
-    decl_spec_.SetType(std::move(type));
-  }
+  void SetType(Type* type) { decl_spec_.SetType(type); }
 
   std::string GetName() { return name_.GetAsString(); }
 };

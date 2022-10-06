@@ -1,14 +1,12 @@
 #pragma once
 
-#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
 
-#include "jcc/ast_context.h"
 #include "jcc/source_location.h"
-#include "jcc/type.h"
 
+class Type;
 class Stmt;
 class ASTContext;
 
@@ -25,23 +23,22 @@ class Decl {
 
 class VarDecl : public Decl {
   Stmt* init_{nullptr};
-  std::unique_ptr<Type> type_;
+  Type* type_;
   std::string name_;
 
-  VarDecl(SourceRange loc, Stmt* init, std::unique_ptr<Type> type,
-          std::string name)
+  VarDecl(SourceRange loc, Stmt* init, Type* type, std::string name)
       : Decl(std::move(loc)),
         init_(init),
-        type_(std::move(type)),
+        type_(type),
         name_(std::move(name)) {}
 
  public:
   static VarDecl* Create(ASTContext& ctx, SourceRange loc, Stmt* init,
-                         std::unique_ptr<Type> type, std::string name);
+                         Type* type, std::string name);
 
   [[nodiscard]] std::string_view GetName() const { return name_; }
 
-  Type* GetType() { return type_.get(); }
+  Type* GetType() { return type_; }
 
   Stmt* GetInit() { return init_; }
 
@@ -55,25 +52,25 @@ class VarDecl : public Decl {
 class FunctionDecl : public Decl {
   std::string name_;
   std::vector<VarDecl*> args_;
-  std::unique_ptr<Type> return_type_;
+  Type* return_type_;
   Stmt* body_ = nullptr;
 
   FunctionDecl(SourceRange loc, std::string name, std::vector<VarDecl*> args,
-               std::unique_ptr<Type> returnTy, Stmt* body)
+               Type* return_type, Stmt* body)
       : Decl(std::move(loc)),
         name_(std::move(name)),
         args_(std::move(args)),
-        return_type_(std::move(returnTy)),
+        return_type_(return_type),
         body_(body) {}
 
  public:
   static FunctionDecl* Create(ASTContext& ctx, SourceRange loc,
                               std::string name, std::vector<VarDecl*> args,
-                              std::unique_ptr<Type> returnTy, Stmt* body);
+                              Type* return_type, Stmt* body);
 
   [[nodiscard]] std::string_view GetName() const { return name_; }
 
-  Type* GetType() { return return_type_.get(); }
+  Type* GetReturnType() { return return_type_; }
 
   Stmt* GetBody() { return body_; }
 

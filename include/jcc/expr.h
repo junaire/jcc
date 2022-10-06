@@ -14,7 +14,7 @@ class ASTContext;
 // computation of a value, or that designates an object or a function, or that
 // generates side effects, or that performs a combination thereof.
 class Expr : public Stmt {
-  std::unique_ptr<Type> type_ = nullptr;
+  Type* type_ = nullptr;
 
  protected:
   explicit Expr(SourceRange loc) : Stmt(std::move(loc)) {}
@@ -25,7 +25,7 @@ class Expr : public Stmt {
     return static_cast<Ty*>(this);
   }
 
-  Type* GetType() { return type_.get(); }
+  Type* GetType() { return type_; }
 
   // TODO(Jun): What's the signature?
   void SetType() {}

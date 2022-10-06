@@ -1,5 +1,7 @@
 #include "jcc/type.h"
 
+#include "jcc/ast_context.h"
+
 bool Type::IsCompatible(const Type& lhs, const Type& rhs) {
   if (&lhs == &rhs) {
     return true;
@@ -37,78 +39,87 @@ bool Type::IsCompatible(const Type& lhs, const Type& rhs) {
   return false;
 }
 
-std::unique_ptr<Type> Type::CreatePointerType(std::unique_ptr<Type> base) {
-  std::unique_ptr<PointerType> type =
-      std::make_unique<PointerType>(TypeKind::Ptr, 8, 8);
-  type->SetBase(std::move(base));
+Type* Type::CreateEnumType(ASTContext& ctx) {
+  void* mem = ctx.Allocate<Type>();
+  return new (mem) Type(TypeKind::Enum, 4, 4);
+}
+
+#define INIT_TYPE(KIND, SIZE, ALIGN) \
+  void* mem = ctx.Allocate<Type>();  \
+  return new (mem) Type(KIND, SIZE, ALIGN);
+
+Type* Type::CreateVoidType(ASTContext& ctx) { INIT_TYPE(TypeKind::Void, 2, 1); }
+
+Type* Type::CreateCharType(ASTContext& ctx, bool is_unsigned) {
+  void* mem = ctx.Allocate<Type>();
+  Type* type = new (mem) Type(TypeKind::Char, 1, 1);
+  type->SetUnsigned(is_unsigned);
+  return type;
+}
+
+Type* Type::CreateShortType(ASTContext& ctx, bool is_unsigned) {
+  void* mem = ctx.Allocate<Type>();
+  Type* type = new (mem) Type(TypeKind::Short, 2, 2);
+  type->SetUnsigned(is_unsigned);
+  return type;
+}
+
+Type* Type::CreateBoolType(ASTContext& ctx) {
+  void* mem = ctx.Allocate<Type>();
+  Type* type = new (mem) Type(TypeKind::Bool, 1, 1);
+  return type;
+}
+
+Type* Type::CreateIntType(ASTContext& ctx, bool is_unsigned) {
+  void* mem = ctx.Allocate<Type>();
+  Type* type = new (mem) Type(TypeKind::Int, 4, 4);
+  type->SetUnsigned(is_unsigned);
+  return type;
+}
+
+Type* Type::CreateLongType(ASTContext& ctx, bool is_unsigned) {
+  void* mem = ctx.Allocate<Type>();
+  Type* type = new (mem) Type(TypeKind::Long, 8, 8);
+  type->SetUnsigned(is_unsigned);
+  return type;
+}
+
+Type* Type::CreateFloatType(ASTContext& ctx) {
+  INIT_TYPE(TypeKind::Float, 4, 4);
+}
+
+Type* Type::CreateDoubleType(ASTContext& ctx, bool is_long) {
+  int size_and_alignment = is_long ? 16 : 8;
+  INIT_TYPE(TypeKind::Double, size_and_alignment, size_and_alignment);
+}
+#undef INIT_TYPE
+
+Type* Type::CreatePointerType(ASTContext& ctx, Type* base) {
+  void* mem = ctx.Allocate<PointerType>();
+  auto* type = new (mem) PointerType(TypeKind::Ptr, 8, 8);
+  type->SetBase(base);
   type->SetUnsigned();
   return type;
 }
 
-std::unique_ptr<Type> Type::createEnumType() {
-  return std::make_unique<Type>(TypeKind::Enum, 4, 4);
-}
+Type* Type::CreateFuncType(ASTContext& ctx, Type* return_type) {
+  void* mem = ctx.Allocate<FunctionType>();
+  auto* type = new (mem) FunctionType(TypeKind::Func, 1, 1);
 
-std::unique_ptr<Type> Type::createStructType() {
-  return std::make_unique<Type>(TypeKind::Struct, 0, 1);
-}
-
-#define INIT_TYPE(KIND, SIZE, ALIGN) std::make_unique<Type>(KIND, SIZE, ALIGN);
-
-std::unique_ptr<Type> Type::createVoidType() {
-  return INIT_TYPE(TypeKind::Void, 2, 1);
-}
-
-std::unique_ptr<Type> Type::createBoolType() {
-  return INIT_TYPE(TypeKind::Bool, 1, 1);
-}
-
-std::unique_ptr<Type> Type::createCharType(bool is_unsigned) {
-  std::unique_ptr<Type> type = INIT_TYPE(TypeKind::Char, 1, 1);
-  type->SetUnsigned(is_unsigned);
+  type->SetReturnType(return_type);
   return type;
 }
 
-std::unique_ptr<Type> Type::createShortType(bool is_unsigned) {
-  std::unique_ptr<Type> type = INIT_TYPE(TypeKind::Short, 2, 2);
-  type->SetUnsigned(is_unsigned);
+Type* Type::CreateArrayType(ASTContext& ctx, Type* base, std::size_t len) {
+  void* mem = ctx.Allocate<ArrayType>();
+  auto* type = new (mem)
+      ArrayType(TypeKind::Array, base->GetSize() * len, base->GetAlignment());
+  type->SetBase(base);
+  type->SetLength(len);
   return type;
 }
 
-std::unique_ptr<Type> Type::createIntType(bool is_unsigned) {
-  std::unique_ptr<Type> type = INIT_TYPE(TypeKind::Int, 4, 4);
-  type->SetUnsigned(is_unsigned);
-  return type;
-}
-
-std::unique_ptr<Type> Type::createLongType(bool is_unsigned) {
-  std::unique_ptr<Type> type = INIT_TYPE(TypeKind::Long, 8, 8);
-  type->SetUnsigned(is_unsigned);
-  return type;
-}
-
-std::unique_ptr<Type> Type::createFloatType() {
-  return INIT_TYPE(TypeKind::Float, 4, 4);
-}
-
-std::unique_ptr<Type> Type::createDoubleType(bool is_long) {
-  int sizeAndAlignment = is_long ? 16 : 8;
-  return INIT_TYPE(TypeKind::Double, sizeAndAlignment, sizeAndAlignment);
-}
-#undef INIT_TYPE
-
-std::unique_ptr<Type> Type::CreateFuncType(std::unique_ptr<Type> return_type) {
-  std::unique_ptr<Type> type =
-      std::make_unique<FunctionType>(TypeKind::Func, 1, 1);
-  type->AsType<FunctionType>()->setReturnType(std::move(return_type));
-  return type;
-}
-
-std::unique_ptr<Type> Type::CreateArrayType(std::unique_ptr<Type> base,
-                                            std::size_t len) {
-  std::unique_ptr<Type> type = std::make_unique<ArrayType>(
-      TypeKind::Array, base->GetSize() * len, base->GetAlignment());
-  type->AsType<ArrayType>()->SetBase(std::move(base));
-  type->AsType<ArrayType>()->SetLength(len);
-  return type;
+Type* Type::CreateStructType(ASTContext& ctx) {
+  void* mem = ctx.Allocate<StructType>();
+  return new (mem) StructType(TypeKind::Struct, 0, 1);
 }

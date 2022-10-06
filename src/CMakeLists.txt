@@ -1,5 +1,6 @@
 SET(SOURCES
 	ast.cc
+	ast_context.cc
 	main.cc
 	lexer.cc
 	parser.cc

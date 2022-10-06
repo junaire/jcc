@@ -15,9 +15,10 @@ class ASTContext;
 class Stmt {
   SourceRange range_;
 
- public:
+ protected:
   explicit Stmt(SourceRange rng) : range_(std::move(rng)) {}
 
+ public:
   SourceRange GetSourceRange() { return range_; }
 
   template <typename Ty>
@@ -34,10 +35,10 @@ class LabeledStatement : public Stmt {
   LabelDecl* label_;
   Stmt* sub_stmt_ = nullptr;
 
- public:
   explicit LabeledStatement(SourceRange loc, LabelDecl* label, Stmt* subStmt)
       : Stmt(std::move(loc)), label_(label), sub_stmt_(subStmt) {}
 
+ public:
   Stmt* GetSubStmt() { return sub_stmt_; }
   LabelDecl* GetLabel() { return label_; }
   void dump(int indent) const override;
@@ -58,7 +59,7 @@ class CompoundStatement : public Stmt {
     return stmts_[index];
   }
 
-  void AddStmt(Stmt* stmt) { stmts_.emplace_back(stmt); }
+  void AddStmt(Stmt* stmt) { stmts_.push_back(stmt); }
   void dump(int indent) const override;
 };
 
@@ -89,10 +90,10 @@ class IfStatement : public Stmt {
 class SwitchStatement : public Stmt {
   std::vector<Stmt*> cases_;
 
- public:
   explicit SwitchStatement(SourceRange loc, std::vector<Stmt*> cases)
       : Stmt(std::move(loc)), cases_(std::move(cases)) {}
 
+ public:
   [[nodiscard]] auto GetSize() const { return cases_.size(); }
 
   Stmt* GetStmt(std::size_t index) {
@@ -106,10 +107,10 @@ class WhileStatement : public Stmt {
   Expr* condition_{nullptr};
   Stmt* body_{nullptr};
 
- public:
   explicit WhileStatement(SourceRange loc, Expr* condition, Stmt* body)
       : Stmt(std::move(loc)), condition_(condition), body_(body) {}
 
+ public:
   Expr* GetCondition() { return condition_; }
   Stmt* GetBody() { return body_; }
   void dump(int indent) const override;
@@ -119,9 +120,10 @@ class DoStatement : public Stmt {
   Expr* condition_{nullptr};
   Stmt* body_{nullptr};
 
- public:
   explicit DoStatement(SourceRange loc, Expr* condition, Stmt* body)
       : Stmt(std::move(loc)), condition_(condition), body_(body) {}
+
+ public:
   Stmt* GetBody() { return body_; }
   Expr* GetCondition() { return condition_; }
   void dump(int indent) const override;
@@ -133,7 +135,6 @@ class ForStatement : public Stmt {
   Stmt* increment_{nullptr};
   Stmt* body_{nullptr};
 
- public:
   explicit ForStatement(SourceRange loc, Stmt* init, Stmt* condition,
                         Stmt* increment, Stmt* body)
       : Stmt(std::move(loc)),
@@ -142,6 +143,7 @@ class ForStatement : public Stmt {
         increment_(increment),
         body_(body) {}
 
+ public:
   Stmt* GetInit() { return init_; }
   Stmt* GetCondition() { return condition_; }
   Stmt* GetIncrement() { return increment_; }
@@ -153,27 +155,30 @@ class GotoStatement : public Stmt {
   LabelDecl* label_{nullptr};
   SourceRange goto_loc_;
 
- public:
   GotoStatement(SourceRange loc, LabelDecl* label, SourceRange goto_loc)
       : Stmt(std::move(loc)), label_(label), goto_loc_(std::move(goto_loc)) {}
+
+ public:
   void dump(int indent) const override;
 };
 
 class ContinueStatement : public Stmt {
   SourceRange continue_loc_;
 
- public:
   ContinueStatement(SourceRange loc, SourceRange continue_loc)
       : Stmt(std::move(loc)), continue_loc_(std::move(continue_loc)) {}
+
+ public:
   void dump(int indent) const override;
 };
 
 class BreakStatement : public Stmt {
   SourceRange breakLoc_;
 
- public:
   BreakStatement(SourceRange loc, SourceRange breakLoc)
       : Stmt(std::move(loc)), breakLoc_(std::move(breakLoc)) {}
+
+ public:
 };
 
 class ReturnStatement : public Stmt {

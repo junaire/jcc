@@ -1,12 +1,13 @@
 #pragma once
 
 #include <concepts>
-#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
 
 #include "jcc/token.h"
+
+class ASTContext;
 
 enum class Qualifiers {
   Unspecified,
@@ -42,7 +43,7 @@ class Type {
   int alignment_ = 0;
   bool unsigned_ = false;
 
-  Type* origin = nullptr;
+  Type* origin_ = nullptr;
 
   Token name_;
 
@@ -112,40 +113,38 @@ class Type {
 
   [[nodiscard]] bool IsUnsigned() const { return unsigned_; }
 
-  static std::unique_ptr<Type> CreatePointerType(std::unique_ptr<Type> base);
+  static Type* CreatePointerType(ASTContext& ctx, Type* base);
 
-  static std::unique_ptr<Type> createEnumType();
+  static Type* CreateEnumType(ASTContext& ctx);
 
-  static std::unique_ptr<Type> createStructType();
+  static Type* CreateStructType(ASTContext& ctx);
 
-  static std::unique_ptr<Type> createVoidType();
+  static Type* CreateVoidType(ASTContext& ctx);
 
-  static std::unique_ptr<Type> createBoolType();
+  static Type* CreateBoolType(ASTContext& ctx);
 
-  static std::unique_ptr<Type> createCharType(bool is_unsigned);
+  static Type* CreateCharType(ASTContext& ctx, bool is_unsigned);
 
-  static std::unique_ptr<Type> createShortType(bool is_unsigned);
+  static Type* CreateShortType(ASTContext& ctx, bool is_unsigned);
 
-  static std::unique_ptr<Type> createIntType(bool is_unsigned);
+  static Type* CreateIntType(ASTContext& ctx, bool is_unsigned);
 
-  static std::unique_ptr<Type> createLongType(bool is_unsigned);
+  static Type* CreateLongType(ASTContext& ctx, bool is_unsigned);
 
-  static std::unique_ptr<Type> createFloatType();
+  static Type* CreateFloatType(ASTContext& ctx);
 
-  static std::unique_ptr<Type> createDoubleType(bool is_long);
+  static Type* CreateDoubleType(ASTContext& ctx, bool is_long);
 
-  static std::unique_ptr<Type> CreateFuncType(
-      std::unique_ptr<Type> return_type);
+  static Type* CreateFuncType(ASTContext& ctx, Type* return_type);
 
-  static std::unique_ptr<Type> CreateArrayType(std::unique_ptr<Type> base,
-                                               std::size_t len);
+  static Type* CreateArrayType(ASTContext& ctx, Type* base, std::size_t len);
 
   static bool IsCompatible(const Type& lhs, const Type& rhs);
 };
 
 class ArrayType : public Type {
   std::size_t len_ = 0;
-  std::unique_ptr<Type> base_;
+  Type* base_;
 
  public:
   ArrayType() = default;
@@ -154,32 +153,32 @@ class ArrayType : public Type {
 
   [[nodiscard]] std::size_t GetLength() const { return len_; }
 
-  [[nodiscard]] Type* GetBase() const { return base_.get(); }
+  [[nodiscard]] Type* GetBase() const { return base_; }
 
-  void SetBase(std::unique_ptr<Type> base) { base_ = std::move(base); }
+  void SetBase(Type* base) { base_ = base; }
 
   void SetLength(std::size_t len) { len_ = len; }
 };
 
 class PointerType : public Type {
-  std::unique_ptr<Type> base_;
+  Type* base_;
 
  public:
   PointerType() = default;
   PointerType(TypeKind kind, int size, int alignment)
       : Type(kind, size, alignment) {}
 
-  std::unique_ptr<Type> GetBase() { return std::move(base_); }
+  Type* GetBase() { return base_; }
 
-  void SetBase(std::unique_ptr<Type> base) { base_ = std::move(base); }
+  void SetBase(Type* base) { base_ = base; }
 };
 
 class StructType : public Type {
   class StructMember : public Type {
-    std::unique_ptr<Type> type_;
+    Type* type_;
   };
 
-  std::vector<std::unique_ptr<StructMember>> members_;
+  std::vector<StructMember*> members_;
 
  public:
   StructType() = default;
@@ -189,28 +188,26 @@ class StructType : public Type {
 };
 
 class FunctionType : public Type {
-  std::unique_ptr<Type> returnType_;
-  std::vector<std::unique_ptr<Type>> paramTypes_;
+  Type* return_type_;
+  std::vector<Type*> param_types_;
 
  public:
   FunctionType() = default;
   FunctionType(TypeKind kind, int size, int alignment)
       : Type(kind, size, alignment) {}
 
-  std::unique_ptr<Type> GetReturnType() { return std::move(returnType_); }
+  Type* GetReturnType() { return return_type_; }
 
-  void setReturnType(std::unique_ptr<Type> type) {
-    returnType_ = std::move(type);
-  }
+  void SetReturnType(Type* type) { return_type_ = type; }
 
   Type* GetParamType(std::size_t idx) {
-    assert(idx < paramTypes_.size() && "No more params!");
-    return paramTypes_[idx].get();
+    assert(idx < param_types_.size() && "No more params!");
+    return param_types_[idx];
   }
 
-  void SetParams(std::vector<std::unique_ptr<Type>> params) {
-    paramTypes_ = std::move(params);
+  void SetParams(std::vector<Type*> params) {
+    param_types_ = std::move(params);
   }
 
-  [[nodiscard]] std::size_t GetParamSize() const { return paramTypes_.size(); }
+  [[nodiscard]] std::size_t GetParamSize() const { return param_types_.size(); }
 };

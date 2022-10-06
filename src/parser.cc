@@ -93,7 +93,7 @@ bool Parser::TryConsumeToken(TokenKind expected) {
   return false;
 }
 
-std::unique_ptr<Type> Parser::ParseTypename() {
+Type* Parser::ParseTypename() {
   DeclSpec declSpec = ParseDeclSpec();
   return nullptr;
 }
@@ -113,7 +113,7 @@ void Parser::ExitScope() { scopes_.pop_back(); }
 
 DeclSpec Parser::ParseDeclSpec() {
   using enum TokenKind;
-  DeclSpec decl_spec;
+  DeclSpec decl_spec(GetASTContext());
   while (CurrentToken().IsTypename()) {
     if (CurrentToken()
             .IsOneOf<Typedef, Static, Extern, Inline, DashThreadLocal>()) {
@@ -222,12 +222,11 @@ DeclSpec Parser::ParseDeclSpec() {
   return decl_spec;
 }
 
-std::unique_ptr<Type> Parser::ParsePointers(Declarator& declarator) {
+Type* Parser::ParsePointers(Declarator& declarator) {
   using enum TokenKind;
-  std::unique_ptr<Type> type = declarator.GetBaseType();
-  ;
+  Type* type = declarator.GetBaseType();
   while (TryConsumeToken(Star)) {
-    type = Type::CreatePointerType(std::move(type));
+    type = Type::CreatePointerType(GetASTContext(), type);
     while (CurrentToken().IsOneOf<Const, Volatile, Restrict>()) {
       ConsumeToken();
     }
@@ -235,26 +234,26 @@ std::unique_ptr<Type> Parser::ParsePointers(Declarator& declarator) {
   return type;
 }
 
-std::unique_ptr<Type> Parser::ParseTypeSuffix(std::unique_ptr<Type> type) {
+Type* Parser::ParseTypeSuffix(Type* type) {
   if (TryConsumeToken(TokenKind::LeftParen)) {
-    return ParseParams(std::move(type));
+    return ParseParams(type);
   }
   if (TryConsumeToken(TokenKind::LeftSquare)) {
-    return ParseArrayDimensions(std::move(type));
+    return ParseArrayDimensions(type);
   }
   return type;
 }
 
 Declarator Parser::ParseDeclarator(DeclSpec& decl_spec) {
   Declarator declarator(decl_spec);
-  std::unique_ptr<Type> type = ParsePointers(declarator);
+  Type* type = ParsePointers(declarator);
   if (TryConsumeToken(TokenKind::LeftParen)) {
-    DeclSpec dummy;
+    DeclSpec dummy(GetASTContext());
     ParseDeclarator(dummy);
     ConsumeToken();  // Eat ')'
-    std::unique_ptr<Type> suffixType = ParseTypeSuffix(std::move(type));
-    DeclSpec suffix;
-    suffix.SetType(std::move(suffixType));
+    Type* suffixType = ParseTypeSuffix(type);
+    DeclSpec suffix(GetASTContext());
+    suffix.SetType(suffixType);
     return ParseDeclarator(suffix);
   }
 
@@ -265,48 +264,49 @@ Declarator Parser::ParseDeclarator(DeclSpec& decl_spec) {
   }
   // FIXME: Looks like we'll gonna screw up here if the token is not an
   // identifier.
-  std::unique_ptr<Type> suffixType = ParseTypeSuffix(std::move(type));
+  Type* suffixType = ParseTypeSuffix(type);
   declarator.name_ = name;
-  declarator.setType(std::move(suffixType));
+  declarator.SetType(suffixType);
   return declarator;
 }
 
-std::unique_ptr<Type> Parser::ParseParams(std::unique_ptr<Type> type) {
+Type* Parser::ParseParams(Type* type) {
   if (CurrentToken().Is<TokenKind::Void>() &&
       NextToken().Is<TokenKind::RightParen>()) {
     SkipUntil(TokenKind::RightParen, /*skip_match=*/true);
-    return Type::CreateFuncType(std::move(type));
+    return Type::CreateFuncType(GetASTContext(), type);
   }
 
-  std::vector<std::unique_ptr<Type>> params;
+  std::vector<Type*> params;
   while (!CurrentToken().Is<TokenKind::RightParen>()) {
-    std::unique_ptr<Type> type;
+    Type* type;
     DeclSpec decl_spec = ParseDeclSpec();
     Declarator declarator = ParseDeclarator(decl_spec);
 
     if (declarator.GetTypeKind() == TypeKind::Array) {
       type = Type::CreatePointerType(
+          GetASTContext(),
           declarator.GetBaseType()->AsType<PointerType>()->GetBase());
       // FIXME: set name to type.
     } else if (declarator.GetTypeKind() == TypeKind::Func) {
-      type = Type::CreatePointerType(declarator.GetBaseType());
+      type = Type::CreatePointerType(GetASTContext(), declarator.GetBaseType());
     }
-    params.emplace_back(std::move(type));
+    params.push_back(type);
   }
 
-  std::unique_ptr<Type> function_type = Type::CreateFuncType(std::move(type));
+  Type* function_type = Type::CreateFuncType(GetASTContext(), type);
   function_type->AsType<FunctionType>()->SetParams(std::move(params));
   return function_type;
 }
 
-std::unique_ptr<Type> Parser::ParseArrayDimensions(std::unique_ptr<Type> type) {
+Type* Parser::ParseArrayDimensions(Type* type) {
   while (CurrentToken().IsOneOf<TokenKind::Static, TokenKind::Restrict>()) {
     ConsumeToken();
   }
 
   if (TryConsumeToken(TokenKind::RightParen)) {
-    std::unique_ptr<Type> arr_type = ParseTypeSuffix(std::move(type));
-    return Type::CreateArrayType(std::move(arr_type), -1);
+    Type* arr_type = ParseTypeSuffix(type);
+    return Type::CreateArrayType(GetASTContext(), arr_type, -1);
   }
 
   // cond ? A : B
@@ -350,8 +350,9 @@ std::vector<VarDecl*> Parser::CreateParams(FunctionType* type) {
   std::vector<VarDecl*> params;
   for (std::size_t idx = 0; idx < type->GetParamSize(); idx++) {
     Type* param_type = type->GetParamType(idx);
-    params.emplace_back(VarDecl::Create(GetASTContext(), SourceRange(), nullptr,
-                                        nullptr, param_type->GetName()));
+    // TODO(Jun): This doesn't work with parameters with names.
+    params.push_back(VarDecl::Create(GetASTContext(), SourceRange(), nullptr,
+                                     nullptr, param_type->GetName()));
   }
   return params;
 }
@@ -393,9 +394,7 @@ Decl* Parser::ParseFunction(Declarator& declarator) {
   }
   // Check redefinition
 
-  // FIXME: must capture the type first, or UAF happens!
-  std::unique_ptr<Type> base_type = declarator.GetBaseType();
-  auto* self = base_type->AsType<FunctionType>();
+  auto* self = declarator.GetBaseType()->AsType<FunctionType>();
 
   ScopeRAII scopeRAII(*this);
 
@@ -523,7 +522,7 @@ std::vector<Decl*> Parser::ParseFunctionOrVar(DeclSpec& decl_spec) {
 
   Declarator declarator = ParseDeclarator(decl_spec);
   if (declarator.GetTypeKind() == TypeKind::Func) {
-    decls.emplace_back(ParseFunction(declarator));
+    decls.push_back(ParseFunction(declarator));
   } else {
     std::vector<Decl*> vars = ParseGlobalVariables(declarator);
     decls.insert(decls.end(), vars.begin(), vars.end());

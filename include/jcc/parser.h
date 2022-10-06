@@ -73,15 +73,15 @@ class Parser {
 
   Decl* ParseFunction(Declarator& declarator);
 
-  std::unique_ptr<Type> ParseParams(std::unique_ptr<Type> type);
+  Type* ParseParams(Type* type);
 
-  std::unique_ptr<Type> ParseArrayDimensions(std::unique_ptr<Type> type);
+  Type* ParseArrayDimensions(Type* type);
 
-  std::unique_ptr<Type> ParseTypeSuffix(std::unique_ptr<Type> type);
+  Type* ParseTypeSuffix(Type* type);
 
-  std::unique_ptr<Type> ParsePointers(Declarator& declarator);
+  Type* ParsePointers(Declarator& declarator);
 
-  std::unique_ptr<Type> ParseTypename();
+  Type* ParseTypename();
 
   std::vector<VarDecl*> CreateParams(FunctionType* type);
 
