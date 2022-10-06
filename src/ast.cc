@@ -36,16 +36,17 @@ FunctionDecl* FunctionDecl::Create(ASTContext& ctx, SourceRange loc,
 
 void FunctionDecl::dump(int indent) const {
   InsertIndent(indent);
-  fmt::print("FunctionDecl\n");
-  fmt::print("  {}\n", GetName());
-  fmt::print("  Args({})\n", GetParamNum());
+  fmt::print("FunctionDecl: {}\n", GetName());
+  InsertIndent(indent + 2);
+  fmt::print("Args[{}]\n", GetParamNum());
   for (const auto* arg : args_) {
     arg->dump(indent + 2);
   }
   if (body_ != nullptr) {
     body_->dump(indent + 2);
   } else {
-    fmt::print("  Declaration\n");
+    InsertIndent(indent + 2);
+    fmt::print("Body(empty)\n");
   }
 }
 
@@ -59,9 +60,7 @@ RecordDecl* RecordDecl::Create(ASTContext& ctx, SourceRange loc,
 
 void RecordDecl::dump(int indent) const {
   InsertIndent(indent);
-  fmt::print("RecordDecl\n");
-  fmt::print("  {}\n", GetName());
-  fmt::print("  Args({})\n", GetMemberNum());
+  fmt::print("RecordDecl: {}\n", GetName());
   for (const auto* member : members_) {
     member->dump(indent + 2);
   }
@@ -190,7 +189,8 @@ void ReturnStatement::dump(int indent) const {
   if (return_expr_ != nullptr) {
     return_expr_->dump(indent + 2);
   } else {
-    fmt::print("  Empty\n");
+    InsertIndent(indent + 2);
+    fmt::print("Empty\n");
   }
 }
 
