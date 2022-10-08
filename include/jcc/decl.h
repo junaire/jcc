@@ -4,21 +4,22 @@
 #include <string_view>
 #include <vector>
 
+#include "jcc/ast_node.h"
 #include "jcc/source_location.h"
 
 class Type;
 class Stmt;
 class ASTContext;
 
-class Decl {
+class Decl : public ASTNode {
   SourceRange loc_;
 
  protected:
   explicit Decl(SourceRange loc) : loc_(std::move(loc)) {}
 
  public:
-  virtual void dump(int indent) const = 0;
-  virtual ~Decl() = default;
+  virtual void dump(int indent) const override{};
+  virtual ~Decl() override = default;
 };
 
 class VarDecl : public Decl {

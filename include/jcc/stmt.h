@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "jcc/ast_node.h"
 #include "jcc/source_location.h"
 
 class Expr;
@@ -12,23 +13,21 @@ class Decl;
 class LabelDecl;
 class ASTContext;
 
-class Stmt {
-  SourceRange range_;
+class Stmt : public ASTNode {
+  SourceRange loc_;
 
  protected:
-  explicit Stmt(SourceRange rng) : range_(std::move(rng)) {}
+  explicit Stmt(SourceRange loc) : loc_(std::move(loc)) {}
 
  public:
-  SourceRange GetSourceRange() { return range_; }
-
   template <typename Ty>
   requires std::convertible_to<Ty, Stmt> Ty* AsStmt() {
     return static_cast<Ty*>(this);
   }
 
-  virtual ~Stmt() = default;
+  virtual ~Stmt() override{};
 
-  virtual void dump(int indent) const = 0;
+  virtual void dump(int indent) const override{};
 };
 
 class LabeledStatement : public Stmt {

@@ -5,6 +5,8 @@
 #include <string_view>
 #include <vector>
 
+#include "jcc/ast_node.h"
+#include "jcc/common.h"
 #include "jcc/token.h"
 
 class ASTContext;
@@ -35,7 +37,7 @@ enum class TypeKind {
   Union,
 };
 
-class Type {
+class Type : public ASTNode {
   TypeKind kind_;
   Qualifiers quals_ = Qualifiers::Unspecified;
 
@@ -57,6 +59,8 @@ class Type {
   requires std::convertible_to<Ty, Type> Ty* AsType() {
     return static_cast<Ty*>(this);
   }
+
+  virtual void dump(int indent) const { jcc_unreachable(); }
 
   [[nodiscard]] bool HasQualifiers() const {
     return quals_ != Qualifiers::Unspecified;

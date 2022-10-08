@@ -4,9 +4,11 @@
 #include <vector>
 
 class Type;
+#include "jcc/ast_node.h"
 
 class ASTContext {
   // TODO(Jun): Implement arena based allocator.
+  // TODO(Jun): Seperate the allocator from ASTContext, make it more generic.
   std::vector<void*> slabs_;
 
   std::vector<Type*> user_defined_types_;
@@ -38,7 +40,10 @@ class ASTContext {
     return mem;
   }
 
-  static void Deallocate(void* mem) { free(mem); }
+  static void Deallocate(void* mem) {
+    reinterpret_cast<ASTNode*>(mem)->~ASTNode();
+    free(mem);
+  }
 
   ~ASTContext() {
     for (auto& slab : slabs_) {
