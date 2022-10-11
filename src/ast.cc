@@ -130,13 +130,25 @@ CallExpr* CallExpr::Create(ASTContext& ctx, SourceRange loc, Expr* callee,
 
 void CallExpr::dump(int indent) const { jcc_unreachable(); }
 
-UnaryExpr* UnaryExpr::create(ASTContext& ctx, SourceRange loc,
+UnaryExpr* UnaryExpr::Create(ASTContext& ctx, SourceRange loc,
                              UnaryOperatorKind kind, Stmt* value) {
   void* mem = ctx.Allocate<UnaryExpr>();
   return new (mem) UnaryExpr{std::move(loc), kind, value};
 }
 
-void UnaryExpr::dump(int indent) const { jcc_unreachable(); }
+static std::string_view PrintUnaryOpKind(UnaryOperatorKind kind) {
+  switch (kind) {
+    case UnaryOperatorKind::AddressOf:
+      return "&";
+    default:
+      jcc_unreachable();
+  }
+}
+void UnaryExpr::dump(int indent) const {
+  InsertIndent(indent);
+  fmt::print("UnaryExpr({}):\n", PrintUnaryOpKind(kind_));
+  value_->dump(indent + 2);
+}
 
 BinaryExpr* BinaryExpr::Create(ASTContext& ctx, SourceRange loc,
                                BinaryOperatorKind kind, Expr* lhs, Expr* rhs) {
@@ -158,6 +170,8 @@ static std::string_view PrintBinaryOpKind(BinaryOperatorKind kind) {
       return ">";
     case BinaryOperatorKind::Less:
       return "<";
+    default:
+      jcc_unreachable();
   }
 }
 void BinaryExpr::dump(int indent) const {
@@ -183,12 +197,13 @@ MemberExpr* MemberExpr::create(ASTContext& ctx, SourceRange loc, Stmt* base,
 
 void MemberExpr::dump(int indent) const { jcc_unreachable(); }
 
-DeclRefExpr* DeclRefExpr::create(ASTContext& ctx, SourceRange loc, Decl* decl) {
+DeclRefExpr* DeclRefExpr::Create(ASTContext& ctx, SourceRange loc, Decl* decl) {
   void* mem = ctx.Allocate<DeclRefExpr>();
   return new (mem) DeclRefExpr{std::move(loc), decl};
 }
 
-void DeclRefExpr::dump(int indent) const { jcc_unreachable(); }
+// FIXME: WE don't really need to print that much information.
+void DeclRefExpr::dump(int indent) const { decl_->dump(indent); }
 
 ReturnStatement* ReturnStatement::Create(ASTContext& ctx, SourceRange loc,
                                          Expr* return_expr) {

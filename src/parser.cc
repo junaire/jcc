@@ -465,6 +465,24 @@ Expr* Parser::ParseCastExpr() {
       ConsumeToken();
       break;
     }
+    case TokenKind::Ampersand: {
+      ConsumeToken();
+      result = ParseCastExpr();
+      result = UnaryExpr::Create(GetASTContext(), SourceRange(),
+                                 UnaryOperatorKind::AddressOf, result);
+      return result;
+    }
+    case TokenKind::Identifier: {
+      std::string name = CurrentToken().GetAsString();
+      ConsumeToken();
+      // Lookup the identifier and find where it comes from.
+      if (auto* decl = Lookup(name)) {
+        result = DeclRefExpr::Create(GetASTContext(), SourceRange(), decl);
+      } else {
+        jcc_unreachable();
+      }
+      break;
+    }
     default:
       jcc_unreachable();
   }

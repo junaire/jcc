@@ -135,18 +135,24 @@ class InitListExpr : public Expr {
 // TODO(Jun): Add more kinds.
 enum class UnaryOperatorKind {
   PreIncrement,
+  PreDecrement,
   PostIncrement,
+  PostDecrement,
+  AddressOf,
+  Deref,
+  Plus,
+  Minus,
 };
 
 class UnaryExpr : public Expr {
   UnaryOperatorKind kind_;
-  Stmt* value_{nullptr};
+  Stmt* value_ = nullptr;
 
   UnaryExpr(SourceRange loc, UnaryOperatorKind kind, Stmt* value)
       : Expr(std::move(loc)), kind_(kind), value_(value) {}
 
  public:
-  static UnaryExpr* create(ASTContext& ctx, SourceRange loc,
+  static UnaryExpr* Create(ASTContext& ctx, SourceRange loc,
                            UnaryOperatorKind kind, Stmt* value);
 
   [[nodiscard]] UnaryOperatorKind getKind() const { return kind_; }
@@ -222,15 +228,15 @@ class MemberExpr : public Expr {
 };
 
 class DeclRefExpr : public Expr {
-  Decl* decl_{nullptr};
+  Decl* decl_ = nullptr;
 
   DeclRefExpr(SourceRange loc, Decl* decl)
       : Expr(std::move(loc)), decl_(decl) {}
 
  public:
-  static DeclRefExpr* create(ASTContext& ctx, SourceRange loc, Decl* decl);
+  static DeclRefExpr* Create(ASTContext& ctx, SourceRange loc, Decl* decl);
 
-  Decl* getRefDecl() { return decl_; }
+  Decl* GetRefDecl() { return decl_; }
 
   void dump(int indent) const override;
 };
