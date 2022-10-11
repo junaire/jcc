@@ -505,6 +505,15 @@ Expr* Parser::ParseRhsOfBinaryExpr(Expr* lhs, BinOpPreLevel min_prec) {
     bool is_right_assoc = this_tok_prec == BinOpPreLevel::Conditional ||
                           this_tok_prec == BinOpPreLevel::Assignment;
 
+    if (this_tok_prec < next_tok_prec ||
+        (this_tok_prec == next_tok_prec && is_right_assoc)) {
+      rhs =
+          ParseRhsOfBinaryExpr(rhs, static_cast<BinOpPreLevel>(this_tok_prec));
+      next_tok_prec = GetBinOpPrecedence(CurrentToken().GetKind());
+    }
+
+    Expr* origin_lhs = lhs;
+
     Expr* binary_expr =
         BinaryExpr::Create(GetASTContext(), SourceRange(),
                            ConvertOpToKind(op_tok.GetKind()), lhs, rhs);
