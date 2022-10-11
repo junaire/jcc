@@ -1,10 +1,23 @@
 #pragma once
 
 #include <cstdlib>
+#include <iterator>
+#include <map>
+#include <string>
 #include <vector>
 
-class Type;
 #include "jcc/ast_node.h"
+
+class Decl;
+class Type;
+
+struct Scope {
+  void PushVar(const std::string& name, Decl* var) { vars[name] = var; }
+  void PushTag(const std::string& name, Decl* tag) { tags[name] = tag; }
+
+  std::map<std::string, Decl*> vars;
+  std::map<std::string, Decl*> tags;
+};
 
 class ASTContext {
   // TODO(Jun): Implement arena based allocator.
@@ -29,6 +42,8 @@ class ASTContext {
   Type* float_type_;
   Type* double_type_;
   Type* ldouble_type_;
+
+  std::vector<Scope> scopes_;
 
  public:
   ASTContext();
@@ -67,6 +82,23 @@ class ASTContext {
 
   Type* GetFloatType() { return float_type_; }
   Type* GetDoubleType() { return double_type_; }
+
+  void EnterScope() { scopes_.emplace_back(); }
+  void ExitScope() { scopes_.pop_back(); }
+
+  Scope& getCurScope() { return scopes_.back(); }
+
+  // TODO(Jun): Look up in vars, need similiar work for tags.
+  Decl* Lookup(const std::string& name) {
+    for (auto rbeg = scopes_.rbegin(), rend = scopes_.rend(); rbeg != rend;
+         rbeg++) {
+      auto iter = rbeg->vars.find(name);
+      if (iter != rbeg->vars.end()) {
+        return iter->second;
+      }
+    }
+    return nullptr;
+  }
 
  private:
   void CreateBuiltinTypes();

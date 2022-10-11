@@ -17,7 +17,9 @@ static void InsertIndent(int n) {
 VarDecl* VarDecl::Create(ASTContext& ctx, SourceRange loc, Stmt* init,
                          Type* type, std::string name) {
   void* mem = ctx.Allocate<VarDecl>();
-  return new (mem) VarDecl{std::move(loc), init, type, std::move(name)};
+  auto* var = new (mem) VarDecl(std::move(loc), init, type, std::move(name));
+  ctx.getCurScope().PushVar(var->GetName(), var);
+  return var;
 }
 
 void VarDecl::dump(int indent) const {
@@ -30,8 +32,19 @@ FunctionDecl* FunctionDecl::Create(ASTContext& ctx, SourceRange loc,
                                    std::string name, std::vector<VarDecl*> args,
                                    Type* return_type, Stmt* body) {
   void* mem = ctx.Allocate<FunctionDecl>();
-  return new (mem) FunctionDecl{std::move(loc), std::move(name),
-                                std::move(args), return_type, body};
+  auto* function = new (mem) FunctionDecl(std::move(loc), std::move(name),
+                                          std::move(args), return_type, body);
+  ctx.getCurScope().PushVar(name, function);
+  return function;
+}
+
+FunctionDecl* FunctionDecl::Create(ASTContext& ctx, SourceRange loc,
+                                   std::string name, Type* return_type) {
+  void* mem = ctx.Allocate<FunctionDecl>();
+  auto* function =
+      new (mem) FunctionDecl(std::move(loc), std::move(name), return_type);
+  ctx.getCurScope().PushVar(name, function);
+  return function;
 }
 
 void FunctionDecl::dump(int indent) const {

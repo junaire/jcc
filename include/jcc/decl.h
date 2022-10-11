@@ -23,8 +23,8 @@ class Decl : public ASTNode {
 };
 
 class VarDecl : public Decl {
-  Stmt* init_{nullptr};
-  Type* type_;
+  Stmt* init_ = nullptr;
+  Type* type_ = nullptr;
   std::string name_;
 
   VarDecl(SourceRange loc, Stmt* init, Type* type, std::string name)
@@ -37,7 +37,7 @@ class VarDecl : public Decl {
   static VarDecl* Create(ASTContext& ctx, SourceRange loc, Stmt* init,
                          Type* type, std::string name);
 
-  [[nodiscard]] std::string_view GetName() const { return name_; }
+  [[nodiscard]] std::string GetName() const { return name_; }
 
   Type* GetType() { return type_; }
 
@@ -56,6 +56,11 @@ class FunctionDecl : public Decl {
   Type* return_type_;
   Stmt* body_ = nullptr;
 
+  FunctionDecl(SourceRange loc, std::string name, Type* return_type)
+      : Decl(std::move(loc)),
+        name_(std::move(name)),
+        return_type_(return_type) {}
+
   FunctionDecl(SourceRange loc, std::string name, std::vector<VarDecl*> args,
                Type* return_type, Stmt* body)
       : Decl(std::move(loc)),
@@ -66,6 +71,8 @@ class FunctionDecl : public Decl {
 
  public:
   static FunctionDecl* Create(ASTContext& ctx, SourceRange loc,
+                              std::string name, Type* return_type);
+  static FunctionDecl* Create(ASTContext& ctx, SourceRange loc,
                               std::string name, std::vector<VarDecl*> args,
                               Type* return_type, Stmt* body);
 
@@ -75,6 +82,9 @@ class FunctionDecl : public Decl {
 
   Stmt* GetBody() { return body_; }
 
+  void SetBody(Stmt* body) { body_ = body; }
+
+  void SetParams(std::vector<VarDecl*> params) { args_ = std::move(params); }
   VarDecl* GetParam(std::size_t index) { return args_[index]; }
 
   [[nodiscard]] std::size_t GetParamNum() const { return args_.size(); }

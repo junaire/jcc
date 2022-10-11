@@ -57,6 +57,7 @@ static BinOpPreLevel GetBinOpPrecedence(TokenKind Kind) {
       return BinOpPreLevel::Multiplicative;
   }
 }
+
 Parser::Parser(Lexer& lexer) : lexer_(lexer) { token_ = lexer_.Lex(); }
 
 Token Parser::CurrentToken() { return token_; }
@@ -93,11 +94,6 @@ bool Parser::TryConsumeToken(TokenKind expected) {
   return false;
 }
 
-Type* Parser::ParseTypename() {
-  DeclSpec declSpec = ParseDeclSpec();
-  return nullptr;
-}
-
 void Parser::SkipUntil(TokenKind kind, bool skip_match) {
   while (CurrentToken().GetKind() != kind) {
     ConsumeToken();
@@ -107,9 +103,10 @@ void Parser::SkipUntil(TokenKind kind, bool skip_match) {
   }
 }
 
-void Parser::EnterScope() { scopes_.emplace_back(*this); }
-
-void Parser::ExitScope() { scopes_.pop_back(); }
+Type* Parser::ParseTypename() {
+  DeclSpec declSpec = ParseDeclSpec();
+  return nullptr;
+}
 
 DeclSpec Parser::ParseDeclSpec() {
   using enum TokenKind;
@@ -360,7 +357,8 @@ std::vector<VarDecl*> Parser::CreateParams(FunctionType* type) {
 Stmt* Parser::ParseCompoundStmt() {
   CompoundStatement* stmt =
       CompoundStatement::Create(GetASTContext(), SourceRange());
-  ScopeRAII scope_guard(*this);
+  ScopeRAII scope_guard(*this);  // FIXME: Create another scope, but it could be
+                                 // a function body, so we create it twice?
 
   while (!CurrentToken().Is<TokenKind::RightBracket>()) {
     if (CurrentToken().IsTypename() && !NextToken().Is<TokenKind::Colon>()) {
@@ -392,26 +390,30 @@ Decl* Parser::ParseFunction(Declarator& declarator) {
   if (!name.IsValid()) {
     jcc_unreachable();
   }
+  std::string func_name = name.GetAsString();
   // Check redefinition
+  if (Decl* func = Lookup(func_name)) {
+    // FIXME: This is not correct!
+    jcc_unreachable();
+  }
 
   auto* self = declarator.GetBaseType()->AsType<FunctionType>();
 
-  ScopeRAII scopeRAII(*this);
+  FunctionDecl* function = FunctionDecl::Create(
+      GetASTContext(), SourceRange(), func_name, self->GetReturnType());
 
-  std::vector<VarDecl*> params = CreateParams(self);
+  ScopeRAII scope_guard(*this);
 
-  Stmt* body = nullptr;
+  function->SetParams(CreateParams(self));
+
   if (TryConsumeToken(TokenKind::LeftBracket)) {
-    body = ParseCompoundStmt();
+    function->SetBody(ParseCompoundStmt());
   } else if (CurrentToken().Is<TokenKind::Semi>()) {
     // this function doesn't have a body, nothing to do.
   } else {
     jcc_unreachable();
   }
 
-  FunctionDecl* function =
-      FunctionDecl::Create(GetASTContext(), SourceRange(), name.GetAsString(),
-                           std::move(params), self->GetReturnType(), body);
   return function;
 }
 
@@ -424,6 +426,7 @@ std::vector<Decl*> Parser::ParseGlobalVariables(Declarator& declarator) {
     }
     is_first = false;
 
+    // FIXME: Just a note, we need to check its redefinition.
     VarDecl* var =
         VarDecl::Create(GetASTContext(), SourceRange(), nullptr,
                         declarator.GetBaseType(), declarator.GetName());
@@ -540,6 +543,8 @@ std::vector<Decl*> Parser::ParseFunctionOrVar(DeclSpec& decl_spec) {
 }
 
 std::vector<Decl*> Parser::ParseTranslateUnit() {
+  ScopeRAII scope_guard(*this);  // The file scope.
+
   std::vector<Decl*> top_decls;
   while (!CurrentToken().Is<TokenKind::Eof>()) {
     DeclSpec decl_spec = ParseDeclSpec();

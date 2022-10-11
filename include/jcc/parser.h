@@ -1,8 +1,6 @@
 #pragma once
 
-#include <memory>
 #include <optional>
-#include <unordered_map>
 
 #include "jcc/ast_context.h"
 #include "jcc/declarator.h"
@@ -15,13 +13,6 @@ class Parser;
 class VarDecl;
 class Stmt;
 class Lexer;
-
-struct Scope {
-  explicit Scope(Parser& parser) : self(parser) {}
-  Parser& self;
-  std::unordered_map<std::string, Decl*> vars;
-  std::unordered_map<std::string, Decl*> tags;
-};
 
 enum class BinOpPreLevel {
   Unknown = 0,          // Not binary operator.
@@ -87,6 +78,8 @@ class Parser {
 
   ASTContext& GetASTContext() { return ctx_; }
 
+  Decl* Lookup(const std::string& name) { return ctx_.Lookup(name); }
+
  private:
   Token CurrentToken();
   Token ConsumeToken();
@@ -97,16 +90,14 @@ class Parser {
   Token token_;
   std::optional<Token> cache_;
   ASTContext ctx_;
-  std::vector<Scope> scopes_;
-
-  void EnterScope();
-  void ExitScope();
 
   class ScopeRAII {
-    Parser& self_;
+    ASTContext& self_;
 
    public:
-    explicit ScopeRAII(Parser& self) : self_(self) { self_.EnterScope(); }
+    explicit ScopeRAII(Parser& parser) : self_(parser.GetASTContext()) {
+      self_.EnterScope();
+    }
     ~ScopeRAII() { self_.ExitScope(); }
   };
 };
