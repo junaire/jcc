@@ -13,12 +13,13 @@ class DeclSpec {
     Static,
     ThreadLocal,
     Auto,
-    Register
+    Register,
+    Unspecified
   };
 
-  enum class TypeQual { Const, Restrict, Volatile, Atomic };
+  enum class TypeQual { Const, Restrict, Volatile, Atomic, Unspecified };
 
-  enum class FunctionSpec { Inline, NoReturn };
+  enum class FunctionSpec { Inline, NoReturn, Unspecified };
 
   using TypeSpecKind = TypeKind;
 
@@ -38,31 +39,37 @@ class DeclSpec {
 
   explicit DeclSpec(ASTContext& ctx) : ctx_(ctx) {}
 
-  [[nodiscard]] StorageClassSpec GetStorageClassSpec() const { return SCS; }
+  [[nodiscard]] StorageClassSpec GetStorageClassSpec() const {
+    return storage_class_spec_;
+  }
 
-  [[nodiscard]] TypeQual GetTypeQual() const { return TQ; }
+  [[nodiscard]] TypeQual GetTypeQual() const { return type_qual_; }
 
-  [[nodiscard]] TypeSpecKind GetTypeSpec() const { return TSK; }
+  [[nodiscard]] TypeSpecKind GetTypeSpec() const { return type_spec_kind_; }
 
-  [[nodiscard]] FunctionSpec GetFunctionSpec() const { return FS; }
+  [[nodiscard]] FunctionSpec GetFunctionSpec() const { return funtion_spec_; }
 
-  [[nodiscard]] TypeSpecKind GetTypeSpecKind() const { return TSK; }
+  [[nodiscard]] TypeSpecKind GetTypeSpecKind() const { return type_spec_kind_; }
 
-  [[nodiscard]] TypeSpecWidth GetTypeSpecWidth() const { return TSW; }
+  [[nodiscard]] TypeSpecWidth GetTypeSpecWidth() const {
+    return type_spec_width_;
+  }
 
-  [[nodiscard]] TypeSpecSign GetTypeSpecSign() const { return TSS; }
+  [[nodiscard]] TypeSpecSign GetTypeSpecSign() const { return type_spec_sign_; }
 
-  void SetStorageClassSpec(StorageClassSpec spec) { SCS = spec; }
+  void SetStorageClassSpec(StorageClassSpec spec) {
+    storage_class_spec_ = spec;
+  }
 
-  void SetFunctionSpec(FunctionSpec spec) { FS = spec; }
+  void SetFunctionSpec(FunctionSpec spec) { funtion_spec_ = spec; }
 
-  void SetTypeQual(TypeQual qual) { TQ = qual; }
+  void SetTypeQual(TypeQual qual) { type_qual_ = qual; }
 
-  void SetTypeSpecKind(TypeSpecKind kind) { TSK = kind; }
+  void SetTypeSpecKind(TypeSpecKind kind) { type_spec_kind_ = kind; }
 
-  void setTypeSpecWidth(TypeSpecWidth width) { TSW = width; }
+  void setTypeSpecWidth(TypeSpecWidth width) { type_spec_width_ = width; }
 
-  void setTypeSpecSign(TypeSpecSign sign) { TSS = sign; }
+  void setTypeSpecSign(TypeSpecSign sign) { type_spec_sign_ = sign; }
 
   void SetType(Type* type) { type_ = type; }
 
@@ -117,46 +124,55 @@ class DeclSpec {
   Type* GetType() { return type_; }
 
   [[nodiscard]] bool IsTypedef() const {
-    return SCS == StorageClassSpec::Typedef;
+    return storage_class_spec_ == StorageClassSpec::Typedef;
   }
 
   [[nodiscard]] bool IsExtern() const {
-    return SCS == StorageClassSpec::Extern;
+    return storage_class_spec_ == StorageClassSpec::Extern;
   }
 
   [[nodiscard]] bool isRegister() const {
-    return SCS == StorageClassSpec::Register;
+    return storage_class_spec_ == StorageClassSpec::Register;
   }
 
   [[nodiscard]] bool IsStatic() const {
-    return SCS == StorageClassSpec::Static;
+    return storage_class_spec_ == StorageClassSpec::Static;
   }
 
   [[nodiscard]] bool IsThreadLocal() const {
-    return SCS == StorageClassSpec::ThreadLocal;
+    return storage_class_spec_ == StorageClassSpec::ThreadLocal;
   }
 
-  [[nodiscard]] bool IsAuto() const { return SCS == StorageClassSpec::Auto; }
+  [[nodiscard]] bool IsAuto() const {
+    return storage_class_spec_ == StorageClassSpec::Auto;
+  }
 
-  [[nodiscard]] bool IsInline() const { return FS == FunctionSpec::Inline; }
+  [[nodiscard]] bool IsInline() const {
+    return funtion_spec_ == FunctionSpec::Inline;
+  }
 
-  [[nodiscard]] bool IsNoReturn() const { return FS == FunctionSpec::NoReturn; }
+  [[nodiscard]] bool IsNoReturn() const {
+    return funtion_spec_ == FunctionSpec::NoReturn;
+  }
 
-  [[nodiscard]] bool IsConst() const { return TQ == TypeQual::Const; }
+  [[nodiscard]] bool IsConst() const { return type_qual_ == TypeQual::Const; }
 
-  [[nodiscard]] bool IsRestrict() const { return TQ == TypeQual::Restrict; }
+  [[nodiscard]] bool IsRestrict() const {
+    return type_qual_ == TypeQual::Restrict;
+  }
 
-  [[nodiscard]] bool IsAtomic() const { return TQ == TypeQual::Atomic; }
+  [[nodiscard]] bool IsAtomic() const { return type_qual_ == TypeQual::Atomic; }
 
-  [[nodiscard]] bool IsVolatile() const { return TQ == TypeQual::Volatile; }
+  [[nodiscard]] bool IsVolatile() const {
+    return type_qual_ == TypeQual::Volatile;
+  }
 
-  // FIXME: Naming conversion?
-  StorageClassSpec SCS;
-  TypeQual TQ;
-  FunctionSpec FS;
-  TypeSpecKind TSK = TSK_Int;  // Yeah, implicit int, so evil
-  TypeSpecWidth TSW = TypeSpecWidth::Unspecified;
-  TypeSpecSign TSS = TypeSpecSign::Unspecified;
+  StorageClassSpec storage_class_spec_ = StorageClassSpec::Unspecified;
+  TypeQual type_qual_ = TypeQual::Unspecified;
+  FunctionSpec funtion_spec_ = FunctionSpec::Unspecified;
+  TypeSpecKind type_spec_kind_ = TSK_Int;  // Yeah, implicit int, so evil
+  TypeSpecWidth type_spec_width_ = TypeSpecWidth::Unspecified;
+  TypeSpecSign type_spec_sign_ = TypeSpecSign::Unspecified;
   Type* type_ = nullptr;
   ASTContext& ctx_;
 };
