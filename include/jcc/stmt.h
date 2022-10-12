@@ -110,6 +110,8 @@ class WhileStatement : public Stmt {
       : Stmt(std::move(loc)), condition_(condition), body_(body) {}
 
  public:
+  static WhileStatement* Create(ASTContext& ctx, SourceRange loc,
+                                Expr* condition, Stmt* body);
   Expr* GetCondition() { return condition_; }
   Stmt* GetBody() { return body_; }
   void dump(int indent) const override;

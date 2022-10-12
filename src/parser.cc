@@ -5,6 +5,7 @@
 #include "jcc/expr.h"
 #include "jcc/lexer.h"
 #include "jcc/source_location.h"
+#include "jcc/stmt.h"
 #include "jcc/token.h"
 #include "jcc/type.h"
 
@@ -345,6 +346,21 @@ Stmt* Parser::ParseIfStmt() {
                              else_stmt);
 }
 
+Stmt* Parser::ParseWhileStmt() {
+  Stmt* body = nullptr;
+
+  MustConsumeToken(TokenKind::LeftParen);
+  Expr* condition = ParseExpr();
+  MustConsumeToken(TokenKind::RightParen);
+
+  // FIXME: not all ifs have {}
+  MustConsumeToken(TokenKind::LeftBracket);
+  body = ParseCompoundStmt();
+
+  return WhileStatement::Create(GetASTContext(), SourceRange(), condition,
+                                body);
+}
+
 Stmt* Parser::ParseStatement() {
   if (TryConsumeToken(TokenKind::Return)) {
     return ParseReturnStmt();
@@ -352,6 +368,10 @@ Stmt* Parser::ParseStatement() {
 
   if (TryConsumeToken(TokenKind::If)) {
     return ParseIfStmt();
+  }
+
+  if (TryConsumeToken(TokenKind::While)) {
+    return ParseWhileStmt();
   }
   jcc_unreachable();
 }

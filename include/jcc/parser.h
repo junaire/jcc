@@ -56,6 +56,8 @@ class Parser {
 
   Stmt* ParseIfStmt();
 
+  Stmt* ParseWhileStmt();
+
   Expr* ParseExpr();
 
   Expr* ParseAssignmentExpr();

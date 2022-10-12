@@ -238,6 +238,20 @@ void IfStatement::dump(int indent) const {
   else_stmt_->dump(indent + 2);
 }
 
+WhileStatement* WhileStatement::Create(ASTContext& ctx, SourceRange loc,
+                                       Expr* condition, Stmt* body) {
+  void* mem = ctx.Allocate<WhileStatement>();
+  return new (mem) WhileStatement(std::move(loc), condition, body);
+}
+
+void WhileStatement::dump(int indent) const {
+  InsertIndent(indent);
+  fmt::print("WhileStatement\n");
+  condition_->dump(indent + 2);
+  // FIXME: it's not always exsits.
+  body_->dump(indent + 2);
+}
+
 DeclStatement* DeclStatement::Create(ASTContext& ctx, SourceRange loc,
                                      std::vector<Decl*> decls) {
   void* mem = ctx.Allocate<DeclStatement>();
