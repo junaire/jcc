@@ -86,7 +86,7 @@ class ASTContext {
   void EnterScope() { scopes_.emplace_back(); }
   void ExitScope() { scopes_.pop_back(); }
 
-  Scope& getCurScope() { return scopes_.back(); }
+  Scope& GetCurScope() { return scopes_.back(); }
 
   // TODO(Jun): Look up in vars, need similiar work for tags.
   Decl* Lookup(const std::string& name) {

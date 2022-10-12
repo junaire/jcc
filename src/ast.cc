@@ -18,7 +18,7 @@ VarDecl* VarDecl::Create(ASTContext& ctx, SourceRange loc, Stmt* init,
                          Type* type, std::string name) {
   void* mem = ctx.Allocate<VarDecl>();
   auto* var = new (mem) VarDecl(std::move(loc), init, type, std::move(name));
-  ctx.getCurScope().PushVar(var->GetName(), var);
+  ctx.GetCurScope().PushVar(var->GetName(), var);
   return var;
 }
 
@@ -34,7 +34,7 @@ FunctionDecl* FunctionDecl::Create(ASTContext& ctx, SourceRange loc,
   void* mem = ctx.Allocate<FunctionDecl>();
   auto* function = new (mem) FunctionDecl(std::move(loc), std::move(name),
                                           std::move(args), return_type, body);
-  ctx.getCurScope().PushVar(name, function);
+  ctx.GetCurScope().PushVar(name, function);
   return function;
 }
 
@@ -43,7 +43,7 @@ FunctionDecl* FunctionDecl::Create(ASTContext& ctx, SourceRange loc,
   void* mem = ctx.Allocate<FunctionDecl>();
   auto* function =
       new (mem) FunctionDecl(std::move(loc), std::move(name), return_type);
-  ctx.getCurScope().PushVar(name, function);
+  ctx.GetCurScope().PushVar(name, function);
   return function;
 }
 

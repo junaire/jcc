@@ -33,8 +33,8 @@ class Lexer {
  public:
   explicit Lexer(std::string_view source, std::string name = "<Buffer>")
       : file_name_(std::move(name)),
-        // FIXME: we can't initialize const char* with string_view::begin() in
-        // MSVC, not sure it's a bug :(
+        // FIXME: we can't initialize const char* with string_view::begin(),
+        // it's implementation defined.
         buffer_start_(source.data()),
         buffer_end_(source.data() + source.length()),
         buffer_ptr_(source.data()) {}
