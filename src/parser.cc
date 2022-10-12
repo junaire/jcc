@@ -324,21 +324,34 @@ Stmt* Parser::ParseReturnStmt() {
   }
   return ReturnStatement::Create(GetASTContext(), SourceRange(), return_expr);
 }
+
+Stmt* Parser::ParseIfStmt() {
+  Stmt* else_stmt = nullptr;
+
+  MustConsumeToken(TokenKind::LeftParen);
+  Expr* condition = ParseExpr();
+  MustConsumeToken(TokenKind::RightParen);
+
+  // FIXME: not all ifs have {}
+  MustConsumeToken(TokenKind::LeftBracket);
+  Stmt* then = ParseCompoundStmt();
+
+  if (TryConsumeToken(TokenKind::Else)) {
+    MustConsumeToken(TokenKind::LeftBracket);
+    else_stmt = ParseCompoundStmt();
+  }
+
+  return IfStatement::Create(GetASTContext(), SourceRange(), condition, then,
+                             else_stmt);
+}
+
 Stmt* Parser::ParseStatement() {
   if (TryConsumeToken(TokenKind::Return)) {
     return ParseReturnStmt();
   }
 
   if (TryConsumeToken(TokenKind::If)) {
-    MustConsumeToken(TokenKind::LeftParen);
-    Expr* condition = ParseExpr();
-    Stmt* then = ParseStatement();
-    Stmt* else_stmt = nullptr;
-    if (CurrentToken().Is<TokenKind::Else>()) {
-      else_stmt = ParseStatement();
-    }
-    return IfStatement::Create(GetASTContext(), SourceRange(), condition, then,
-                               else_stmt);
+    return ParseIfStmt();
   }
   jcc_unreachable();
 }

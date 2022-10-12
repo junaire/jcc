@@ -229,7 +229,14 @@ IfStatement* IfStatement::Create(ASTContext& ctx, SourceRange loc,
   return new (mem) IfStatement(std::move(loc), condition, thenStmt, elseStmt);
 }
 
-void IfStatement::dump(int indent) const { jcc_unreachable(); }
+void IfStatement::dump(int indent) const {
+  InsertIndent(indent);
+  fmt::print("IfStatement\n");
+  condition_->dump(indent + 2);
+  // FIXME: they're not always exsits.
+  then_stmt_->dump(indent + 2);
+  else_stmt_->dump(indent + 2);
+}
 
 DeclStatement* DeclStatement::Create(ASTContext& ctx, SourceRange loc,
                                      std::vector<Decl*> decls) {
