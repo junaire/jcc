@@ -333,13 +333,10 @@ Stmt* Parser::ParseIfStmt() {
   Expr* condition = ParseExpr();
   MustConsumeToken(TokenKind::RightParen);
 
-  // FIXME: not all ifs have {}
-  MustConsumeToken(TokenKind::LeftBracket);
-  Stmt* then = ParseCompoundStmt();
+  Stmt* then = ParseStatement();
 
   if (TryConsumeToken(TokenKind::Else)) {
-    MustConsumeToken(TokenKind::LeftBracket);
-    else_stmt = ParseCompoundStmt();
+    else_stmt = ParseStatement();
   }
 
   return IfStatement::Create(GetASTContext(), SourceRange(), condition, then,
