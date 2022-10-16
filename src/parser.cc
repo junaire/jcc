@@ -353,12 +353,20 @@ Stmt* Parser::ParseWhileStmt() {
   Expr* condition = ParseExpr();
   MustConsumeToken(TokenKind::RightParen);
 
-  // FIXME: not all ifs have {}
-  MustConsumeToken(TokenKind::LeftBracket);
-  body = ParseCompoundStmt();
+  body = ParseStatement();
 
   return WhileStatement::Create(GetASTContext(), SourceRange(), condition,
                                 body);
+}
+
+Stmt* Parser::ParseExprStmt() {
+  if (TryConsumeToken(TokenKind::Semi)) {
+    // TODO(Jun): We need an empty statement node.
+    jcc_unreachable();
+  }
+
+  Expr* expr = ParseExpr();
+  return ExprStatement::Create(GetASTContext(), SourceRange(), expr);
 }
 
 Stmt* Parser::ParseStatement() {
@@ -373,7 +381,11 @@ Stmt* Parser::ParseStatement() {
   if (TryConsumeToken(TokenKind::While)) {
     return ParseWhileStmt();
   }
-  jcc_unreachable();
+
+  if (TryConsumeToken(TokenKind::LeftBracket)) {
+    return ParseCompoundStmt();
+  }
+  return ParseExprStmt();
 }
 
 std::vector<VarDecl*> Parser::CreateParams(FunctionType* type) {

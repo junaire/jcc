@@ -218,3 +218,14 @@ class DeclStatement : public Stmt {
   std::vector<Decl*> GetDecls() { return decls_; }
   void dump(int indent) const override;
 };
+
+class ExprStatement : public Stmt {
+  Expr* expr_;
+  ExprStatement(SourceRange loc, Expr* expr)
+      : Stmt(std::move(loc)), expr_(expr) {}
+
+ public:
+  static ExprStatement* Create(ASTContext& ctx, SourceRange loc, Expr* expr);
+  Expr* GetExpr() { return expr_; }
+  void dump(int indent) const override;
+};

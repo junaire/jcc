@@ -281,3 +281,15 @@ void CompoundStatement::dump(int indent) const {
     stmt->dump(indent + 2);
   }
 }
+
+ExprStatement* ExprStatement::Create(ASTContext& ctx, SourceRange loc,
+                                     Expr* expr) {
+  void* mem = ctx.Allocate<ExprStatement>();
+  return new (mem) ExprStatement(std::move(loc), expr);
+}
+
+void ExprStatement::dump(int indent) const {
+  InsertIndent(indent);
+  fmt::print("ExprStatement\n");
+  expr_->dump(indent + 2);
+}
