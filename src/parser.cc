@@ -408,7 +408,7 @@ Stmt* Parser::ParseCompoundStmt() {
         continue;
       }
       stmt->AddStmt(DeclStatement::Create(GetASTContext(), SourceRange(),
-                                          ParseGlobalVariables(declarator)));
+                                          ParseDeclaration(declarator)));
     } else {
       stmt->AddStmt(ParseStatement());
     }
@@ -450,9 +450,11 @@ Decl* Parser::ParseFunction(Declarator& declarator) {
   return function;
 }
 
-std::vector<Decl*> Parser::ParseGlobalVariables(Declarator& declarator) {
+std::vector<Decl*> Parser::ParseDeclaration(Declarator& declarator) {
   std::vector<Decl*> vars;
   bool is_first = true;
+  // FIXME: This doesn't work for:
+  // int x;
   while (!CurrentToken().Is<TokenKind::Semi>()) {
     if (!is_first) {
       SkipUntil(TokenKind::Comma);
@@ -487,6 +489,7 @@ Expr* Parser::ParseCastExpr() {
   // UnaryExpr, CastExpr, PrimaryExpr...
   switch (kind) {
     case TokenKind::NumericConstant: {
+      // FIXME: This is not right for floating numbers.
       int value = std::stoi(CurrentToken().GetData());
       ConsumeToken();
       result = IntergerLiteral::Create(GetASTContext(), SourceRange(), value);
@@ -587,7 +590,7 @@ std::vector<Decl*> Parser::ParseFunctionOrVar(DeclSpec& decl_spec) {
   if (declarator.GetTypeKind() == TypeKind::Func) {
     decls.push_back(ParseFunction(declarator));
   } else {
-    std::vector<Decl*> vars = ParseGlobalVariables(declarator);
+    std::vector<Decl*> vars = ParseDeclaration(declarator);
     decls.insert(decls.end(), vars.begin(), vars.end());
   }
   return decls;
