@@ -1,12 +1,14 @@
 #pragma once
 
-#include <cstdlib>
 #include <iterator>
 #include <map>
 #include <string>
+#include <type_traits>
 #include <vector>
 
+#include "jcc/allocator.h"
 #include "jcc/ast_node.h"
+#include "jcc/common.h"
 
 class Decl;
 class Type;
@@ -20,10 +22,6 @@ struct Scope {
 };
 
 class ASTContext {
-  // TODO(Jun): Implement arena based allocator.
-  // TODO(Jun): Seperate the allocator from ASTContext, make it more generic.
-  std::vector<void*> slabs_;
-
   std::vector<Type*> user_defined_types_;
 
   Type* void_type_;
@@ -45,25 +43,20 @@ class ASTContext {
 
   std::vector<Scope> scopes_;
 
+  Allocator<ASTNode> ast_node_allocator_;
+  Allocator<Type> type_allocator_;
+
  public:
   ASTContext();
 
   template <typename T>
   void* Allocate() {
-    void* mem = malloc(sizeof(T));
-    slabs_.push_back(mem);
-    return mem;
-  }
-
-  static void Deallocate(void* mem) {
-    reinterpret_cast<ASTNode*>(mem)->~ASTNode();
-    free(mem);
-  }
-
-  ~ASTContext() {
-    for (auto& slab : slabs_) {
-      Deallocate(slab);
+    if constexpr (std::is_base_of_v<ASTNode, T>) {
+      return ast_node_allocator_.Allocate<T>();
+    } else if constexpr (std::is_base_of_v<Type, T>) {
+      return type_allocator_.Allocate<T>();
     }
+    jcc_unreachable();
   }
 
   // TODO(Jun): signedness, long long ...

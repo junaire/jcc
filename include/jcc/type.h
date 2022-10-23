@@ -5,7 +5,6 @@
 #include <string_view>
 #include <vector>
 
-#include "jcc/ast_node.h"
 #include "jcc/common.h"
 #include "jcc/token.h"
 
@@ -37,7 +36,7 @@ enum class TypeKind {
   Union,
 };
 
-class Type : public ASTNode {
+class Type {
   TypeKind kind_;
   Qualifiers quals_ = Qualifiers::Unspecified;
 
