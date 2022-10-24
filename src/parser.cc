@@ -80,7 +80,7 @@ void Parser::MustConsumeToken(TokenKind expected) {
     ConsumeToken();
     return;
   }
-  jcc_unreachable();
+  jcc_unreachable("MustConsumeToken() consumed unexpeted token!");
 }
 
 Token Parser::NextToken() {
@@ -136,14 +136,16 @@ DeclSpec Parser::ParseDeclSpec() {
               DeclSpec::StorageClassSpec::ThreadLocal);
           break;
         default:
-          jcc_unreachable();
+          jcc_unreachable("current token is not a typename!");
       }
 
       if (decl_spec.IsTypedef()) {
         if (decl_spec.IsStatic() || decl_spec.IsExtern() ||
             decl_spec.IsInline() || decl_spec.IsThreadLocal()) {
           // TODO(Jun): Can you have a nice diag instead of panic?
-          jcc_unreachable();
+          jcc_unreachable(
+              "typedef may not be used together with static, extern, inline, "
+              "__thread or _Thread_local");
         }
       }
       ConsumeToken();
@@ -166,12 +168,12 @@ DeclSpec Parser::ParseDeclSpec() {
 
     // Deal with _Alignas
     if (CurrentToken().Is<TokenKind::DashAlignas>()) {
-      jcc_unreachable();
+      jcc_unimplemented();
     }
 
     // Handle user defined types
     if (CurrentToken().IsOneOf<Struct, Union, Typedef, Enum>()) {
-      jcc_unreachable();
+      jcc_unimplemented();
     }
 
     // Handle builtin types
@@ -212,7 +214,7 @@ DeclSpec Parser::ParseDeclSpec() {
         decl_spec.setTypeSpecSign(DeclSpec::TypeSpecSign::Unsigned);
         break;
       default:
-        jcc_unreachable();
+        jcc_unreachable("current token kind is not a builtin type");
     }
 
     decl_spec.GenerateType();
@@ -314,7 +316,7 @@ Type* Parser::ParseArrayDimensions(Type* type) {
 
   // cond ? A : B
   // vla
-  jcc_unreachable();
+  jcc_unimplemented();
 }
 
 Expr* Parser::ParseExpr() {
@@ -364,7 +366,7 @@ Stmt* Parser::ParseWhileStmt() {
 Stmt* Parser::ParseExprStmt() {
   if (TryConsumeToken(TokenKind::Semi)) {
     // TODO(Jun): We need an empty statement node.
-    jcc_unreachable();
+    jcc_unimplemented();
   }
 
   Expr* expr = ParseExpr();
@@ -412,7 +414,7 @@ Stmt* Parser::ParseCompoundStmt() {
       DeclSpec decl_spec = ParseDeclSpec();
       if (decl_spec.IsTypedef()) {
         // Parse Typedef
-        jcc_unreachable();
+        jcc_unimplemented();
         continue;
       }
       Declarator declarator = ParseDeclarator(decl_spec);
@@ -435,13 +437,13 @@ Stmt* Parser::ParseCompoundStmt() {
 Decl* Parser::ParseFunction(Declarator& declarator) {
   Token name = declarator.name_;
   if (!name.IsValid()) {
-    jcc_unreachable();
+    jcc_unreachable("function name is missing!");
   }
   std::string func_name = name.GetAsString();
   // Check redefinition
   if (Decl* func = Lookup(func_name)) {
     // FIXME: This is not correct!
-    jcc_unreachable();
+    jcc_unreachable("function redefinition!");
   }
 
   auto* self = declarator.GetBaseType()->AsType<FunctionType>();
@@ -458,7 +460,7 @@ Decl* Parser::ParseFunction(Declarator& declarator) {
   } else if (CurrentToken().Is<TokenKind::Semi>()) {
     // this function doesn't have a body, nothing to do.
   } else {
-    jcc_unreachable();
+    jcc_unreachable("error when parsing function body!");
   }
 
   return function;
@@ -539,12 +541,12 @@ Expr* Parser::ParseCastExpr() {
       if (auto* decl = Lookup(name)) {
         result = DeclRefExpr::Create(GetASTContext(), SourceRange(), decl);
       } else {
-        jcc_unreachable();
+        jcc_unimplemented();
       }
       break;
     }
     default:
-      jcc_unreachable();
+      jcc_unreachable("Unexpeted token kind!");
   }
   return result;
 }
@@ -564,7 +566,7 @@ static BinaryOperatorKind ConvertOpToKind(TokenKind kind) {
     case TokenKind::Less:
       return BinaryOperatorKind::Less;
     default:
-      jcc_unreachable();
+      jcc_unimplemented();
   }
 }
 
@@ -607,7 +609,7 @@ Expr* Parser::ParseRhsOfBinaryExpr(Expr* lhs, BinOpPreLevel min_prec) {
 std::vector<Decl*> Parser::ParseFunctionOrVar(DeclSpec& decl_spec) {
   std::vector<Decl*> decls;
   if (CurrentToken().Is<TokenKind::Semi>()) {
-    jcc_unreachable();
+    jcc_unimplemented();
   }
 
   Declarator declarator = ParseDeclarator(decl_spec);
@@ -628,7 +630,7 @@ std::vector<Decl*> Parser::ParseTranslateUnit() {
     DeclSpec decl_spec = ParseDeclSpec();
     // TODO(Jun): Handle typedefs
     if (decl_spec.IsTypedef()) {
-      jcc_unreachable();
+      jcc_unimplemented();
     }
 
     std::vector<Decl*> decls = ParseFunctionOrVar(decl_spec);

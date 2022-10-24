@@ -117,7 +117,7 @@ class DeclSpec {
         break;
       }
       default:
-        jcc_unreachable();
+        jcc_unreachable("Unknown type specifier when generating type!");
     }
   }
 

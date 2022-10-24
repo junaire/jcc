@@ -132,7 +132,7 @@ CallExpr* CallExpr::Create(ASTContext& ctx, SourceRange loc, Expr* callee,
   return new (mem) CallExpr{std::move(loc), callee, std::move(args)};
 }
 
-void CallExpr::dump(int indent) const { jcc_unreachable(); }
+void CallExpr::dump(int indent) const { jcc_unimplemented(); }
 
 UnaryExpr* UnaryExpr::Create(ASTContext& ctx, SourceRange loc,
                              UnaryOperatorKind kind, Stmt* value) {
@@ -145,7 +145,7 @@ static std::string_view PrintUnaryOpKind(UnaryOperatorKind kind) {
     case UnaryOperatorKind::AddressOf:
       return "&";
     default:
-      jcc_unreachable();
+      jcc_unimplemented();
   }
 }
 void UnaryExpr::dump(int indent) const {
@@ -175,7 +175,7 @@ static std::string_view PrintBinaryOpKind(BinaryOperatorKind kind) {
     case BinaryOperatorKind::Less:
       return "<";
     default:
-      jcc_unreachable();
+      jcc_unimplemented();
   }
 }
 void BinaryExpr::dump(int indent) const {
@@ -191,7 +191,7 @@ ArraySubscriptExpr* ArraySubscriptExpr::create(ASTContext& ctx, SourceRange loc,
   return new (mem) ArraySubscriptExpr{std::move(loc), lhs, rhs};
 }
 
-void ArraySubscriptExpr::dump(int indent) const { jcc_unreachable(); }
+void ArraySubscriptExpr::dump(int indent) const { jcc_unimplemented(); }
 
 MemberExpr* MemberExpr::create(ASTContext& ctx, SourceRange loc, Stmt* base,
                                Decl* member) {
@@ -199,7 +199,7 @@ MemberExpr* MemberExpr::create(ASTContext& ctx, SourceRange loc, Stmt* base,
   return new (mem) MemberExpr{std::move(loc), base, member};
 }
 
-void MemberExpr::dump(int indent) const { jcc_unreachable(); }
+void MemberExpr::dump(int indent) const { jcc_unimplemented(); }
 
 DeclRefExpr* DeclRefExpr::Create(ASTContext& ctx, SourceRange loc, Decl* decl) {
   void* mem = ctx.Allocate<DeclRefExpr>();

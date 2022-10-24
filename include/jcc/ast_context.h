@@ -56,7 +56,7 @@ class ASTContext {
     } else if constexpr (std::is_base_of_v<Type, T>) {
       return type_allocator_.Allocate<T>();
     }
-    jcc_unreachable();
+    jcc_unreachable("Can't allocate for unknown type!");
   }
 
   // TODO(Jun): signedness, long long ...

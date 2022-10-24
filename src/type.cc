@@ -1,6 +1,7 @@
 #include "jcc/type.h"
 
 #include "jcc/ast_context.h"
+#include "jcc/common.h"
 
 bool Type::IsCompatible(const Type& lhs, const Type& rhs) {
   if (&lhs == &rhs) {
@@ -26,15 +27,15 @@ bool Type::IsCompatible(const Type& lhs, const Type& rhs) {
       return true;
     case Ptr:
       // TBD
-      jcc_unreachable();
+      jcc_unimplemented();
     case Func:
       // TBD
-      jcc_unreachable();
+      jcc_unimplemented();
     case Array:
       // TBD
-      jcc_unreachable();
+      jcc_unimplemented();
     default:
-      jcc_unreachable();
+      jcc_unimplemented();
   }
   return false;
 }

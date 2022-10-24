@@ -357,7 +357,7 @@ class Token {
       case TokenKind::Eof:
         return "Eof";
       default:
-        jcc_unreachable();
+        jcc_unreachable("Unexpected charater when lexing!");
     }
   }
 
