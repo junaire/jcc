@@ -269,8 +269,11 @@ Declarator Parser::ParseDeclarator(DeclSpec& decl_spec) {
 }
 
 Type* Parser::ParseParams(Type* type) {
-  if (CurrentToken().Is<TokenKind::Void>() &&
-      NextToken().Is<TokenKind::RightParen>()) {
+  // 1. int foo(void)
+  // 2. int foo()
+  if ((CurrentToken().Is<TokenKind::Void>() &&
+       NextToken().Is<TokenKind::RightParen>()) ||
+      CurrentToken().Is<TokenKind::RightParen>()) {
     SkipUntil(TokenKind::RightParen, /*skip_match=*/true);
     return Type::CreateFuncType(GetASTContext(), type);
   }
