@@ -1,14 +1,27 @@
-# JCC
-Jun's own C compiler from scractch.
-
+# JCC: Jun's C compiler from scractch
+```
+    ___  ________  ________     
+   |\  \|\   ____\|\   ____\    
+   \ \  \ \  \___|\ \  \___|    
+ __ \ \  \ \  \    \ \  \       
+|\  \\_\  \ \  \____\ \  \____  
+\ \________\ \_______\ \_______\
+ \|________|\|_______|\|_______|
+```
 **Please note this is just my little toy and could be abandoned any time**
 
 ## Build instruction
 
+**Instructions below assume you use Ubtuntu22**
+
+### Prerequisites
+```
+sudo apt install cmake clang ninja-build -y
+pip3 install --user conan
+```
 ### Build
 ```
-pip3 install --user conan
-mkdir build
+mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Debug            \
       -DCMAKE_C_COMPILER=clang            \
       -DCMAKE_CXX_COMPILER=clang++        \
