@@ -63,11 +63,6 @@ jobs:
         cmake --build . -j$(nproc)
         ctest . -j$(nproc)
   build-windows:
-    strategy:
-      matrix:
-        target:
-        - 'Debug'
-        - 'Release'
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
@@ -79,5 +74,5 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ matrix.target }} ..
+        cmake -DCMAKE_BUILD_TYPE=Debug ..
         cmake --build . -j $Env:NUMBER_OF_PROCESSORS

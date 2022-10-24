@@ -1,5 +1,7 @@
 #include "jcc/parser.h"
 
+#include <algorithm>
+
 #include "jcc/common.h"
 #include "jcc/decl.h"
 #include "jcc/expr.h"
