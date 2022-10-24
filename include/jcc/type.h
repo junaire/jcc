@@ -178,11 +178,11 @@ class PointerType : public Type {
 };
 
 class StructType : public Type {
-  class StructMember : public Type {
-    Type* type_;
-  };
+  // class StructMember : public Type {
+  //   Type* type_;
+  // };
 
-  std::vector<StructMember*> members_;
+  // std::vector<StructMember*> members_;
 
  public:
   StructType() = default;
