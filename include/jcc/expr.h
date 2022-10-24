@@ -1,7 +1,7 @@
 #pragma once
 
-#include <concepts>
 #include <memory>
+#include <type_traits>
 
 #include "jcc/stmt.h"
 
@@ -21,7 +21,7 @@ class Expr : public Stmt {
 
  public:
   template <typename Ty>
-  requires std::convertible_to<Ty, Expr> Ty* AsExpr() {
+  requires std::is_base_of_v<Expr, Ty> Ty* AsExpr() {
     return static_cast<Ty*>(this);
   }
 

@@ -462,25 +462,28 @@ Decl* Parser::ParseFunction(Declarator& declarator) {
   return function;
 }
 
+// 1. int x;
+// 2. int x = 0;
+// 3. int x, y;
+// 4. int x, y, z = 0;
 std::vector<Decl*> Parser::ParseDeclaration(Declarator& declarator) {
   std::vector<Decl*> vars;
-  bool is_first = true;
-  // FIXME: This doesn't work for:
-  // int x;
-  while (!CurrentToken().Is<TokenKind::Semi>()) {
-    if (!is_first) {
-      SkipUntil(TokenKind::Comma);
-    }
-    is_first = false;
 
-    // FIXME: Just a note, we need to check its redefinition.
-    VarDecl* var =
-        VarDecl::Create(GetASTContext(), SourceRange(), nullptr,
-                        declarator.GetBaseType(), declarator.GetName());
-    if (TryConsumeToken(TokenKind::Equal)) {
-      var->SetInit(ParseAssignmentExpr());
-    }
-    vars.push_back(var);
+  vars.push_back(VarDecl::Create(GetASTContext(), SourceRange(), nullptr,
+                                 declarator.GetBaseType(),
+                                 declarator.GetName()));
+  // Parse optional decls.
+  while (!CurrentToken().Is<TokenKind::Semi>() &&
+         !CurrentToken().Is<TokenKind::Equal>()) {
+    jcc_unreachable();
+  }
+
+  // init if any.
+  // FIXME: Just a note, we need to check its redefinition.
+  if (TryConsumeToken(TokenKind::Equal)) {
+    Expr* init = ParseAssignmentExpr();
+    std::for_each(vars.begin(), vars.end(),
+                  [=](Decl* var) { var->AsDecl<VarDecl>()->SetInit(init); });
   }
   MustConsumeToken(TokenKind::Semi);  // Eat ';'
   return vars;

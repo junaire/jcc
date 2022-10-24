@@ -25,7 +25,11 @@ VarDecl* VarDecl::Create(ASTContext& ctx, SourceRange loc, Stmt* init,
 void VarDecl::dump(int indent) const {
   InsertIndent(indent);
   fmt::print("VarDecl: {}\n", GetName());
-  init_->dump(indent + 2);
+
+  // If we have init.
+  if (init_ != nullptr) {
+    init_->dump(indent + 2);
+  }
 }
 
 FunctionDecl* FunctionDecl::Create(ASTContext& ctx, SourceRange loc,

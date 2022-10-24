@@ -2,6 +2,7 @@
 
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <vector>
 
 #include "jcc/ast_node.h"
@@ -18,6 +19,10 @@ class Decl : public ASTNode {
   explicit Decl(SourceRange loc) : loc_(std::move(loc)) {}
 
  public:
+  template <typename Ty>
+  requires std::is_base_of_v<Decl, Ty> Ty* AsDecl() {
+    return static_cast<Ty*>(this);
+  }
   virtual void dump(int indent) const override{};
   virtual ~Decl() override = default;
 };

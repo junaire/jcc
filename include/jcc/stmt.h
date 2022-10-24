@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cassert>
-#include <concepts>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include "jcc/ast_node.h"
@@ -21,7 +21,7 @@ class Stmt : public ASTNode {
 
  public:
   template <typename Ty>
-  requires std::convertible_to<Ty, Stmt> Ty* AsStmt() {
+  requires std::is_base_of_v<Stmt, Ty> Ty* AsStmt() {
     return static_cast<Ty*>(this);
   }
 
