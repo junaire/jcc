@@ -475,7 +475,14 @@ std::vector<Decl*> Parser::ParseDeclaration(Declarator& declarator) {
   // Parse optional decls.
   while (!CurrentToken().Is<TokenKind::Semi>() &&
          !CurrentToken().Is<TokenKind::Equal>()) {
-    jcc_unreachable();
+    MustConsumeToken(TokenKind::Comma);
+
+    if (CurrentToken().Is<TokenKind::Identifier>()) {
+      vars.push_back(VarDecl::Create(GetASTContext(), SourceRange(), nullptr,
+                                     declarator.GetBaseType(),
+                                     CurrentToken().GetAsString()));
+      MustConsumeToken(TokenKind::Identifier);
+    }
   }
 
   // init if any.
