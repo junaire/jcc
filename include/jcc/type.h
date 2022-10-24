@@ -50,6 +50,7 @@ class Type {
 
  public:
   Type() = default;
+  virtual ~Type() = default;
 
   explicit Type(TypeKind kind, int size, int alignment)
       : kind_(kind), size_(size), alignment_(alignment) {}
