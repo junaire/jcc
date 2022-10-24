@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdlib>
+#include <type_traits>
 #include <vector>
 // TODO(Jun): Implement arena based allocator.
 template <typename T>
@@ -9,6 +10,7 @@ class Allocator {
 
  public:
   template <typename U>
+  requires std::is_base_of_v<T, U>
   void* Allocate() {
     void* mem = malloc(sizeof(U));
     slabs_.push_back(mem);
