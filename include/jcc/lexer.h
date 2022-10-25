@@ -7,6 +7,7 @@
 
 #include "jcc/token.h"
 
+namespace jcc {
 class Keywords {
   std::unordered_map<std::string_view, TokenKind> keywords_;
 
@@ -60,3 +61,4 @@ class Lexer {
   [[nodiscard]] bool IsValidChar() const;
   [[nodiscard]] bool IsLineTerminator() const;
 };
+}  // namespace jcc

@@ -1,5 +1,7 @@
 #include "jcc/codegen.h"
 
+namespace jcc {
+
 void CodeGen::Emit() {
   Write(" .global main\n");
   Write(" .main:\n");
@@ -43,3 +45,4 @@ void CodeGen::EmitArraySubscriptExpr(ArraySubscriptExpr& expr) {}
 void CodeGen::EmitMemberExpr(MemberExpr& expr) {}
 
 void CodeGen::EmitDeclRefExpr(DeclRefExpr& expr) {}
+}  // namespace jcc

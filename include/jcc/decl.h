@@ -8,6 +8,7 @@
 #include "jcc/ast_node.h"
 #include "jcc/source_location.h"
 
+namespace jcc {
 class Type;
 class Stmt;
 class ASTContext;
@@ -53,7 +54,7 @@ class VarDecl : public Decl {
   [[nodiscard]] bool IsDefinition() const { return init_ == nullptr; }
 
   void dump(int indent) const override;
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 class FunctionDecl : public Decl {
@@ -97,7 +98,7 @@ class FunctionDecl : public Decl {
 
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 class LabelDecl : public Decl {};
@@ -127,5 +128,6 @@ class RecordDecl : public Decl {
 
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
+}  // namespace jcc

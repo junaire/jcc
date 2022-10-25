@@ -5,6 +5,8 @@
 
 #include "jcc/stmt.h"
 
+namespace jcc {
+
 class Type;
 class Decl;
 class ASTContext;
@@ -48,7 +50,7 @@ class StringLiteral : public Expr {
   [[nodiscard]] std::string GetValue() const { return literal_; }
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 class CharacterLiteral : public Expr {
@@ -65,7 +67,7 @@ class CharacterLiteral : public Expr {
 
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 class IntergerLiteral : public Expr {
@@ -81,7 +83,7 @@ class IntergerLiteral : public Expr {
 
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 class FloatingLiteral : public Expr {
@@ -98,7 +100,7 @@ class FloatingLiteral : public Expr {
 
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 class ConstantExpr : public Expr {
@@ -124,7 +126,7 @@ class CallExpr : public Expr {
 
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 class CastExpr : public Expr {
@@ -169,7 +171,7 @@ class UnaryExpr : public Expr {
 
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 // TODO(Jun): Add more kinds.
@@ -202,7 +204,7 @@ class BinaryExpr : public Expr {
 
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 class ArraySubscriptExpr : public Expr {
@@ -222,7 +224,7 @@ class ArraySubscriptExpr : public Expr {
 
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 class MemberExpr : public Expr {
@@ -242,7 +244,7 @@ class MemberExpr : public Expr {
 
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 class DeclRefExpr : public Expr {
@@ -258,5 +260,6 @@ class DeclRefExpr : public Expr {
 
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
+}  // namespace jcc

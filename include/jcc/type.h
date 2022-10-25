@@ -8,6 +8,8 @@
 #include "jcc/common.h"
 #include "jcc/token.h"
 
+namespace jcc {
+
 class ASTContext;
 
 enum class Qualifiers {
@@ -215,3 +217,4 @@ class FunctionType : public Type {
 
   [[nodiscard]] std::size_t GetParamSize() const { return param_types_.size(); }
 };
+}  // namespace jcc

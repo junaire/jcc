@@ -7,6 +7,8 @@
 #include "jcc/common.h"
 #include "jcc/source_location.h"
 
+namespace jcc {
+
 enum class TokenKind {
   StringLiteral,
   NumericConstant,
@@ -408,3 +410,4 @@ class Token {
     }
   }
 };
+}  // namespace jcc

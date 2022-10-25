@@ -3,6 +3,9 @@
 #include <cstdlib>
 #include <type_traits>
 #include <vector>
+
+namespace jcc {
+
 // TODO(Jun): Implement arena based allocator.
 template <typename T>
 class Allocator {
@@ -28,3 +31,4 @@ class Allocator {
     }
   }
 };
+}  // namespace jcc

@@ -2,6 +2,8 @@
 
 #include "jcc/type.h"
 
+namespace jcc {
+
 ASTContext::ASTContext() { CreateBuiltinTypes(); }
 
 void ASTContext::CreateBuiltinTypes() {
@@ -26,3 +28,4 @@ void ASTContext::CreateBuiltinTypes() {
 void ASTContext::RegisterUserType(Type* type) {
   user_defined_types_.push_back(type);
 }
+}  // namespace jcc

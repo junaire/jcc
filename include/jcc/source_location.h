@@ -4,6 +4,7 @@
 #include <string>
 #include <string_view>
 
+namespace jcc {
 class SourceLocation {
   std::size_t line_;
   std::size_t column_;
@@ -48,3 +49,4 @@ class SourceRange {
 
   [[nodiscard]] std::string_view GetFileName() const { return file_name_; }
 };
+}  // namespace jcc

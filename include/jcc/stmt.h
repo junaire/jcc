@@ -8,6 +8,8 @@
 #include "jcc/ast_node.h"
 #include "jcc/source_location.h"
 
+namespace jcc {
+
 class Expr;
 class Decl;
 class LabelDecl;
@@ -42,7 +44,7 @@ class LabeledStatement : public Stmt {
   LabelDecl* GetLabel() { return label_; }
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 class CompoundStatement : public Stmt {
@@ -63,7 +65,7 @@ class CompoundStatement : public Stmt {
   void AddStmt(Stmt* stmt) { stmts_.push_back(stmt); }
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 class ExpressionStatement : public Stmt {};
@@ -89,7 +91,7 @@ class IfStatement : public Stmt {
   Stmt* GetElse() { return else_stmt_; }
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 class SwitchStatement : public Stmt {
@@ -107,7 +109,7 @@ class SwitchStatement : public Stmt {
   }
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 class WhileStatement : public Stmt {
@@ -124,7 +126,7 @@ class WhileStatement : public Stmt {
   Stmt* GetBody() { return body_; }
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 class DoStatement : public Stmt {
@@ -139,7 +141,7 @@ class DoStatement : public Stmt {
   Expr* GetCondition() { return condition_; }
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 class ForStatement : public Stmt {
@@ -163,7 +165,7 @@ class ForStatement : public Stmt {
   Stmt* GetBody() { return body_; }
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 class GotoStatement : public Stmt {
@@ -176,7 +178,7 @@ class GotoStatement : public Stmt {
  public:
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 class ContinueStatement : public Stmt {
@@ -188,7 +190,7 @@ class ContinueStatement : public Stmt {
  public:
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 class BreakStatement : public Stmt {
@@ -212,7 +214,7 @@ class ReturnStatement : public Stmt {
   Expr* GetReturn() { return return_expr_; }
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 class DeclStatement : public Stmt {
@@ -238,7 +240,7 @@ class DeclStatement : public Stmt {
   std::vector<Decl*> GetDecls() { return decls_; }
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
 
 class ExprStatement : public Stmt {
@@ -251,5 +253,6 @@ class ExprStatement : public Stmt {
   Expr* GetExpr() { return expr_; }
   void dump(int indent) const override;
 
-	void GenCode(CodeGen& gen) override;
+  void GenCode(CodeGen& gen) override;
 };
+}  // namespace jcc

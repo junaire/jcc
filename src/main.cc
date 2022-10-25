@@ -22,13 +22,13 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  std::string fileName = argv[1];
-  std::string content = ReadFile(fileName);
+  std::string file_name = argv[1];
+  std::string content = ReadFile(file_name);
 
-  Lexer lexer(content, fileName);
-  Parser parser(lexer);
+  jcc::Lexer lexer(content, file_name);
+  jcc::Parser parser(lexer);
 
-  std::vector<Decl*> decls = parser.ParseTranslateUnit();
+  std::vector<jcc::Decl*> decls = parser.ParseTranslateUnit();
   for (const auto* decl : decls) {
     decl->dump(0);
   }

@@ -10,6 +10,8 @@
 #include "jcc/ast_node.h"
 #include "jcc/common.h"
 
+namespace jcc {
+
 class Decl;
 class Type;
 
@@ -97,3 +99,4 @@ class ASTContext {
   void CreateBuiltinTypes();
   void RegisterUserType(Type* type);
 };
+}  // namespace jcc

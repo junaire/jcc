@@ -3,6 +3,8 @@
 #include "jcc/ast_context.h"
 #include "jcc/common.h"
 
+namespace jcc {
+
 bool Type::IsCompatible(const Type& lhs, const Type& rhs) {
   if (&lhs == &rhs) {
     return true;
@@ -124,3 +126,4 @@ Type* Type::CreateStructType(ASTContext& ctx) {
   void* mem = ctx.Allocate<StructType>();
   return new (mem) StructType(TypeKind::Struct, 0, 1);
 }
+}  // namespace jcc

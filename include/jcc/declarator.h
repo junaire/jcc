@@ -3,6 +3,8 @@
 #include "jcc/ast_context.h"
 #include "jcc/type.h"
 
+namespace jcc {
+
 class DeclSpec {
   friend class Declarator;
 
@@ -201,3 +203,4 @@ class Declarator {
 
   std::string GetName() { return name_.GetAsString(); }
 };
+}  // namespace jcc

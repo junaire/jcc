@@ -9,7 +9,10 @@
 #include "jcc/expr.h"
 #include "jcc/stmt.h"
 
-#define GEN(Node) void Node::GenCode(CodeGen& gen) { gen.Emit##Node(*this); }
+namespace jcc {
+
+#define GEN(Node) \
+  void Node::GenCode(CodeGen& gen) { gen.Emit##Node(*this); }
 
 GEN(VarDecl)
 GEN(FunctionDecl)
@@ -322,3 +325,4 @@ void ExprStatement::dump(int indent) const {
   fmt::print("ExprStatement\n");
   expr_->dump(indent + 2);
 }
+}  // namespace jcc

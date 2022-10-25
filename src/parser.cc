@@ -11,6 +11,8 @@
 #include "jcc/token.h"
 #include "jcc/type.h"
 
+namespace jcc {
+
 static BinOpPreLevel GetBinOpPrecedence(TokenKind Kind) {
   switch (Kind) {
     default:
@@ -639,3 +641,4 @@ std::vector<Decl*> Parser::ParseTranslateUnit() {
 
   return top_decls;
 }
+}  // namespace jcc

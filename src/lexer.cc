@@ -1,5 +1,7 @@
 #include "jcc/lexer.h"
 
+namespace jcc {
+
 Keywords::Keywords() {
   // TODO(Jun): Use macros to reduce the work?
   keywords_.insert({"do", TokenKind::Do});
@@ -425,3 +427,4 @@ Token Lexer::LexNumericConstant() {
   }
   return Token{TokenKind::NumericConstant, data, len, loc};
 }
+}  // namespace jcc

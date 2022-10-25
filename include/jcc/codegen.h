@@ -10,6 +10,8 @@
 #include "fmt/core.h"
 #include "jcc/stmt.h"
 
+namespace jcc {
+
 class VarDecl;
 class FunctionDecl;
 class RecordDecl;
@@ -113,3 +115,4 @@ class CodeGen {
     StackDepthTracker::Pop();
   }
 };
+}  // namespace jcc

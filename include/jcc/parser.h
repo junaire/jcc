@@ -7,6 +7,8 @@
 #include "jcc/expr.h"
 #include "jcc/token.h"
 
+namespace jcc {
+
 class Decl;
 class Expr;
 class Parser;
@@ -107,3 +109,4 @@ class Parser {
     ~ScopeRAII() { self_.ExitScope(); }
   };
 };
+}  // namespace jcc
