@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
 
   jcc::Lexer lexer(content, file_name);
   jcc::Parser parser(lexer);
-  jcc::CodeGen codegen("./demo.s");
+  jcc::CodeGen codegen(file_name);
 
   std::vector<jcc::Decl*> decls = parser.ParseTranslateUnit();
 

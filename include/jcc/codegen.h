@@ -75,7 +75,7 @@ class CodeGen {
   File file_;
 
  public:
-  explicit CodeGen(std::string_view file_name);
+  explicit CodeGen(const std::string& file_name);
 
   void EmitVarDecl(VarDecl& decl);
   void EmitFunctionDecl(FunctionDecl& decl);

@@ -1,18 +1,29 @@
 #include "jcc/codegen.h"
 
+#include <cassert>
 #include <cstddef>
+#include <string_view>
 
 #include "jcc/decl.h"
 #include "jcc/expr.h"
 #include "jcc/stmt.h"
 
+// Turn foo.c => foo.s
+static std::string CreateAsmFileName(const std::string& name) {
+  assert(name.ends_with(".c") &&
+         "Can't generate asm code for non C source code!");
+  std::string asm_file = name.substr(0, name.size() - 2);
+  return asm_file + ".s";
+}
+
 namespace jcc {
 
-CodeGen::CodeGen(std::string_view file_name) : file_(file_name) { Init(); }
-
-void CodeGen::Init() {
-	Write(".intel_syntax noprefix");
+CodeGen::CodeGen(const std::string& file_name)
+    : file_(CreateAsmFileName(file_name)) {
+  Init();
 }
+
+void CodeGen::Init() { Write(".intel_syntax noprefix"); }
 
 void CodeGen::EmitVarDecl(VarDecl& decl) {}
 
