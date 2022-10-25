@@ -75,9 +75,7 @@ class CodeGen {
   File file_;
 
  public:
-  explicit CodeGen(std::string_view file_name) : file_(file_name) {}
-
-  void Emit();
+  explicit CodeGen(std::string_view file_name);
 
   void EmitVarDecl(VarDecl& decl);
   void EmitFunctionDecl(FunctionDecl& decl);
@@ -105,6 +103,7 @@ class CodeGen {
   template <typename S, typename... Args>
   void Write(const S& format, Args&&... args) {
     file_.Write(format, std::forward<Args>(args)...);
+    file_.Write("\n");
   }
   void Push() {
     Write(" push %rax\n");
@@ -114,5 +113,7 @@ class CodeGen {
     Write(" pop {}\n", arg);
     StackDepthTracker::Pop();
   }
+
+	void Init();
 };
 }  // namespace jcc

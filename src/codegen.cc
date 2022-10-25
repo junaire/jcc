@@ -1,16 +1,29 @@
 #include "jcc/codegen.h"
 
+#include <cstddef>
+
+#include "jcc/decl.h"
+#include "jcc/expr.h"
+#include "jcc/stmt.h"
+
 namespace jcc {
 
-void CodeGen::Emit() {
-  Write(" .global main\n");
-  Write(" .main:\n");
-  Write("  ret\n");
+CodeGen::CodeGen(std::string_view file_name) : file_(file_name) { Init(); }
+
+void CodeGen::Init() {
+	Write(".intel_syntax noprefix");
 }
 
 void CodeGen::EmitVarDecl(VarDecl& decl) {}
 
-void CodeGen::EmitFunctionDecl(FunctionDecl& decl) {}
+void CodeGen::EmitFunctionDecl(FunctionDecl& decl) {
+  Write("{}:", decl.GetName());
+  Write("  push rbp");
+  Write("  mov rbp, rsp");
+  decl.GetBody()->GenCode(*this);
+  Write("  pop rbp");
+  Write("  ret");
+}
 
 void CodeGen::EmitRecordDecl(RecordDecl& decl) {}
 
@@ -18,13 +31,20 @@ void CodeGen::EmitIfStatement(IfStatement& stmt) {}
 
 void CodeGen::EmitWhileStatement(WhileStatement& stmt) {}
 
-void CodeGen::EmitReturnStatement(ReturnStatement& stmt) {}
+void CodeGen::EmitReturnStatement(ReturnStatement& stmt) {
+  auto value = stmt.GetReturn()->AsExpr<IntergerLiteral>()->GetValue();
+  Write("  mov eax, {}", value);
+}
 
 void CodeGen::EmitDeclStatement(DeclStatement& stmt) {}
 
 void CodeGen::EmitExprStatement(ExprStatement& stmt) {}
 
-void CodeGen::EmitCompoundStatement(CompoundStatement& stmt) {}
+void CodeGen::EmitCompoundStatement(CompoundStatement& stmt) {
+  for (std::size_t idx = 0; idx < stmt.GetSize(); idx++) {
+    stmt.GetStmt(idx)->GenCode(*this);
+  }
+}
 
 void CodeGen::EmitStringLiteral(StringLiteral& expr) {}
 

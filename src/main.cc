@@ -5,6 +5,7 @@
 #include <string_view>
 #include <vector>
 
+#include "jcc/codegen.h"
 #include "jcc/decl.h"
 #include "jcc/lexer.h"
 #include "jcc/parser.h"
@@ -27,9 +28,11 @@ int main(int argc, char** argv) {
 
   jcc::Lexer lexer(content, file_name);
   jcc::Parser parser(lexer);
+  jcc::CodeGen codegen("./demo.s");
 
   std::vector<jcc::Decl*> decls = parser.ParseTranslateUnit();
-  for (const auto* decl : decls) {
-    decl->dump(0);
+
+  for (jcc::Decl* decl : decls) {
+    decl->GenCode(codegen);
   }
 }
