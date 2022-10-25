@@ -5,6 +5,7 @@ SET(SOURCES
 	lexer.cc
 	parser.cc
 	type.cc
+	codegen.cc
 )
 
 add_executable(

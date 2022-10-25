@@ -47,6 +47,8 @@ class StringLiteral : public Expr {
 
   [[nodiscard]] std::string GetValue() const { return literal_; }
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
 
 class CharacterLiteral : public Expr {
@@ -62,6 +64,8 @@ class CharacterLiteral : public Expr {
   [[nodiscard]] char GetValue() const { return value_; }
 
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
 
 class IntergerLiteral : public Expr {
@@ -76,6 +80,8 @@ class IntergerLiteral : public Expr {
   [[nodiscard]] int GetValue() const { return value_; }
 
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
 
 class FloatingLiteral : public Expr {
@@ -91,6 +97,8 @@ class FloatingLiteral : public Expr {
   [[nodiscard]] double GetValue() const { return value_; };
 
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
 
 class ConstantExpr : public Expr {
@@ -115,6 +123,8 @@ class CallExpr : public Expr {
   [[nodiscard]] std::size_t GetArgNum() const { return args_.size(); }
 
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
 
 class CastExpr : public Expr {
@@ -158,6 +168,8 @@ class UnaryExpr : public Expr {
   [[nodiscard]] UnaryOperatorKind getKind() const { return kind_; }
 
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
 
 // TODO(Jun): Add more kinds.
@@ -189,6 +201,8 @@ class BinaryExpr : public Expr {
   Expr* GetRhs() { return rhs_; }
 
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
 
 class ArraySubscriptExpr : public Expr {
@@ -207,6 +221,8 @@ class ArraySubscriptExpr : public Expr {
   Expr* getRhs() { return rhs_; }
 
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
 
 class MemberExpr : public Expr {
@@ -225,6 +241,8 @@ class MemberExpr : public Expr {
   Decl* getMember() { return member_; }
 
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
 
 class DeclRefExpr : public Expr {
@@ -239,4 +257,6 @@ class DeclRefExpr : public Expr {
   Decl* GetRefDecl() { return decl_; }
 
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };

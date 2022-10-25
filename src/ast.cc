@@ -3,10 +3,35 @@
 #include <string_view>
 
 #include "jcc/ast_context.h"
+#include "jcc/codegen.h"
 #include "jcc/common.h"
 #include "jcc/decl.h"
 #include "jcc/expr.h"
 #include "jcc/stmt.h"
+
+#define GEN(Node) void Node::GenCode(CodeGen& gen) { gen.Emit##Node(*this); }
+
+GEN(VarDecl)
+GEN(FunctionDecl)
+
+GEN(CompoundStatement)
+GEN(DeclStatement)
+GEN(WhileStatement)
+GEN(IfStatement)
+GEN(ReturnStatement)
+
+GEN(DeclRefExpr)
+GEN(ArraySubscriptExpr)
+GEN(BinaryExpr)
+GEN(UnaryExpr)
+GEN(RecordDecl)
+GEN(MemberExpr)
+GEN(ExprStatement)
+GEN(StringLiteral)
+GEN(CharacterLiteral)
+GEN(IntergerLiteral)
+GEN(CallExpr)
+GEN(FloatingLiteral)
 
 static void InsertIndent(int n) {
   for (int i = 0; i < n; i++) {

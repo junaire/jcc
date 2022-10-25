@@ -41,6 +41,8 @@ class LabeledStatement : public Stmt {
   Stmt* GetSubStmt() { return sub_stmt_; }
   LabelDecl* GetLabel() { return label_; }
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
 
 class CompoundStatement : public Stmt {
@@ -60,6 +62,8 @@ class CompoundStatement : public Stmt {
 
   void AddStmt(Stmt* stmt) { stmts_.push_back(stmt); }
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
 
 class ExpressionStatement : public Stmt {};
@@ -84,6 +88,8 @@ class IfStatement : public Stmt {
   Stmt* GetThen() { return then_stmt_; }
   Stmt* GetElse() { return else_stmt_; }
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
 
 class SwitchStatement : public Stmt {
@@ -100,6 +106,8 @@ class SwitchStatement : public Stmt {
     return cases_[index];
   }
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
 
 class WhileStatement : public Stmt {
@@ -115,6 +123,8 @@ class WhileStatement : public Stmt {
   Expr* GetCondition() { return condition_; }
   Stmt* GetBody() { return body_; }
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
 
 class DoStatement : public Stmt {
@@ -128,6 +138,8 @@ class DoStatement : public Stmt {
   Stmt* GetBody() { return body_; }
   Expr* GetCondition() { return condition_; }
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
 
 class ForStatement : public Stmt {
@@ -150,6 +162,8 @@ class ForStatement : public Stmt {
   Stmt* GetIncrement() { return increment_; }
   Stmt* GetBody() { return body_; }
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
 
 class GotoStatement : public Stmt {
@@ -161,6 +175,8 @@ class GotoStatement : public Stmt {
 
  public:
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
 
 class ContinueStatement : public Stmt {
@@ -171,6 +187,8 @@ class ContinueStatement : public Stmt {
 
  public:
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
 
 class BreakStatement : public Stmt {
@@ -193,6 +211,8 @@ class ReturnStatement : public Stmt {
                                  Expr* return_expr);
   Expr* GetReturn() { return return_expr_; }
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
 
 class DeclStatement : public Stmt {
@@ -217,6 +237,8 @@ class DeclStatement : public Stmt {
 
   std::vector<Decl*> GetDecls() { return decls_; }
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
 
 class ExprStatement : public Stmt {
@@ -228,4 +250,6 @@ class ExprStatement : public Stmt {
   static ExprStatement* Create(ASTContext& ctx, SourceRange loc, Expr* expr);
   Expr* GetExpr() { return expr_; }
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };

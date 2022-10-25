@@ -53,6 +53,7 @@ class VarDecl : public Decl {
   [[nodiscard]] bool IsDefinition() const { return init_ == nullptr; }
 
   void dump(int indent) const override;
+	void GenCode(CodeGen& gen) override;
 };
 
 class FunctionDecl : public Decl {
@@ -95,6 +96,8 @@ class FunctionDecl : public Decl {
   [[nodiscard]] std::size_t GetParamNum() const { return args_.size(); }
 
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
 
 class LabelDecl : public Decl {};
@@ -123,4 +126,6 @@ class RecordDecl : public Decl {
   [[nodiscard]] std::size_t GetMemberNum() const { return members_.size(); }
 
   void dump(int indent) const override;
+
+	void GenCode(CodeGen& gen) override;
 };
