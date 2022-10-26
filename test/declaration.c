@@ -4,4 +4,7 @@ int main() {
 
   int a, b, c;
   int m, n, o = 42;
+
+  int q;
+  q = 42;
 }

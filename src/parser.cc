@@ -372,6 +372,8 @@ Stmt* Parser::ParseExprStmt() {
   }
 
   Expr* expr = ParseExpr();
+  MustConsumeToken(TokenKind::Semi);  // I'm not really sure when to eat this
+                                      // semi.
   return ExprStatement::Create(GetASTContext(), SourceRange(), expr);
 }
 
@@ -567,6 +569,8 @@ static BinaryOperatorKind ConvertOpToKind(TokenKind kind) {
       return BinaryOperatorKind::Greater;
     case TokenKind::Less:
       return BinaryOperatorKind::Less;
+    case TokenKind::Equal:
+      return BinaryOperatorKind::Equal;
     default:
       jcc_unimplemented();
   }

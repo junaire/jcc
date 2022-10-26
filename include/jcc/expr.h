@@ -179,6 +179,7 @@ enum class BinaryOperatorKind {
   Divide,
   Greater,
   Less,
+  Equal,
 };
 
 class BinaryExpr : public Expr {

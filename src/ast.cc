@@ -202,6 +202,8 @@ static std::string_view PrintBinaryOpKind(BinaryOperatorKind kind) {
       return ">";
     case BinaryOperatorKind::Less:
       return "<";
+    case BinaryOperatorKind::Equal:
+      return "=";
     default:
       jcc_unimplemented();
   }
