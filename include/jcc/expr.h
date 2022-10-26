@@ -3,6 +3,7 @@
 #include <memory>
 #include <type_traits>
 
+#include "jcc/source_location.h"
 #include "jcc/stmt.h"
 
 namespace jcc {
@@ -31,10 +32,6 @@ class Expr : public Stmt {
 
   // TODO(Jun): What's the signature?
   void SetType() {}
-
-  virtual void dump(int indent) const override{};
-
-  virtual ~Expr() override = default;
 };
 
 class StringLiteral : public Expr {

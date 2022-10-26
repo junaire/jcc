@@ -16,20 +16,14 @@ class LabelDecl;
 class ASTContext;
 
 class Stmt : public ASTNode {
-  SourceRange loc_;
-
  protected:
-  explicit Stmt(SourceRange loc) : loc_(std::move(loc)) {}
+  explicit Stmt(SourceRange loc) : ASTNode(std::move(loc)) {}
 
  public:
   template <typename Ty>
   requires std::is_base_of_v<Stmt, Ty> Ty* AsStmt() {
     return static_cast<Ty*>(this);
   }
-
-  virtual ~Stmt() override{};
-
-  virtual void dump(int indent) const override{};
 };
 
 class LabeledStatement : public Stmt {

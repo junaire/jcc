@@ -1,13 +1,16 @@
 #pragma once
 
+#include "jcc/source_location.h"
+
 namespace jcc {
 
 class CodeGen;
-// FIXME: Why can't ASTNode hold source location, we need a better way
-// to handle Types.
+
 class ASTNode {
+  SourceRange loc_;
+
  protected:
-  ASTNode() = default;
+  explicit ASTNode(SourceRange loc) : loc_(std::move(loc)) {}
 
  public:
   virtual ~ASTNode() = default;

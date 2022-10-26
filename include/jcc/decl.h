@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "jcc/ast_node.h"
-#include "jcc/source_location.h"
 
 namespace jcc {
 class Type;
@@ -14,18 +13,14 @@ class Stmt;
 class ASTContext;
 
 class Decl : public ASTNode {
-  SourceRange loc_;
-
  protected:
-  explicit Decl(SourceRange loc) : loc_(std::move(loc)) {}
+  explicit Decl(SourceRange loc) : ASTNode(std::move(loc)) {}
 
  public:
   template <typename Ty>
   requires std::is_base_of_v<Decl, Ty> Ty* AsDecl() {
     return static_cast<Ty*>(this);
   }
-  virtual void dump(int indent) const override{};
-  virtual ~Decl() override = default;
 };
 
 class VarDecl : public Decl {
