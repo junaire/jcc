@@ -513,7 +513,7 @@ Decl* Parser::ParseFunction(Declarator& declarator) {
 
   ScopeRAII scope_guard(*this);
 
-  function->SetParams(CreateParams(self));
+  function->SetParams(std::move(CreateParams(self)));
 
   if (TryConsumeToken(TokenKind::LeftBracket)) {
     function->SetBody(ParseCompoundStmt());
