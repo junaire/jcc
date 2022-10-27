@@ -86,6 +86,8 @@ class CodeGen {
   void EmitWhileStatement(WhileStatement& stmt);
   void EmitForStatement(ForStatement& stmt);
   void EmitReturnStatement(ReturnStatement& stmt);
+  void EmitBreakStatement(BreakStatement& stmt);
+  void EmitContinueStatement(ContinueStatement& stmt);
   void EmitDeclStatement(DeclStatement& stmt);
   void EmitExprStatement(ExprStatement& stmt);
   void EmitCompoundStatement(CompoundStatement& stmt);

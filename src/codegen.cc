@@ -49,6 +49,10 @@ void CodeGen::EmitReturnStatement(ReturnStatement& stmt) {
   Write("  mov eax, {}", value);
 }
 
+void CodeGen::EmitBreakStatement(BreakStatement& stmt) {}
+
+void CodeGen::EmitContinueStatement(ContinueStatement& stmt) {}
+
 void CodeGen::EmitDeclStatement(DeclStatement& stmt) {}
 
 void CodeGen::EmitExprStatement(ExprStatement& stmt) {}

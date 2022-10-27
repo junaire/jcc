@@ -365,6 +365,17 @@ Stmt* Parser::ParseWhileStmt() {
                                 body);
 }
 
+Stmt* Parser::ParseBreakStmt() {
+  MustConsumeToken(TokenKind::Semi);
+  return BreakStatement::Create(GetASTContext(), SourceRange(), SourceRange());
+}
+
+Stmt* Parser::ParseContinueStmt() {
+  MustConsumeToken(TokenKind::Semi);
+  return ContinueStatement::Create(GetASTContext(), SourceRange(),
+                                   SourceRange());
+}
+
 Stmt* Parser::ParseForStmt() {
   MustConsumeToken(TokenKind::LeftParen);
   Stmt* init = ParseStatement();
@@ -395,12 +406,40 @@ Stmt* Parser::ParseStatement() {
     return ParseReturnStmt();
   }
 
+  if (TryConsumeToken(TokenKind::Break)) {
+    return ParseBreakStmt();
+  }
+
+  if (TryConsumeToken(TokenKind::Continue)) {
+    return ParseContinueStmt();
+  }
+
   if (TryConsumeToken(TokenKind::If)) {
     return ParseIfStmt();
   }
 
   if (TryConsumeToken(TokenKind::While)) {
     return ParseWhileStmt();
+  }
+
+  if (TryConsumeToken(TokenKind::Switch)) {
+    jcc_unimplemented();
+  }
+
+  if (TryConsumeToken(TokenKind::Case)) {
+    jcc_unimplemented();
+  }
+
+  if (TryConsumeToken(TokenKind::Default)) {
+    jcc_unimplemented();
+  }
+
+  if (TryConsumeToken(TokenKind::Do)) {
+    jcc_unimplemented();
+  }
+
+  if (TryConsumeToken(TokenKind::Goto)) {
+    jcc_unimplemented();
   }
 
   if (TryConsumeToken(TokenKind::For)) {

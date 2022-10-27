@@ -7,6 +7,7 @@
 #include "jcc/common.h"
 #include "jcc/decl.h"
 #include "jcc/expr.h"
+#include "jcc/source_location.h"
 #include "jcc/stmt.h"
 
 namespace jcc {
@@ -23,6 +24,8 @@ GEN(WhileStatement)
 GEN(ForStatement)
 GEN(IfStatement)
 GEN(ReturnStatement)
+GEN(BreakStatement)
+GEN(ContinueStatement)
 
 GEN(DeclRefExpr)
 GEN(ArraySubscriptExpr)
@@ -356,4 +359,27 @@ void ExprStatement::dump(int indent) const {
   fmt::print("ExprStatement\n");
   expr_->dump(indent + 2);
 }
+
+BreakStatement* BreakStatement::Create(ASTContext& ctx, SourceRange loc,
+                                       SourceRange break_loc) {
+  void* mem = ctx.Allocate<BreakStatement>();
+  return new (mem) BreakStatement(std::move(loc), std::move(break_loc));
+}
+
+void BreakStatement::dump(int indent) const {
+  InsertIndent(indent);
+  fmt::print("BreakStatement\n");
+}
+
+ContinueStatement* ContinueStatement::Create(ASTContext& ctx, SourceRange loc,
+                                             SourceRange continue_loc) {
+  void* mem = ctx.Allocate<ContinueStatement>();
+  return new (mem) ContinueStatement(std::move(loc), std::move(continue_loc));
+}
+
+void ContinueStatement::dump(int indent) const {
+  InsertIndent(indent);
+  fmt::print("ContinueStatement\n");
+}
+
 }  // namespace jcc

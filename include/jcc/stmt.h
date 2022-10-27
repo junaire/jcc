@@ -185,18 +185,27 @@ class ContinueStatement : public Stmt {
       : Stmt(std::move(loc)), continue_loc_(std::move(continue_loc)) {}
 
  public:
+  static ContinueStatement* Create(ASTContext& ctx, SourceRange loc,
+                                   SourceRange continue_loc);
+
   void dump(int indent) const override;
 
   void GenCode(CodeGen& gen) override;
 };
 
 class BreakStatement : public Stmt {
-  SourceRange breakLoc_;
+  SourceRange break_loc_;
 
-  BreakStatement(SourceRange loc, SourceRange breakLoc)
-      : Stmt(std::move(loc)), breakLoc_(std::move(breakLoc)) {}
+  BreakStatement(SourceRange loc, SourceRange break_loc)
+      : Stmt(std::move(loc)), break_loc_(std::move(break_loc)) {}
 
  public:
+  static BreakStatement* Create(ASTContext& ctx, SourceRange loc,
+                                SourceRange break_loc);
+
+  void dump(int indent) const override;
+
+  void GenCode(CodeGen& gen) override;
 };
 
 class ReturnStatement : public Stmt {
