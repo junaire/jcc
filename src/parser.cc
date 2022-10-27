@@ -368,10 +368,8 @@ Stmt* Parser::ParseWhileStmt() {
 Stmt* Parser::ParseForStmt() {
   MustConsumeToken(TokenKind::LeftParen);
   Stmt* init = ParseStatement();
-  MustConsumeToken(TokenKind::Semi);
   Stmt* condition = ParseStatement();
-  MustConsumeToken(TokenKind::Semi);
-  Stmt* increment = ParseStatement();
+  Stmt* increment = ParseExpr();
   MustConsumeToken(TokenKind::RightParen);
 
   MustConsumeToken(TokenKind::LeftBracket);
@@ -388,6 +386,7 @@ Stmt* Parser::ParseExprStmt() {
   }
 
   Expr* expr = ParseExpr();
+  MustConsumeToken(TokenKind::Semi);
   return ExprStatement::Create(GetASTContext(), SourceRange(), expr);
 }
 
