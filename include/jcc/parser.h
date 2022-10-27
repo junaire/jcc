@@ -60,6 +60,8 @@ class Parser {
 
   Stmt* ParseWhileStmt();
 
+  Stmt* ParseForStmt();
+
   Stmt* ParseExprStmt();
 
   Expr* ParseExpr();

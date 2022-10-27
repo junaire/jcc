@@ -139,10 +139,10 @@ class DoStatement : public Stmt {
 };
 
 class ForStatement : public Stmt {
-  Stmt* init_{nullptr};
-  Stmt* condition_{nullptr};
-  Stmt* increment_{nullptr};
-  Stmt* body_{nullptr};
+  Stmt* init_ = nullptr;
+  Stmt* condition_ = nullptr;
+  Stmt* increment_ = nullptr;
+  Stmt* body_ = nullptr;
 
   explicit ForStatement(SourceRange loc, Stmt* init, Stmt* condition,
                         Stmt* increment, Stmt* body)
@@ -153,6 +153,9 @@ class ForStatement : public Stmt {
         body_(body) {}
 
  public:
+  static ForStatement* Create(ASTContext& ctx, SourceRange loc, Stmt* init,
+                              Stmt* condition, Stmt* increment, Stmt* body);
+
   Stmt* GetInit() { return init_; }
   Stmt* GetCondition() { return condition_; }
   Stmt* GetIncrement() { return increment_; }

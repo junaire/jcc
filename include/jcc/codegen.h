@@ -17,6 +17,7 @@ class FunctionDecl;
 class RecordDecl;
 class IfStatement;
 class WhileStatement;
+class ForStatement;
 class ReturnStatement;
 class DeclStatement;
 class ExprStatement;
@@ -83,6 +84,7 @@ class CodeGen {
 
   void EmitIfStatement(IfStatement& stmt);
   void EmitWhileStatement(WhileStatement& stmt);
+  void EmitForStatement(ForStatement& stmt);
   void EmitReturnStatement(ReturnStatement& stmt);
   void EmitDeclStatement(DeclStatement& stmt);
   void EmitExprStatement(ExprStatement& stmt);
@@ -114,6 +116,6 @@ class CodeGen {
     StackDepthTracker::Pop();
   }
 
-	void Init();
+  void Init();
 };
 }  // namespace jcc

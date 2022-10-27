@@ -180,6 +180,7 @@ enum class BinaryOperatorKind {
   Greater,
   Less,
   Equal,
+  PlusEqual,
 };
 
 class BinaryExpr : public Expr {

@@ -365,6 +365,22 @@ Stmt* Parser::ParseWhileStmt() {
                                 body);
 }
 
+Stmt* Parser::ParseForStmt() {
+  MustConsumeToken(TokenKind::LeftParen);
+  Stmt* init = ParseStatement();
+  MustConsumeToken(TokenKind::Semi);
+  Stmt* condition = ParseStatement();
+  MustConsumeToken(TokenKind::Semi);
+  Stmt* increment = ParseStatement();
+  MustConsumeToken(TokenKind::RightParen);
+
+  MustConsumeToken(TokenKind::LeftBracket);
+  Stmt* body = ParseCompoundStmt();
+
+  return ForStatement::Create(GetASTContext(), SourceRange(), init, condition,
+                              increment, body);
+}
+
 Stmt* Parser::ParseExprStmt() {
   if (TryConsumeToken(TokenKind::Semi)) {
     // TODO(Jun): We need an empty statement node.
@@ -372,8 +388,6 @@ Stmt* Parser::ParseExprStmt() {
   }
 
   Expr* expr = ParseExpr();
-  MustConsumeToken(TokenKind::Semi);  // I'm not really sure when to eat this
-                                      // semi.
   return ExprStatement::Create(GetASTContext(), SourceRange(), expr);
 }
 
@@ -388,6 +402,10 @@ Stmt* Parser::ParseStatement() {
 
   if (TryConsumeToken(TokenKind::While)) {
     return ParseWhileStmt();
+  }
+
+  if (TryConsumeToken(TokenKind::For)) {
+    return ParseForStmt();
   }
 
   if (TryConsumeToken(TokenKind::LeftBracket)) {
@@ -571,6 +589,8 @@ static BinaryOperatorKind ConvertOpToKind(TokenKind kind) {
       return BinaryOperatorKind::Less;
     case TokenKind::Equal:
       return BinaryOperatorKind::Equal;
+    case TokenKind::PlusEqual:
+      return BinaryOperatorKind::PlusEqual;
     default:
       jcc_unimplemented();
   }

@@ -20,6 +20,7 @@ GEN(FunctionDecl)
 GEN(CompoundStatement)
 GEN(DeclStatement)
 GEN(WhileStatement)
+GEN(ForStatement)
 GEN(IfStatement)
 GEN(ReturnStatement)
 
@@ -204,6 +205,8 @@ static std::string_view PrintBinaryOpKind(BinaryOperatorKind kind) {
       return "<";
     case BinaryOperatorKind::Equal:
       return "=";
+    case BinaryOperatorKind::PlusEqual:
+      return "+=";
     default:
       jcc_unimplemented();
   }
@@ -284,6 +287,32 @@ void WhileStatement::dump(int indent) const {
   condition_->dump(indent + 2);
   // FIXME: it's not always exsits.
   body_->dump(indent + 2);
+}
+
+ForStatement* ForStatement::Create(ASTContext& ctx, SourceRange loc, Stmt* init,
+                                   Stmt* condition, Stmt* increment,
+                                   Stmt* body) {
+  void* mem = ctx.Allocate<ForStatement>();
+  return new (mem)
+      ForStatement(std::move(loc), init, condition, increment, body);
+}
+
+void ForStatement::dump(int indent) const {
+  InsertIndent(indent);
+  fmt::print("ForStatement:\n");
+
+  if (init_ != nullptr) {
+    init_->dump(indent + 2);
+  }
+  if (condition_ != nullptr) {
+    condition_->dump(indent + 2);
+  }
+  if (increment_ != nullptr) {
+    increment_->dump(indent + 2);
+  }
+  if (body_ != nullptr) {
+    body_->dump(indent + 2);
+  }
 }
 
 DeclStatement* DeclStatement::Create(ASTContext& ctx, SourceRange loc,
