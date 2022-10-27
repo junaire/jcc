@@ -28,13 +28,13 @@ int main(int argc, char** argv) {
   std::string file_name = argv[1];
   std::string content = ReadFile(file_name);
 
+	// FIXME: Write more robost arg parser for it.
   if (argc == 3) {
     ast_dump_mode = (strcmp(argv[2], "--ast-dump") == 0);
   }
 
   jcc::Lexer lexer(content, file_name);
   jcc::Parser parser(lexer);
-  jcc::CodeGen codegen(file_name);
 
   std::vector<jcc::Decl*> decls = parser.ParseTranslateUnit();
 
@@ -42,9 +42,10 @@ int main(int argc, char** argv) {
     for (jcc::Decl* decl : decls) {
       decl->dump(0);
     }
-  }
-
-  for (jcc::Decl* decl : decls) {
-    decl->GenCode(codegen);
+  } else {
+    jcc::CodeGen codegen(file_name);
+    for (jcc::Decl* decl : decls) {
+      decl->GenCode(codegen);
+    }
   }
 }
