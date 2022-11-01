@@ -73,7 +73,7 @@ class FunctionDecl : public Decl {
 
  public:
   static FunctionDecl* Create(ASTContext& ctx, SourceRange loc,
-                              std::string name, Type* return_type);
+                              const std::string& name, Type* return_type);
   static FunctionDecl* Create(ASTContext& ctx, SourceRange loc,
                               std::string name, std::vector<VarDecl*> args,
                               Type* return_type, Stmt* body);

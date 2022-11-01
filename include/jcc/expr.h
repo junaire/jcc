@@ -105,7 +105,7 @@ class ConstantExpr : public Expr {
 };
 
 class CallExpr : public Expr {
-  Expr* callee_{nullptr};
+  Expr* callee_ = nullptr;
   std::vector<Expr*> args_;
 
   CallExpr(SourceRange loc, Expr* callee, std::vector<Expr*> args)
@@ -115,7 +115,7 @@ class CallExpr : public Expr {
   static CallExpr* Create(ASTContext& ctx, SourceRange loc, Expr* callee,
                           std::vector<Expr*> args);
 
-  Expr* GetCallee() { return callee_; }
+  [[nodiscard]] Expr* GetCallee() const { return callee_; }
 
   Expr* GetArg(std::size_t index) { return args_[index]; }
 

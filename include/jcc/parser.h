@@ -76,6 +76,10 @@ class Parser {
 
   Expr* ParseRhsOfBinaryExpr(Expr* lhs, BinOpPreLevel min_prec);
 
+  Expr* ParsePostfixExpr(Expr* lhs);
+
+  std::vector<Expr*> ParseExprList();
+
   Decl* ParseFunction(Declarator& declarator);
 
   Type* ParseParams(Type* type);

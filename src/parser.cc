@@ -608,7 +608,39 @@ Expr* Parser::ParseCastExpr() {
     default:
       jcc_unreachable("Unexpeted token kind!");
   }
-  return result;
+  return ParsePostfixExpr(result);
+}
+
+std::vector<Expr*> Parser::ParseExprList() {
+  std::vector<Expr*> expr_list;
+  while (true) {
+    expr_list.push_back(ParseAssignmentExpr());
+    if (!CurrentToken().Is<TokenKind::Comma>()) {
+      break;
+    }
+    MustConsumeToken(TokenKind::Comma);
+  }
+  return expr_list;
+}
+
+Expr* Parser::ParsePostfixExpr(Expr* lhs) {
+  while (true) {
+    switch (CurrentToken().GetKind()) {
+      case TokenKind::LeftParen: {
+        ConsumeToken();
+        std::vector<Expr*> args;
+        if (!CurrentToken().Is<TokenKind::RightParen>()) {
+          args = ParseExprList();
+        }
+        lhs = CallExpr::Create(GetASTContext(), SourceRange(), lhs,
+                               std::move(args));
+        MustConsumeToken(TokenKind::RightParen);
+        break;
+      }
+      default:
+        return lhs;
+    }
+  }
 }
 
 static BinaryOperatorKind ConvertOpToKind(TokenKind kind) {

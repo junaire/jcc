@@ -75,10 +75,9 @@ FunctionDecl* FunctionDecl::Create(ASTContext& ctx, SourceRange loc,
 }
 
 FunctionDecl* FunctionDecl::Create(ASTContext& ctx, SourceRange loc,
-                                   std::string name, Type* return_type) {
+                                   const std::string& name, Type* return_type) {
   void* mem = ctx.Allocate<FunctionDecl>();
-  auto* function =
-      new (mem) FunctionDecl(std::move(loc), std::move(name), return_type);
+  auto* function = new (mem) FunctionDecl(std::move(loc), name, return_type);
   ctx.GetCurScope().PushVar(name, function);
   return function;
 }
@@ -164,7 +163,14 @@ CallExpr* CallExpr::Create(ASTContext& ctx, SourceRange loc, Expr* callee,
   return new (mem) CallExpr{std::move(loc), callee, std::move(args)};
 }
 
-void CallExpr::dump(int indent) const { jcc_unimplemented(); }
+void CallExpr::dump(int indent) const {
+  InsertIndent(indent);
+  fmt::print("CallExpr: {}\n", GetCallee()
+                                   ->AsExpr<DeclRefExpr>()
+                                   ->GetRefDecl()
+                                   ->AsDecl<FunctionDecl>()
+                                   ->GetName());
+}
 
 UnaryExpr* UnaryExpr::Create(ASTContext& ctx, SourceRange loc,
                              UnaryOperatorKind kind, Stmt* value) {
