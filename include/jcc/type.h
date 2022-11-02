@@ -114,6 +114,7 @@ class Type {
   void SetUnsigned(bool usg = true) { unsigned_ = usg; }
 
   [[nodiscard]] std::string GetNameAsString() const {
+    assert(name_.IsValid() && "Can't access name of non-user-defined types!");
     return name_.GetAsString();
   }
 
