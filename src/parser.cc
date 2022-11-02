@@ -131,8 +131,9 @@ Type* Parser::ParseStructType() {
     ConsumeToken();
   }
 
-  MustConsumeToken(TokenKind::LeftBracket);
-  type->AsType<StructType>()->SetMembers(ParseStructMembers());
+  if (TryConsumeToken(TokenKind::LeftBracket)) {
+    type->AsType<StructType>()->SetMembers(ParseStructMembers());
+  }
 
   return type;
 }
