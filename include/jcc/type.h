@@ -42,7 +42,7 @@ class Type {
   TypeKind kind_;
   Qualifiers quals_ = Qualifiers::Unspecified;
 
-  int size_ = 0;
+  std::size_t size_ = 0;
   int alignment_ = 0;
   bool unsigned_ = false;
 
@@ -54,7 +54,7 @@ class Type {
   Type() = default;
   virtual ~Type() = default;
 
-  explicit Type(TypeKind kind, int size, int alignment)
+  explicit Type(TypeKind kind, std::size_t size, int alignment)
       : kind_(kind), size_(size), alignment_(alignment) {}
 
   template <typename Ty>
@@ -118,7 +118,7 @@ class Type {
     return name_.GetAsString();
   }
 
-  [[nodiscard]] int GetSize() const { return size_; }
+  [[nodiscard]] std::size_t GetSize() const { return size_; }
 
   [[nodiscard]] int GetAlignment() const { return alignment_; }
 
@@ -159,7 +159,7 @@ class ArrayType : public Type {
 
  public:
   ArrayType() = default;
-  ArrayType(TypeKind kind, int size, int alignment)
+  ArrayType(TypeKind kind, std::size_t size, int alignment)
       : Type(kind, size, alignment) {}
 
   [[nodiscard]] std::size_t GetLength() const { return len_; }

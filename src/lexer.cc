@@ -192,7 +192,7 @@ Token Lexer::Lex() {
       if (TryConsume('*')) {
         // skip comments
         while (true) {
-          SkipUntil('*', /*skipItself=*/true);
+          SkipUntil('*', /*skip_match=*/true);
           TryConsume('/');
         }
       }
@@ -345,11 +345,11 @@ bool Lexer::TryConsume(char cha) {
   return false;
 }
 
-void Lexer::SkipUntil(char cha, bool skipItself) {
+void Lexer::SkipUntil(char cha, bool skip_match) {
   while (Peek() != cha) {
     Advance();
   }
-  if (skipItself) {
+  if (skip_match) {
     Advance();
   }
 }

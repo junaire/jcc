@@ -69,13 +69,13 @@ class DeclSpec {
 
   void SetTypeSpecKind(TypeSpecKind kind) { type_spec_kind_ = kind; }
 
-  void setTypeSpecWidth(TypeSpecWidth width) { type_spec_width_ = width; }
+  void SetTypeSpecWidth(TypeSpecWidth width) { type_spec_width_ = width; }
 
-  void setTypeSpecSign(TypeSpecSign sign) { type_spec_sign_ = sign; }
+  void SetTypeSpecSign(TypeSpecSign sign) { type_spec_sign_ = sign; }
 
   void SetType(Type* type) { type_ = type; }
 
-  void GenerateType() {
+  void SynthesizeType() {
     // What if it's a user-defined type?
     switch (GetTypeSpecWidth()) {
       case TypeSpecWidth::Short: {
@@ -123,7 +123,7 @@ class DeclSpec {
     }
   }
 
-  Type* GetType() { return type_; }
+  [[nodiscard]] Type* GetType() const { return type_; }
 
   [[nodiscard]] bool IsTypedef() const {
     return storage_class_spec_ == StorageClassSpec::Typedef;

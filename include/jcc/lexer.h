@@ -52,7 +52,7 @@ class Lexer {
   Token LexNumericConstant();
 
   void SkipWhitespace();
-  void SkipUntil(char cha, bool skipItself = false);
+  void SkipUntil(char cha, bool skip_match = false);
   void Advance();
   char Peek() const;
   char PeekAhead(int offset = 1) const;

@@ -127,9 +127,9 @@ class Token {
   TokenKind kind_ = TokenKind::Unspecified;
   // I'm not sure if we need to do more for identifiers,
   // if so, we can use a variant.
-  const char* data_;
+  const char* data_ = nullptr;
 
-  std::size_t length_;
+  std::size_t length_ = 0;
 
   SourceLocation loc_;
 

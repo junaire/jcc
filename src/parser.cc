@@ -223,16 +223,16 @@ DeclSpec Parser::ParseDeclSpec() {
         decl_spec.SetTypeSpecKind(DeclSpec::TSK_Char);
         break;
       case Short:
-        decl_spec.setTypeSpecWidth(DeclSpec::TypeSpecWidth::Short);
+        decl_spec.SetTypeSpecWidth(DeclSpec::TypeSpecWidth::Short);
         break;
       case Int:
         decl_spec.SetTypeSpecKind(DeclSpec::TSK_Int);
         break;
       case Long:
         if (decl_spec.GetTypeSpecWidth() == DeclSpec::TypeSpecWidth::Long) {
-          decl_spec.setTypeSpecWidth(DeclSpec::TypeSpecWidth::LongLong);
+          decl_spec.SetTypeSpecWidth(DeclSpec::TypeSpecWidth::LongLong);
         } else {
-          decl_spec.setTypeSpecWidth(DeclSpec::TypeSpecWidth::Long);
+          decl_spec.SetTypeSpecWidth(DeclSpec::TypeSpecWidth::Long);
         }
         break;
       case Float:
@@ -242,16 +242,16 @@ DeclSpec Parser::ParseDeclSpec() {
         decl_spec.SetTypeSpecKind(DeclSpec::TSK_Double);
         break;
       case Signed:
-        decl_spec.setTypeSpecSign(DeclSpec::TypeSpecSign::Signed);
+        decl_spec.SetTypeSpecSign(DeclSpec::TypeSpecSign::Signed);
         break;
       case Unsigned:
-        decl_spec.setTypeSpecSign(DeclSpec::TypeSpecSign::Unsigned);
+        decl_spec.SetTypeSpecSign(DeclSpec::TypeSpecSign::Unsigned);
         break;
       default:
         jcc_unreachable("current token kind is not a builtin type");
     }
 
-    decl_spec.GenerateType();
+    decl_spec.SynthesizeType();
     ConsumeToken();
   }
 

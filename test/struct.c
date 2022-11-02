@@ -3,4 +3,4 @@ struct S {
   int y;
 };
 
-int main() { struct S s; }
+int main() { struct S s; } 
