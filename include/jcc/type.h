@@ -184,17 +184,17 @@ class PointerType : public Type {
 };
 
 class StructType : public Type {
-  // class StructMember : public Type {
-  //   Type* type_;
-  // };
-
-  // std::vector<StructMember*> members_;
+  std::vector<Type*> members_;
 
  public:
-  StructType() = default;
-
   StructType(TypeKind kind, int size, int alignment)
       : Type(kind, size, alignment) {}
+
+  void SetMembers(const std::vector<Type*>& members) { members_ = members; }
+
+  [[nodiscard]] std::size_t GetMemberSize() const { return members_.size(); }
+
+  Type* GetMember(std::size_t idx) { return members_[idx]; }
 };
 
 class FunctionType : public Type {

@@ -4,6 +4,7 @@
 
 #include "jcc/common.h"
 #include "jcc/decl.h"
+#include "jcc/declarator.h"
 #include "jcc/expr.h"
 #include "jcc/lexer.h"
 #include "jcc/source_location.h"
@@ -108,6 +109,34 @@ void Parser::SkipUntil(TokenKind kind, bool skip_match) {
   }
 }
 
+std::vector<Type*> Parser::ParseStructMembers() {
+  std::vector<Type*> members;
+  while (true) {
+    DeclSpec decl_spec = ParseDeclSpec();
+    Declarator declarator = ParseDeclarator(decl_spec);
+
+    members.push_back(declarator.GetBaseType());
+    MustConsumeToken(TokenKind::Semi);
+    if (TryConsumeToken(TokenKind::RightBracket)) {
+      break;
+    }
+  }
+  return members;
+}
+
+Type* Parser::ParseStructType() {
+  Type* type = Type::CreateStructType(GetASTContext());
+  if (CurrentToken().Is<TokenKind::Identifier>()) {
+    type->SetName(CurrentToken());
+    ConsumeToken();
+  }
+
+  MustConsumeToken(TokenKind::LeftBracket);
+  type->AsType<StructType>()->SetMembers(ParseStructMembers());
+
+  return type;
+}
+
 Type* Parser::ParseTypename() {
   DeclSpec declSpec = ParseDeclSpec();
   return nullptr;
@@ -175,7 +204,9 @@ DeclSpec Parser::ParseDeclSpec() {
 
     // Handle user defined types
     if (CurrentToken().IsOneOf<Struct, Union, Typedef, Enum>()) {
-      jcc_unimplemented();
+      ConsumeToken();
+      decl_spec.SetType(ParseStructType());
+      return decl_spec;
     }
 
     // Handle builtin types
@@ -261,15 +292,16 @@ Declarator Parser::ParseDeclarator(DeclSpec& decl_spec) {
     return ParseDeclarator(suffix);
   }
 
+  // FIXME: Looks like we'll gonna screw up here if the token is not an
+  // identifier.
   Token name;
   if (CurrentToken().Is<TokenKind::Identifier>()) {
     name = CurrentToken();
+    // Keep the token and set it later, or it will be flushed away.
+    declarator.SetType(ParseTypeSuffix(type));
+    declarator.SetName(name);
     ConsumeToken();
   }
-  // FIXME: Looks like we'll gonna screw up here if the token is not an
-  // identifier.
-  declarator.SetType(ParseTypeSuffix(type));
-  declarator.SetName(name);
   return declarator;
 }
 
@@ -710,8 +742,9 @@ Expr* Parser::ParseRhsOfBinaryExpr(Expr* lhs, BinOpPreLevel min_prec) {
 // Function or a simple declaration
 std::vector<Decl*> Parser::ParseFunctionOrVar(DeclSpec& decl_spec) {
   std::vector<Decl*> decls;
-  if (CurrentToken().Is<TokenKind::Semi>()) {
-    jcc_unimplemented();
+  // Cases like struct { int x; };
+  if (TryConsumeToken(TokenKind::Semi)) {
+    return decls;
   }
 
   Declarator declarator = ParseDeclarator(decl_spec);

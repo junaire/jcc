@@ -82,6 +82,10 @@ class Parser {
 
   Decl* ParseFunction(Declarator& declarator);
 
+  Type* ParseStructType();
+
+  std::vector<Type*> ParseStructMembers();
+
   Type* ParseParams(Type* type);
 
   Type* ParseArrayDimensions(Type* type);
