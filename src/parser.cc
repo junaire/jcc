@@ -297,10 +297,10 @@ Declarator Parser::ParseDeclarator(DeclSpec& decl_spec) {
   Token name;
   if (CurrentToken().Is<TokenKind::Identifier>()) {
     name = CurrentToken();
+    ConsumeToken();
     // Keep the token and set it later, or it will be flushed away.
     declarator.SetType(ParseTypeSuffix(type));
     declarator.SetName(name);
-    ConsumeToken();
   }
   return declarator;
 }
