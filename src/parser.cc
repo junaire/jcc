@@ -268,27 +268,27 @@ Declarator Parser::ParseDeclarator(DeclSpec& decl_spec) {
   }
   // FIXME: Looks like we'll gonna screw up here if the token is not an
   // identifier.
-  Type* suffixType = ParseTypeSuffix(type);
-  declarator.name_ = name;
-  declarator.SetType(suffixType);
+  declarator.SetType(ParseTypeSuffix(type));
+  declarator.SetName(name);
   return declarator;
 }
 
 Type* Parser::ParseParams(Type* type) {
+  Type* function_type = Type::CreateFuncType(GetASTContext(), type);
   // 1. int foo(void)
   // 2. int foo()
   if ((CurrentToken().Is<TokenKind::Void>() &&
        NextToken().Is<TokenKind::RightParen>()) ||
       CurrentToken().Is<TokenKind::RightParen>()) {
     SkipUntil(TokenKind::RightParen, /*skip_match=*/true);
-    return Type::CreateFuncType(GetASTContext(), type);
+    return function_type;
   }
 
   std::vector<Type*> params;
-  while (!CurrentToken().Is<TokenKind::RightParen>()) {
-    Type* type;
+  while (true) {
     DeclSpec decl_spec = ParseDeclSpec();
     Declarator declarator = ParseDeclarator(decl_spec);
+    Type* type = decl_spec.GetType();
 
     if (declarator.GetTypeKind() == TypeKind::Array) {
       type = Type::CreatePointerType(
@@ -298,10 +298,16 @@ Type* Parser::ParseParams(Type* type) {
     } else if (declarator.GetTypeKind() == TypeKind::Func) {
       type = Type::CreatePointerType(GetASTContext(), declarator.GetBaseType());
     }
+
     params.push_back(type);
+
+    if (TryConsumeToken(TokenKind::RightParen)) {
+      break;
+    }
+
+    MustConsumeToken(TokenKind::Comma);
   }
 
-  Type* function_type = Type::CreateFuncType(GetASTContext(), type);
   function_type->AsType<FunctionType>()->SetParams(std::move(params));
   return function_type;
 }
@@ -458,7 +464,8 @@ std::vector<VarDecl*> Parser::CreateParams(FunctionType* type) {
     Type* param_type = type->GetParamType(idx);
     // TODO(Jun): This doesn't work with parameters with names.
     params.push_back(VarDecl::Create(GetASTContext(), SourceRange(), nullptr,
-                                     nullptr, param_type->GetName()));
+                                     param_type,
+                                     param_type->GetNameAsString()));
   }
   return params;
 }
@@ -495,11 +502,10 @@ Stmt* Parser::ParseCompoundStmt() {
 }
 
 Decl* Parser::ParseFunction(Declarator& declarator) {
-  Token name = declarator.name_;
-  if (!name.IsValid()) {
+  std::string func_name = declarator.GetName();
+  if (func_name.empty()) {
     jcc_unreachable("function name is missing!");
   }
-  std::string func_name = name.GetAsString();
   // Check redefinition
   if (Decl* func = Lookup(func_name)) {
     // FIXME: This is not correct!

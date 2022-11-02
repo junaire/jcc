@@ -26,30 +26,13 @@ struct Scope {
 class ASTContext {
   std::vector<Type*> user_defined_types_;
 
-  Type* void_type_;
-  Type* bool_type_;
-
-  Type* char_type_;
-  Type* short_type_;
-  Type* int_type_;
-  Type* long_type_;
-
-  Type* uchar_type_;
-  Type* ushort_type_;
-  Type* uint_type_;
-  Type* ulong_type_;
-
-  Type* float_type_;
-  Type* double_type_;
-  Type* ldouble_type_;
-
   std::vector<Scope> scopes_;
 
   Allocator<ASTNode> ast_node_allocator_;
   Allocator<Type> type_allocator_;
 
  public:
-  ASTContext();
+  ASTContext() = default;
 
   template <typename T>
   void* Allocate() {
@@ -61,22 +44,19 @@ class ASTContext {
     jcc_unreachable("Can't allocate for unknown type!");
   }
 
-  // TODO(Jun): signedness, long long ...
-  Type* GetVoidType() { return void_type_; }
-  Type* GetBoolType() { return bool_type_; }
-
-  Type* GetCharType() { return char_type_; }
-  Type* GetShortType() { return short_type_; }
-  Type* GetIntType() { return int_type_; }
-  Type* GetLongType() { return long_type_; }
-
-  Type* GetUCharType() { return char_type_; }
-  Type* GetUShortType() { return short_type_; }
-  Type* GetUIntType() { return int_type_; }
-  Type* GetULongType() { return long_type_; }
-
-  Type* GetFloatType() { return float_type_; }
-  Type* GetDoubleType() { return double_type_; }
+  Type* GetVoidType();
+  Type* GetBoolType();
+  Type* GetCharType();
+  Type* GetShortType();
+  Type* GetIntType();
+  Type* GetLongType();
+  Type* GetUCharType();
+  Type* GetUShortType();
+  Type* GetUIntType();
+  Type* GetULongType();
+  Type* GetFloatType();
+  Type* GetDoubleType();
+  Type* GetLDoubleType();
 
   void EnterScope() { scopes_.emplace_back(); }
   void ExitScope() { scopes_.pop_back(); }
@@ -96,7 +76,6 @@ class ASTContext {
   }
 
  private:
-  void CreateBuiltinTypes();
   void RegisterUserType(Type* type);
 };
 }  // namespace jcc

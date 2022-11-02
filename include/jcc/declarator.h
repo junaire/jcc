@@ -183,7 +183,6 @@ class Declarator {
   // Maybe a mutbale referecnce is enough
   friend class Parser;
   DeclSpec& decl_spec_;
-  Token name_;
 
  public:
   explicit Declarator(DeclSpec& decl_spec) : decl_spec_(decl_spec) {}
@@ -201,6 +200,8 @@ class Declarator {
 
   void SetType(Type* type) { decl_spec_.SetType(type); }
 
-  std::string GetName() { return name_.GetAsString(); }
+  std::string GetName() { return decl_spec_.GetType()->GetNameAsString(); }
+
+  void SetName(const Token& name) { decl_spec_.GetType()->SetName(name); }
 };
 }  // namespace jcc

@@ -102,7 +102,9 @@ class Type {
 
   [[nodiscard]] bool IsPointer() const { return this->Is<TypeKind::Ptr>(); }
 
-  void SetName(Token name) { name_ = name; }
+  void SetName(const Token& name) { name_ = name; }
+
+  Token GetName() { return name_; }
 
   void SetSizeAlign(int size, int alignment) {
     size_ = size;
@@ -111,7 +113,9 @@ class Type {
 
   void SetUnsigned(bool usg = true) { unsigned_ = usg; }
 
-  [[nodiscard]] std::string GetName() const { return name_.GetAsString(); }
+  [[nodiscard]] std::string GetNameAsString() const {
+    return name_.GetAsString();
+  }
 
   [[nodiscard]] int GetSize() const { return size_; }
 
