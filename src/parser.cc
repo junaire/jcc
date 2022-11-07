@@ -109,7 +109,7 @@ void Parser::SkipUntil(TokenKind kind, bool skip_match) {
   }
 }
 
-std::vector<Type*> Parser::ParseStructMembers() {
+std::vector<Type*> Parser::ParseMembers() {
   std::vector<Type*> members;
   while (true) {
     DeclSpec decl_spec = ParseDeclSpec();
@@ -124,15 +124,24 @@ std::vector<Type*> Parser::ParseStructMembers() {
   return members;
 }
 
-Type* Parser::ParseStructType() {
-  Type* type = Type::CreateStructType(GetASTContext());
+Type* Parser::ParseRecordType(TokenKind kind) {
+  TypeKind type_kind;
+  if (kind == TokenKind::Struct) {
+    type_kind = TypeKind::Struct;
+  } else if (kind == TokenKind::Union) {
+    type_kind = TypeKind::Union;
+  } else {
+    jcc_unreachable("Can only parse struct or union here!");
+  }
+
+  Type* type = Type::CreateRecordType(GetASTContext(), type_kind);
   if (CurrentToken().Is<TokenKind::Identifier>()) {
     type->SetName(CurrentToken());
     ConsumeToken();
   }
 
   if (TryConsumeToken(TokenKind::LeftBracket)) {
-    type->AsType<StructType>()->SetMembers(ParseStructMembers());
+    type->AsType<RecordType>()->SetMembers(ParseMembers());
   }
 
   return type;
@@ -203,11 +212,15 @@ DeclSpec Parser::ParseDeclSpec() {
       jcc_unimplemented();
     }
 
-    // Handle user defined types
-    if (CurrentToken().IsOneOf<Struct, Union, Typedef, Enum>()) {
+    if (CurrentToken().IsOneOf<Struct, Union>()) {
+      TokenKind cur_tok_kind = CurrentToken().GetKind();
       ConsumeToken();
-      decl_spec.SetType(ParseStructType());
+      decl_spec.SetType(ParseRecordType(cur_tok_kind));
       return decl_spec;
+    }
+    // Handle user defined types
+    if (CurrentToken().IsOneOf<Typedef, Enum>()) {
+      jcc_unimplemented();
     }
 
     // Handle builtin types

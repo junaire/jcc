@@ -122,8 +122,8 @@ Type* Type::CreateArrayType(ASTContext& ctx, Type* base, std::size_t len) {
   return type;
 }
 
-Type* Type::CreateStructType(ASTContext& ctx) {
-  void* mem = ctx.Allocate<StructType>();
-  return new (mem) StructType(TypeKind::Struct, 0, 1);
+Type* Type::CreateRecordType(ASTContext& ctx, TypeKind kind) {
+  void* mem = ctx.Allocate<RecordType>();
+  return new (mem) RecordType(kind, 0, 1);
 }
 }  // namespace jcc

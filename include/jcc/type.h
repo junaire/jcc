@@ -128,8 +128,6 @@ class Type {
 
   static Type* CreateEnumType(ASTContext& ctx);
 
-  static Type* CreateStructType(ASTContext& ctx);
-
   static Type* CreateVoidType(ASTContext& ctx);
 
   static Type* CreateBoolType(ASTContext& ctx);
@@ -149,6 +147,9 @@ class Type {
   static Type* CreateFuncType(ASTContext& ctx, Type* return_type);
 
   static Type* CreateArrayType(ASTContext& ctx, Type* base, std::size_t len);
+
+  // struct or union.
+  static Type* CreateRecordType(ASTContext& ctx, TypeKind kind);
 
   static bool IsCompatible(const Type& lhs, const Type& rhs);
 };
@@ -184,11 +185,11 @@ class PointerType : public Type {
   void SetBase(Type* base) { base_ = base; }
 };
 
-class StructType : public Type {
+class RecordType : public Type {
   std::vector<Type*> members_;
 
  public:
-  StructType(TypeKind kind, int size, int alignment)
+  RecordType(TypeKind kind, int size, int alignment)
       : Type(kind, size, alignment) {}
 
   void SetMembers(const std::vector<Type*>& members) { members_ = members; }

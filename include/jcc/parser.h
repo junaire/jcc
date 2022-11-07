@@ -82,9 +82,9 @@ class Parser {
 
   Decl* ParseFunction(Declarator& declarator);
 
-  Type* ParseStructType();
+  Type* ParseRecordType(TokenKind kind);
 
-  std::vector<Type*> ParseStructMembers();
+  std::vector<Type*> ParseMembers();
 
   Type* ParseParams(Type* type);
 
