@@ -14,8 +14,8 @@
 
 namespace jcc {
 
-static BinOpPreLevel GetBinOpPrecedence(TokenKind Kind) {
-  switch (Kind) {
+static BinOpPreLevel GetBinOpPrecedence(TokenKind kind) {
+  switch (kind) {
     default:
     case TokenKind::Greater:
       return BinOpPreLevel::Unknown;
@@ -148,7 +148,7 @@ Type* Parser::ParseRecordType(TokenKind kind) {
 }
 
 Type* Parser::ParseTypename() {
-  DeclSpec declSpec = ParseDeclSpec();
+  DeclSpec decl_spec = ParseDeclSpec();
   return nullptr;
 }
 
@@ -300,9 +300,9 @@ Declarator Parser::ParseDeclarator(DeclSpec& decl_spec) {
     DeclSpec dummy(GetASTContext());
     ParseDeclarator(dummy);
     ConsumeToken();  // Eat ')'
-    Type* suffixType = ParseTypeSuffix(type);
+    Type* suffix_type = ParseTypeSuffix(type);
     DeclSpec suffix(GetASTContext());
-    suffix.SetType(suffixType);
+    suffix.SetType(suffix_type);
     return ParseDeclarator(suffix);
   }
 
@@ -702,6 +702,11 @@ Expr* Parser::ParsePostfixExpr(Expr* lhs) {
 
         ConsumeToken();
         lhs = UnaryExpr::Create(GetASTContext(), SourceRange(), op_kind, lhs);
+        break;
+      }
+      case TokenKind::Arrow:
+      case TokenKind::Period: {
+        jcc_unimplemented();
         break;
       }
       default:
