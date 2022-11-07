@@ -15,12 +15,12 @@
 **Instructions below assume you use Ubtuntu22**
 
 ### Prerequisites
-```
+```bash
 sudo apt install cmake clang ninja-build -y
 pip3 install --user conan
 ```
 ### Build
-```
+```bash
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Debug            \
       -DCMAKE_C_COMPILER=clang            \
@@ -31,7 +31,7 @@ cmake -DCMAKE_BUILD_TYPE=Debug            \
 ```
 `-DJCC_USE_ASAN=ON` means enable the address sanitizer, it might be helpful to catch some memory bugs.
 ### Run tests
-```
+```bash
 ninja test
 ```
 
@@ -39,10 +39,10 @@ ninja test
 > Note JCC is still in the very early stage, so don't expected it can handle everything correctly :)
 
 - Dump the AST tree of the program.
-```
+```bash
 ./jcc test.c --ast-dump # Note you can only pass the flag in the end!
 ```
 - Generate the assembly.
-```
+```bash
 ./jcc test.c # It will create test.s.
 ```
