@@ -46,6 +46,8 @@ class Parser {
 
   Declarator ParseDeclarator(DeclSpec& decl_spec);
 
+  Declarator ParseAbstractDeclarator(DeclSpec& decl_spec);
+
   std::vector<Decl*> ParseFunctionOrVar(DeclSpec& decl_spec);
 
   std::vector<Decl*> ParseDeclaration(Declarator& declarator);

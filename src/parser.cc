@@ -149,7 +149,8 @@ Type* Parser::ParseRecordType(TokenKind kind) {
 
 Type* Parser::ParseTypename() {
   DeclSpec decl_spec = ParseDeclSpec();
-  return nullptr;
+  Declarator declarator = ParseDeclarator(decl_spec);
+  return declarator.GetBaseType();
 }
 
 DeclSpec Parser::ParseDeclSpec() {
@@ -316,6 +317,24 @@ Declarator Parser::ParseDeclarator(DeclSpec& decl_spec) {
     declarator.SetType(ParseTypeSuffix(type));
     declarator.SetName(name);
   }
+  return declarator;
+}
+
+// FIXME: Avoid the code ducplication.
+Declarator Parser::ParseAbstractDeclarator(DeclSpec& decl_spec) {
+  Declarator declarator(decl_spec);
+  Type* type = ParsePointers(declarator);
+  if (TryConsumeToken(TokenKind::LeftParen)) {
+    DeclSpec dummy(GetASTContext());
+    ParseDeclarator(dummy);
+    ConsumeToken();  // Eat ')'
+    Type* suffix_type = ParseTypeSuffix(type);
+    DeclSpec suffix(GetASTContext());
+    suffix.SetType(suffix_type);
+    return ParseDeclarator(suffix);
+  }
+
+  declarator.SetType(ParseTypeSuffix(type));
   return declarator;
 }
 
