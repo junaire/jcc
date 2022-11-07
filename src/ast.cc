@@ -182,6 +182,10 @@ static std::string_view PrintUnaryOpKind(UnaryOperatorKind kind) {
   switch (kind) {
     case UnaryOperatorKind::AddressOf:
       return "&";
+    case UnaryOperatorKind::PostIncrement:
+      return "++";
+    case UnaryOperatorKind::PostDecrement:
+      return "--";
     default:
       jcc_unimplemented();
   }

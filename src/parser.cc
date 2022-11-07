@@ -689,6 +689,21 @@ Expr* Parser::ParsePostfixExpr(Expr* lhs) {
         MustConsumeToken(TokenKind::RightParen);
         break;
       }
+      case TokenKind::PlusPlus:
+      case TokenKind::MinusMinus: {
+        UnaryOperatorKind op_kind;
+        if (CurrentToken().GetKind() == TokenKind::PlusPlus) {
+          op_kind = UnaryOperatorKind::PostIncrement;
+        } else if (CurrentToken().GetKind() == TokenKind::MinusMinus) {
+          op_kind = UnaryOperatorKind::PostDecrement;
+        } else {
+          jcc_unreachable("Can only handle `++` or `--` here!");
+        }
+
+        ConsumeToken();
+        lhs = UnaryExpr::Create(GetASTContext(), SourceRange(), op_kind, lhs);
+        break;
+      }
       default:
         return lhs;
     }
