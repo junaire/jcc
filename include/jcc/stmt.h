@@ -88,19 +88,58 @@ class IfStatement : public Stmt {
   void GenCode(CodeGen& gen) override;
 };
 
-class SwitchStatement : public Stmt {
-  std::vector<Stmt*> cases_;
+class CaseStatement : public Stmt {
+  Stmt* stmt_ = nullptr;
+  std::string value_;
 
-  explicit SwitchStatement(SourceRange loc, std::vector<Stmt*> cases)
-      : Stmt(std::move(loc)), cases_(std::move(cases)) {}
+  explicit CaseStatement(SourceRange loc, Stmt* stmt, std::string value)
+      : Stmt(std::move(loc)), stmt_(stmt), value_(std::move(value)) {}
 
  public:
-  [[nodiscard]] auto GetSize() const { return cases_.size(); }
+  static CaseStatement* Create(ASTContext& ctx, SourceRange loc, Stmt* stmt,
+                               std::string value);
 
-  Stmt* GetStmt(std::size_t index) {
-    assert(index < GetSize());
-    return cases_[index];
-  }
+  Stmt* GetStmt() { return stmt_; }
+
+  [[nodiscard]] std::string GetValue() const { return value_; }
+
+  void dump(int indent) const override;
+
+  void GenCode(CodeGen& gen) override;
+};
+
+class DefaultStatement : public Stmt {
+  Stmt* stmt_ = nullptr;
+
+  explicit DefaultStatement(SourceRange loc, Stmt* stmt)
+      : Stmt(std::move(loc)), stmt_(stmt) {}
+
+ public:
+  static DefaultStatement* Create(ASTContext& ctx, SourceRange loc, Stmt* stmt);
+
+  Stmt* GetStmt() { return stmt_; }
+
+  void dump(int indent) const override;
+
+  void GenCode(CodeGen& gen) override;
+};
+
+class SwitchStatement : public Stmt {
+  Expr* condition_ = nullptr;
+  CompoundStatement* body_ = nullptr;
+
+  explicit SwitchStatement(SourceRange loc, Expr* condition,
+                           CompoundStatement* body)
+      : Stmt(std::move(loc)), condition_(condition), body_(body) {}
+
+ public:
+  static SwitchStatement* Create(ASTContext& ctx, SourceRange loc,
+                                 Expr* condition, CompoundStatement* body);
+
+  [[nodiscard]] auto GetSize() const { return body_->GetSize(); }
+
+  Stmt* GetStmt(std::size_t index) { return body_->GetStmt(index); }
+
   void dump(int indent) const override;
 
   void GenCode(CodeGen& gen) override;

@@ -445,6 +445,30 @@ Stmt* Parser::ParseWhileStmt() {
   return WhileStatement::Create(GetASTContext(), SourceRange(), condition,
                                 body);
 }
+Stmt* Parser::ParseSwitchStmt() {
+  MustConsumeToken(TokenKind::LeftParen);
+  Expr* condition = ParseExpr();
+  MustConsumeToken(TokenKind::RightParen);
+  MustConsumeToken(TokenKind::LeftBracket);
+  auto* body = ParseCompoundStmt()->AsStmt<CompoundStatement>();
+  return SwitchStatement::Create(GetASTContext(), SourceRange(), condition,
+                                 body);
+}
+
+Stmt* Parser::ParseCaseStmt() {
+  Token value = CurrentToken();
+  ConsumeToken();
+  MustConsumeToken(TokenKind::Colon);
+  Stmt* stmt = ParseStatement();
+  return CaseStatement::Create(GetASTContext(), SourceRange(), stmt,
+                               value.GetAsString());
+}
+
+Stmt* Parser::ParseDefaultStmt() {
+  MustConsumeToken(TokenKind::Colon);
+  Stmt* stmt = ParseStatement();
+  return DefaultStatement::Create(GetASTContext(), SourceRange(), stmt);
+}
 
 Stmt* Parser::ParseBreakStmt() {
   MustConsumeToken(TokenKind::Semi);
@@ -504,15 +528,15 @@ Stmt* Parser::ParseStatement() {
   }
 
   if (TryConsumeToken(TokenKind::Switch)) {
-    jcc_unimplemented();
+    return ParseSwitchStmt();
   }
 
   if (TryConsumeToken(TokenKind::Case)) {
-    jcc_unimplemented();
+    return ParseCaseStmt();
   }
 
   if (TryConsumeToken(TokenKind::Default)) {
-    jcc_unimplemented();
+    return ParseDefaultStmt();
   }
 
   if (TryConsumeToken(TokenKind::Do)) {

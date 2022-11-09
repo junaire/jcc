@@ -5,6 +5,7 @@
 #include "jcc/ast_context.h"
 #include "jcc/declarator.h"
 #include "jcc/expr.h"
+#include "jcc/stmt.h"
 #include "jcc/token.h"
 
 namespace jcc {
@@ -69,6 +70,12 @@ class Parser {
   Stmt* ParseBreakStmt();
 
   Stmt* ParseContinueStmt();
+
+  Stmt* ParseSwitchStmt();
+
+  Stmt* ParseCaseStmt();
+
+  Stmt* ParseDefaultStmt();
 
   Stmt* ParseExprStmt();
 

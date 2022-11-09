@@ -2,6 +2,7 @@
 
 #include <string_view>
 
+#include "fmt/core.h"
 #include "jcc/ast_context.h"
 #include "jcc/codegen.h"
 #include "jcc/common.h"
@@ -24,6 +25,9 @@ GEN(WhileStatement)
 GEN(ForStatement)
 GEN(IfStatement)
 GEN(DoStatement)
+GEN(SwitchStatement)
+GEN(CaseStatement)
+GEN(DefaultStatement)
 GEN(ReturnStatement)
 GEN(BreakStatement)
 GEN(ContinueStatement)
@@ -341,6 +345,46 @@ void ForStatement::dump(int indent) const {
   if (body_ != nullptr) {
     body_->dump(indent + 2);
   }
+}
+
+SwitchStatement* SwitchStatement::Create(ASTContext& ctx, SourceRange loc,
+                                         Expr* condition,
+                                         CompoundStatement* body) {
+  void* mem = ctx.Allocate<SwitchStatement>();
+  return new (mem) SwitchStatement(std::move(loc), condition, body);
+}
+
+void SwitchStatement::dump(int indent) const {
+  InsertIndent(indent);
+  fmt::print("SwitchStatement\n");
+  condition_->dump(indent + 2);
+  body_->dump(indent + 2);
+}
+
+CaseStatement* CaseStatement::Create(ASTContext& ctx, SourceRange loc,
+                                     Stmt* stmt, std::string value) {
+  void* mem = ctx.Allocate<CaseStatement>();
+  return new (mem) CaseStatement(std::move(loc), stmt, std::move(value));
+}
+
+void CaseStatement::dump(int indent) const {
+  InsertIndent(indent);
+  fmt::print("CaseStatement\n");
+  InsertIndent(indent);
+  fmt::print("value: {}\n", GetValue());
+  stmt_->dump(indent + 2);
+}
+
+DefaultStatement* DefaultStatement::Create(ASTContext& ctx, SourceRange loc,
+                                           Stmt* stmt) {
+  void* mem = ctx.Allocate<CaseStatement>();
+  return new (mem) DefaultStatement(std::move(loc), stmt);
+}
+
+void DefaultStatement::dump(int indent) const {
+  InsertIndent(indent);
+  fmt::print("DefaultStatement\n");
+  stmt_->dump(indent + 2);
 }
 
 DeclStatement* DeclStatement::Create(ASTContext& ctx, SourceRange loc,

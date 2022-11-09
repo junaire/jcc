@@ -68,6 +68,12 @@ void CodeGen::EmitDoStatement(DoStatement& stmt) {}
 
 void CodeGen::EmitForStatement(ForStatement& stmt) {}
 
+void CodeGen::EmitSwitchStatement(SwitchStatement& stmt) {}
+
+void CodeGen::EmitCaseStatement(CaseStatement& stmt) {}
+
+void CodeGen::EmitDefaultStatement(DefaultStatement& stmt) {}
+
 void CodeGen::EmitReturnStatement(ReturnStatement& stmt) {
   Write("  mov eax, ");
   stmt.GetReturn()->GenCode(*this);
