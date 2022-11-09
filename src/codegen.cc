@@ -42,6 +42,8 @@ void CodeGen::EmitIfStatement(IfStatement& stmt) {}
 
 void CodeGen::EmitWhileStatement(WhileStatement& stmt) {}
 
+void CodeGen::EmitDoStatement(DoStatement& stmt) {}
+
 void CodeGen::EmitForStatement(ForStatement& stmt) {}
 
 void CodeGen::EmitReturnStatement(ReturnStatement& stmt) {

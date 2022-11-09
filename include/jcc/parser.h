@@ -62,6 +62,8 @@ class Parser {
 
   Stmt* ParseWhileStmt();
 
+  Stmt* ParseDoStmt();
+
   Stmt* ParseForStmt();
 
   Stmt* ParseBreakStmt();

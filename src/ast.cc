@@ -23,6 +23,7 @@ GEN(DeclStatement)
 GEN(WhileStatement)
 GEN(ForStatement)
 GEN(IfStatement)
+GEN(DoStatement)
 GEN(ReturnStatement)
 GEN(BreakStatement)
 GEN(ContinueStatement)
@@ -300,6 +301,20 @@ void WhileStatement::dump(int indent) const {
   condition_->dump(indent + 2);
   // FIXME: it's not always exsits.
   body_->dump(indent + 2);
+}
+
+DoStatement* DoStatement::Create(ASTContext& ctx, SourceRange loc,
+                                 Expr* condition, Stmt* body) {
+  void* mem = ctx.Allocate<DoStatement>();
+  return new (mem) DoStatement(std::move(loc), condition, body);
+}
+
+void DoStatement::dump(int indent) const {
+  InsertIndent(indent);
+  fmt::print("DoStatement\n");
+  // FIXME: it's not always exsits.
+  body_->dump(indent + 2);
+  condition_->dump(indent + 2);
 }
 
 ForStatement* ForStatement::Create(ASTContext& ctx, SourceRange loc, Stmt* init,

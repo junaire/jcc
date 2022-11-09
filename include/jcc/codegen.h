@@ -17,6 +17,7 @@ class FunctionDecl;
 class RecordDecl;
 class IfStatement;
 class WhileStatement;
+class DoStatement;
 class ForStatement;
 class ReturnStatement;
 class DeclStatement;
@@ -84,6 +85,7 @@ class CodeGen {
 
   void EmitIfStatement(IfStatement& stmt);
   void EmitWhileStatement(WhileStatement& stmt);
+  void EmitDoStatement(DoStatement& stmt);
   void EmitForStatement(ForStatement& stmt);
   void EmitReturnStatement(ReturnStatement& stmt);
   void EmitBreakStatement(BreakStatement& stmt);

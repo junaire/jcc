@@ -131,6 +131,9 @@ class DoStatement : public Stmt {
       : Stmt(std::move(loc)), condition_(condition), body_(body) {}
 
  public:
+  static DoStatement* Create(ASTContext& ctx, SourceRange loc, Expr* condition,
+                             Stmt* body);
+
   Stmt* GetBody() { return body_; }
   Expr* GetCondition() { return condition_; }
   void dump(int indent) const override;

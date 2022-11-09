@@ -423,6 +423,16 @@ Stmt* Parser::ParseIfStmt() {
                              else_stmt);
 }
 
+Stmt* Parser::ParseDoStmt() {
+  Stmt* body = ParseStatement();
+  MustConsumeToken(TokenKind::While);
+  MustConsumeToken(TokenKind::LeftParen);
+  Expr* condition = ParseExpr();
+  MustConsumeToken(TokenKind::RightParen);
+  MustConsumeToken(TokenKind::Semi);
+  return DoStatement::Create(GetASTContext(), SourceRange(), condition, body);
+}
+
 Stmt* Parser::ParseWhileStmt() {
   Stmt* body = nullptr;
 
@@ -506,7 +516,7 @@ Stmt* Parser::ParseStatement() {
   }
 
   if (TryConsumeToken(TokenKind::Do)) {
-    jcc_unimplemented();
+    return ParseDoStmt();
   }
 
   if (TryConsumeToken(TokenKind::Goto)) {
