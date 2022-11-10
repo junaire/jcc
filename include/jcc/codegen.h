@@ -82,6 +82,10 @@ class File {
   }
 };
 
+#define EMITDECL(Node) void Emit##Node(Node& decl);
+#define EMITSTMT(Node) void Emit##Node(Node& stmt);
+#define EMITEXPR(Node) void Emit##Node(Node& expr);
+
 class CodeGen {
   File file_;
 
@@ -92,34 +96,34 @@ class CodeGen {
 
   [[nodiscard]] std::string GetFileName() const { return file_.GetName(); }
 
-  void EmitVarDecl(VarDecl& decl);
-  void EmitFunctionDecl(FunctionDecl& decl);
-  void EmitRecordDecl(RecordDecl& decl);
+  EMITDECL(VarDecl)
+  EMITDECL(FunctionDecl)
+  EMITDECL(RecordDecl)
 
-  void EmitIfStatement(IfStatement& stmt);
-  void EmitWhileStatement(WhileStatement& stmt);
-  void EmitDoStatement(DoStatement& stmt);
-  void EmitForStatement(ForStatement& stmt);
-  void EmitSwitchStatement(SwitchStatement& stmt);
-  void EmitCaseStatement(CaseStatement& stmt);
-  void EmitDefaultStatement(DefaultStatement& stmt);
-  void EmitReturnStatement(ReturnStatement& stmt);
-  void EmitBreakStatement(BreakStatement& stmt);
-  void EmitContinueStatement(ContinueStatement& stmt);
-  void EmitDeclStatement(DeclStatement& stmt);
-  void EmitExprStatement(ExprStatement& stmt);
-  void EmitCompoundStatement(CompoundStatement& stmt);
+  EMITSTMT(IfStatement)
+  EMITSTMT(WhileStatement)
+  EMITSTMT(DoStatement)
+  EMITSTMT(ForStatement)
+  EMITSTMT(SwitchStatement)
+  EMITSTMT(CaseStatement)
+  EMITSTMT(DefaultStatement)
+  EMITSTMT(ReturnStatement)
+  EMITSTMT(BreakStatement)
+  EMITSTMT(ContinueStatement)
+  EMITSTMT(DeclStatement)
+  EMITSTMT(ExprStatement)
+  EMITSTMT(CompoundStatement)
 
-  void EmitStringLiteral(StringLiteral& expr);
-  void EmitCharacterLiteral(CharacterLiteral& expr);
-  void EmitIntergerLiteral(IntergerLiteral& expr);
-  void EmitFloatingLiteral(FloatingLiteral& expr);
-  void EmitCallExpr(CallExpr& expr);
-  void EmitUnaryExpr(UnaryExpr& expr);
-  void EmitBinaryExpr(BinaryExpr& expr);
-  void EmitArraySubscriptExpr(ArraySubscriptExpr& expr);
-  void EmitMemberExpr(MemberExpr& expr);
-  void EmitDeclRefExpr(DeclRefExpr& expr);
+  EMITEXPR(StringLiteral);
+  EMITEXPR(CharacterLiteral);
+  EMITEXPR(IntergerLiteral);
+  EMITEXPR(FloatingLiteral);
+  EMITEXPR(CallExpr);
+  EMITEXPR(UnaryExpr);
+  EMITEXPR(BinaryExpr);
+  EMITEXPR(ArraySubscriptExpr);
+  EMITEXPR(MemberExpr);
+  EMITEXPR(DeclRefExpr);
 
  private:
   template <typename S, typename... Args>
