@@ -20,28 +20,25 @@ namespace jcc {
 
 std::string GenerateAssembly(const std::string& file_name,
                              const std::vector<jcc::Decl*>& decls) {
-  std::string asm_file_name = CreateAsmFileName(file_name);
-  jcc::CodeGen generator(asm_file_name);
+  jcc::CodeGen generator(file_name);
   for (jcc::Decl* decl : decls) {
     decl->GenCode(generator);
   }
-  return asm_file_name;
+  return generator.GetFileName();
 }
 
-CodeGen::CodeGen(const std::string& file_name) : file_(file_name) { Init(); }
-
-void CodeGen::Init() {
+CodeGen::CodeGen(const std::string& file_name)
+    : file_(CreateAsmFileName(file_name)) {
+  Writeln(R"(  .file "{}")", file_name);
   Writeln("  .intel_syntax noprefix");
-  // FIXME: Collect all functions.
-  Writeln("  .global main");
-  // Write("  .data");
   Writeln("  .text");
-  Writeln("  .type main, @function");
 }
 
 void CodeGen::EmitVarDecl(VarDecl& decl) {}
 
 void CodeGen::EmitFunctionDecl(FunctionDecl& decl) {
+  Writeln("  .global {}", decl.GetName());
+  Writeln("  .type {}, @function", decl.GetName());
   Writeln("{}:", decl.GetName());
   // Allocate stack for the function.
   Writeln("  push rbp");

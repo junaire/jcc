@@ -59,23 +59,25 @@ class StackDepthTracker {
 
 class File {
   std::FILE* data_ = nullptr;
-  bool is_valid_ = false;
   static constexpr const char* mode = "w+";
+  std::string file_name_;
 
  public:
-  explicit File(std::string_view file_name) {
-    data_ = std::fopen(file_name.data(), mode);
-    is_valid_ = (data_ != nullptr);
+  explicit File(std::string file_name) : file_name_(std::move(file_name)) {
+    data_ = std::fopen(file_name_.data(), mode);
   }
+
   ~File() {
-    if (is_valid_) {
+    if (data_ != nullptr) {
       std::fclose(data_);
     }
   }
 
+  [[nodiscard]] std::string GetName() const { return file_name_; }
+
   template <typename S, typename... Args>
   void Write(const S& format, Args... args) {
-    assert(is_valid_ && "can't write to invalid file!");
+    assert(data_ && "can't write to invalid file!");
     fmt::vprint(data_, format, fmt::make_format_args(args...));
   }
 };
@@ -85,6 +87,10 @@ class CodeGen {
 
  public:
   explicit CodeGen(const std::string& file_name);
+
+  File GetFile() { return file_; }
+
+  [[nodiscard]] std::string GetFileName() const { return file_.GetName(); }
 
   void EmitVarDecl(VarDecl& decl);
   void EmitFunctionDecl(FunctionDecl& decl);
@@ -135,7 +141,5 @@ class CodeGen {
     Writeln(" pop {}\n", arg);
     StackDepthTracker::Pop();
   }
-
-  void Init();
 };
 }  // namespace jcc
