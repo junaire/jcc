@@ -113,14 +113,20 @@ class CodeGen {
   template <typename S, typename... Args>
   void Write(const S& format, Args&&... args) {
     file_.Write(format, std::forward<Args>(args)...);
+  }
+
+  template <typename S, typename... Args>
+  void Writeln(const S& format, Args&&... args) {
+    Write(format, std::forward<Args>(args)...);
     file_.Write("\n");
   }
+
   void Push() {
-    Write(" push %rax\n");
+    Writeln(" push %rax\n");
     StackDepthTracker::Push();
   }
   void Pop(std::string_view arg) {
-    Write(" pop {}\n", arg);
+    Writeln(" pop {}\n", arg);
     StackDepthTracker::Pop();
   }
 

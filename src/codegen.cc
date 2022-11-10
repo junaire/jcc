@@ -30,26 +30,32 @@ std::string GenerateAssembly(const std::string& file_name,
 
 CodeGen::CodeGen(const std::string& file_name) : file_(file_name) { Init(); }
 
-void CodeGen::Init() { Write(".intel_syntax noprefix"); }
+void CodeGen::Init() {
+  Writeln("  .intel_syntax noprefix");
+  // FIXME: Collect all functions.
+  Writeln("  .global main");
+  // Write("  .data");
+  Writeln("  .text");
+  Writeln("  .type main, @function");
+}
 
 void CodeGen::EmitVarDecl(VarDecl& decl) {}
 
 void CodeGen::EmitFunctionDecl(FunctionDecl& decl) {
+  Writeln("{}:", decl.GetName());
   // Allocate stack for the function.
-  //
+  Writeln("  push rbp");
+  Writeln("  mov rbp, rsp");
+
   // Handle varidic function.
-  //
   // Save passed by regisiter arguments.
-  //
+
   // Emit code for body.
-  //
-  // Section for ret.
-  Write("{}:", decl.GetName());
-  Write("  push rbp");
-  Write("  mov rbp, rsp");
   decl.GetBody()->GenCode(*this);
-  Write("  pop rbp");
-  Write("  ret");
+
+  // Section for ret.
+  Writeln("  pop rbp");
+  Writeln("  ret");
 }
 
 void CodeGen::EmitRecordDecl(RecordDecl& decl) {}
@@ -63,8 +69,8 @@ void CodeGen::EmitDoStatement(DoStatement& stmt) {}
 void CodeGen::EmitForStatement(ForStatement& stmt) {}
 
 void CodeGen::EmitReturnStatement(ReturnStatement& stmt) {
-  auto value = stmt.GetReturn()->AsExpr<IntergerLiteral>()->GetValue();
-  Write("  mov eax, {}", value);
+  Write("  mov eax, ");
+  stmt.GetReturn()->GenCode(*this);
 }
 
 void CodeGen::EmitBreakStatement(BreakStatement& stmt) {}
@@ -85,7 +91,9 @@ void CodeGen::EmitStringLiteral(StringLiteral& expr) {}
 
 void CodeGen::EmitCharacterLiteral(CharacterLiteral& expr) {}
 
-void CodeGen::EmitIntergerLiteral(IntergerLiteral& expr) {}
+void CodeGen::EmitIntergerLiteral(IntergerLiteral& expr) {
+  Writeln("{}", expr.GetValue());
+}
 
 void CodeGen::EmitFloatingLiteral(FloatingLiteral& expr) {}
 
