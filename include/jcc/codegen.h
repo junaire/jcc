@@ -34,6 +34,10 @@ class ArraySubscriptExpr;
 class MemberExpr;
 class DeclRefExpr;
 
+// Entry point for generate assembly code.
+std::string GenerateAssembly(const std::string& file_name,
+                             const std::vector<jcc::Decl*>& decls);
+
 class StackDepthTracker {
  public:
   static int& Get() {

@@ -18,16 +18,32 @@ static std::string CreateAsmFileName(const std::string& name) {
 
 namespace jcc {
 
-CodeGen::CodeGen(const std::string& file_name)
-    : file_(CreateAsmFileName(file_name)) {
-  Init();
+std::string GenerateAssembly(const std::string& file_name,
+                             const std::vector<jcc::Decl*>& decls) {
+  std::string asm_file_name = CreateAsmFileName(file_name);
+  jcc::CodeGen generator(asm_file_name);
+  for (jcc::Decl* decl : decls) {
+    decl->GenCode(generator);
+  }
+  return asm_file_name;
 }
+
+CodeGen::CodeGen(const std::string& file_name) : file_(file_name) { Init(); }
 
 void CodeGen::Init() { Write(".intel_syntax noprefix"); }
 
 void CodeGen::EmitVarDecl(VarDecl& decl) {}
 
 void CodeGen::EmitFunctionDecl(FunctionDecl& decl) {
+  // Allocate stack for the function.
+  //
+  // Handle varidic function.
+  //
+  // Save passed by regisiter arguments.
+  //
+  // Emit code for body.
+  //
+  // Section for ret.
   Write("{}:", decl.GetName());
   Write("  push rbp");
   Write("  mov rbp, rsp");

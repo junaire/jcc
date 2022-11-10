@@ -51,9 +51,6 @@ int main(int argc, char** argv) {
       decl->dump(0);
     }
   } else {
-    jcc::CodeGen codegen(file_name);
-    for (jcc::Decl* decl : decls) {
-      decl->GenCode(codegen);
-    }
+    jcc::GenerateAssembly(file_name, decls);
   }
 }
