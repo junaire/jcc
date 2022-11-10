@@ -96,12 +96,6 @@ class FunctionDecl : public Decl {
   void GenCode(CodeGen& gen) override;
 };
 
-class LabelDecl : public Decl {};
-
-class EnumDecl : public Decl {};
-
-class TypedefDecl : public Decl {};
-
 class RecordDecl : public Decl {
   std::string name_;
   std::vector<VarDecl*> members_;

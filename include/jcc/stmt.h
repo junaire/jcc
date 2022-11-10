@@ -30,8 +30,8 @@ class LabeledStatement : public Stmt {
   LabelDecl* label_;
   Stmt* sub_stmt_ = nullptr;
 
-  explicit LabeledStatement(SourceRange loc, LabelDecl* label, Stmt* subStmt)
-      : Stmt(std::move(loc)), label_(label), sub_stmt_(subStmt) {}
+  explicit LabeledStatement(SourceRange loc, LabelDecl* label, Stmt* sub_stmt)
+      : Stmt(std::move(loc)), label_(label), sub_stmt_(sub_stmt) {}
 
  public:
   Stmt* GetSubStmt() { return sub_stmt_; }
@@ -78,7 +78,7 @@ class IfStatement : public Stmt {
 
  public:
   static IfStatement* Create(ASTContext& ctx, SourceRange loc, Expr* condition,
-                             Stmt* thenStmt, Stmt* elseStmt);
+                             Stmt* then_stmt, Stmt* else_stmt);
 
   Expr* GetCondition() { return condition_; }
   Stmt* GetThen() { return then_stmt_; }
