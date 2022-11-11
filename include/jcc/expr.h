@@ -28,10 +28,12 @@ class Expr : public Stmt {
     return static_cast<Ty*>(this);
   }
 
-  Type* GetType() { return type_; }
+  Type* GetType() {
+    assert(type_ && "Expr's type can't be null!");
+    return type_;
+  }
 
-  // TODO(Jun): What's the signature?
-  void SetType() {}
+  void SetType(Type* type) { type_ = type; }
 };
 
 class StringLiteral : public Expr {

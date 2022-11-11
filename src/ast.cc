@@ -132,7 +132,9 @@ void StringLiteral::dump(int indent) const {
 CharacterLiteral* CharacterLiteral::Create(ASTContext& ctx, SourceRange loc,
                                            char value) {
   void* mem = ctx.Allocate<CharacterLiteral>();
-  return new (mem) CharacterLiteral{std::move(loc), value};
+  auto* expr = new (mem) CharacterLiteral{std::move(loc), value};
+  expr->SetType(ctx.GetCharType());
+  return expr;
 }
 
 void CharacterLiteral::dump(int indent) const {
@@ -143,7 +145,9 @@ void CharacterLiteral::dump(int indent) const {
 IntergerLiteral* IntergerLiteral::Create(ASTContext& ctx, SourceRange loc,
                                          int value) {
   void* mem = ctx.Allocate<IntergerLiteral>();
-  return new (mem) IntergerLiteral{std::move(loc), value};
+  auto* expr = new (mem) IntergerLiteral{std::move(loc), value};
+  expr->SetType(ctx.GetIntType());
+  return expr;
 }
 
 void IntergerLiteral::dump(int indent) const {
@@ -154,7 +158,9 @@ void IntergerLiteral::dump(int indent) const {
 FloatingLiteral* FloatingLiteral::Create(ASTContext& ctx, SourceRange loc,
                                          double value) {
   void* mem = ctx.Allocate<FloatingLiteral>();
-  return new (mem) FloatingLiteral{std::move(loc), value};
+  auto* expr = new (mem) FloatingLiteral(std::move(loc), value);
+  expr->SetType(ctx.GetFloatType());
+  return expr;
 }
 
 void FloatingLiteral::dump(int indent) const {
@@ -278,10 +284,10 @@ void ReturnStatement::dump(int indent) const {
 }
 
 IfStatement* IfStatement::Create(ASTContext& ctx, SourceRange loc,
-                                 Expr* condition, Stmt* thenStmt,
-                                 Stmt* elseStmt) {
+                                 Expr* condition, Stmt* then_stmt,
+                                 Stmt* else_stmt) {
   void* mem = ctx.Allocate<IfStatement>();
-  return new (mem) IfStatement(std::move(loc), condition, thenStmt, elseStmt);
+  return new (mem) IfStatement(std::move(loc), condition, then_stmt, else_stmt);
 }
 
 void IfStatement::dump(int indent) const {

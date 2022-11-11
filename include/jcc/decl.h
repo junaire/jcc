@@ -80,6 +80,7 @@ class FunctionDecl : public Decl {
 
   [[nodiscard]] std::string_view GetName() const { return name_; }
 
+  [[nodiscard]] bool IsMain() const { return GetName() == "main"; }
   Type* GetReturnType() { return return_type_; }
 
   Stmt* GetBody() { return body_; }

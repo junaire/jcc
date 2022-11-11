@@ -2,11 +2,14 @@
 
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
 #include <string_view>
 
+#include "jcc/common.h"
 #include "jcc/decl.h"
 #include "jcc/expr.h"
 #include "jcc/stmt.h"
+#include "jcc/type.h"
 
 // Turn foo.c => foo.s
 static std::string CreateAsmFileName(const std::string& name) {
@@ -14,6 +17,12 @@ static std::string CreateAsmFileName(const std::string& name) {
          "Can't generate asm code for non C source code!");
   std::string asm_file = name.substr(0, name.size() - 2);
   return asm_file + ".s";
+}
+
+// Helper function for section naming.
+static int64_t Counter() {
+  static int64_t cnt = 1;
+  return cnt++;
 }
 
 namespace jcc {
@@ -37,13 +46,14 @@ CodeGen::CodeGen(const std::string& file_name)
 void CodeGen::EmitVarDecl(VarDecl& decl) {}
 
 void CodeGen::EmitFunctionDecl(FunctionDecl& decl) {
+  ctx.cur_func_name = decl.GetName();
   Writeln("  .global {}", decl.GetName());
   Writeln("  .type {}, @function", decl.GetName());
   Writeln("{}:", decl.GetName());
-  // Allocate stack for the function.
-  Writeln("  push rbp");
-  Writeln("  mov rbp, rsp");
 
+  EmitFunctionRAII emit_func_guard(*this);
+
+  // Allocate stack for the function.
   // Handle varidic function.
   // Save passed by regisiter arguments.
 
@@ -51,13 +61,35 @@ void CodeGen::EmitFunctionDecl(FunctionDecl& decl) {
   decl.GetBody()->GenCode(*this);
 
   // Section for ret.
-  Writeln("  pop rbp");
-  Writeln("  ret");
+  if (decl.IsMain()) {
+    Writeln("  mov rax, 0");
+  }
+  Writeln(".L.return.{}:", decl.GetName());
 }
 
 void CodeGen::EmitRecordDecl(RecordDecl& decl) {}
 
-void CodeGen::EmitIfStatement(IfStatement& stmt) {}
+void CodeGen::CompZero(const Type& type) {
+  if (type.IsInteger()) {
+    Writeln("  cmp rax, 0");
+    return;
+  }
+  jcc_unimplemented();
+}
+
+void CodeGen::EmitIfStatement(IfStatement& stmt) {
+  int64_t section_cnt = Counter();
+  stmt.GetCondition()->GenCode(*this);
+  CompZero(*stmt.GetCondition()->GetType());
+  Writeln("  je  .L.else.{}", section_cnt);
+  stmt.GetThen()->GenCode(*this);
+  Writeln("  jmp .L.end.{}", section_cnt);
+  Writeln(".L.else.{}", section_cnt);
+  if (auto* else_stmt = stmt.GetElse()) {
+    else_stmt->GenCode(*this);
+  }
+  Writeln(".L.end.{}", section_cnt);
+}
 
 void CodeGen::EmitWhileStatement(WhileStatement& stmt) {}
 
@@ -72,8 +104,13 @@ void CodeGen::EmitCaseStatement(CaseStatement& stmt) {}
 void CodeGen::EmitDefaultStatement(DefaultStatement& stmt) {}
 
 void CodeGen::EmitReturnStatement(ReturnStatement& stmt) {
-  Write("  mov eax, ");
-  stmt.GetReturn()->GenCode(*this);
+  if (auto* return_expr = stmt.GetReturn()) {
+    return_expr->GenCode(*this);
+    if (!return_expr->GetType()->IsInteger()) {
+      jcc_unimplemented();
+    }
+    Writeln("  jmp .L.return.{}", ctx.cur_func_name);
+  }
 }
 
 void CodeGen::EmitBreakStatement(BreakStatement& stmt) {}
@@ -95,7 +132,7 @@ void CodeGen::EmitStringLiteral(StringLiteral& expr) {}
 void CodeGen::EmitCharacterLiteral(CharacterLiteral& expr) {}
 
 void CodeGen::EmitIntergerLiteral(IntergerLiteral& expr) {
-  Writeln("{}", expr.GetValue());
+  Writeln("  mov %rax, {}", expr.GetValue());
 }
 
 void CodeGen::EmitFloatingLiteral(FloatingLiteral& expr) {}

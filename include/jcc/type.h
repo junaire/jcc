@@ -78,10 +78,18 @@ class Type {
     return quals_ == Qualifiers::Volatile;
   }
 
-  template <TypeKind ty, TypeKind... tyKinds>
+  template <TypeKind ty>
   [[nodiscard]] bool Is() const {
-    if constexpr (sizeof...(tyKinds) != 0) {
-      return kind_ == ty || Is<tyKinds...>();
+    return kind_ == ty;
+  }
+
+  template <TypeKind kind, TypeKind... kinds>
+  [[nodiscard]] bool IsOneOf() const {
+    if (Is<kind>()) {
+      return true;
+    }
+    if constexpr (sizeof...(kinds) > 0) {
+      return IsOneOf<kinds...>();
     }
     return false;
   }
@@ -90,12 +98,12 @@ class Type {
 
   [[nodiscard]] bool IsInteger() const {
     using enum TypeKind;
-    return this->Is<Bool, Char, Short, Int>();
+    return this->IsOneOf<Bool, Char, Short, Int>();
   }
 
   [[nodiscard]] bool IsFloating() const {
     using enum TypeKind;
-    return this->Is<Double, Ldouble, Float>();
+    return this->IsOneOf<Double, Ldouble, Float>();
   }
 
   [[nodiscard]] bool IsNumeric() const { return IsInteger() || IsFloating(); }

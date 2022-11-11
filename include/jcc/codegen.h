@@ -12,6 +12,8 @@
 
 namespace jcc {
 
+class Type;
+
 class VarDecl;
 class FunctionDecl;
 class RecordDecl;
@@ -37,6 +39,9 @@ class ArraySubscriptExpr;
 class MemberExpr;
 class DeclRefExpr;
 
+struct CodeGenContext {
+  std::string cur_func_name;
+};
 // Entry point for generate assembly code.
 std::string GenerateAssembly(const std::string& file_name,
                              const std::vector<jcc::Decl*>& decls);
@@ -88,6 +93,7 @@ class File {
 
 class CodeGen {
   File file_;
+  CodeGenContext ctx;
 
  public:
   explicit CodeGen(const std::string& file_name);
@@ -145,5 +151,22 @@ class CodeGen {
     Writeln(" pop {}\n", arg);
     StackDepthTracker::Pop();
   }
+
+  void CompZero(const Type& type);
+
+  class EmitFunctionRAII {
+    CodeGen& gen_;
+
+   public:
+    explicit EmitFunctionRAII(CodeGen& gen) : gen_(gen) {
+      gen_.Writeln("  push rbp");
+      gen_.Writeln("  mov rbp, rsp");
+    }
+    ~EmitFunctionRAII() {
+      gen_.Writeln("  mov rsp, rbp");
+      gen_.Writeln("  pop rbp");
+      gen_.Writeln("  ret");
+    }
+  };
 };
 }  // namespace jcc
