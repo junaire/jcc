@@ -260,7 +260,9 @@ void MemberExpr::dump(int indent) const { jcc_unimplemented(); }
 
 DeclRefExpr* DeclRefExpr::Create(ASTContext& ctx, SourceRange loc, Decl* decl) {
   void* mem = ctx.Allocate<DeclRefExpr>();
-  return new (mem) DeclRefExpr{std::move(loc), decl};
+  auto* expr = new (mem) DeclRefExpr(std::move(loc), decl);
+  expr->SetType(ctx.GetIntType());
+  return expr;
 }
 
 // FIXME: WE don't really need to print that much information.

@@ -144,11 +144,11 @@ class CodeGen {
   }
 
   void Push() {
-    Writeln(" push %rax\n");
+    Writeln("  push rax");
     StackDepthTracker::Push();
   }
   void Pop(std::string_view arg) {
-    Writeln(" pop {}\n", arg);
+    Writeln("  pop {}", arg);
     StackDepthTracker::Pop();
   }
 

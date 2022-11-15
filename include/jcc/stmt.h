@@ -266,7 +266,7 @@ class ReturnStatement : public Stmt {
 };
 
 class DeclStatement : public Stmt {
-  std::vector<Decl*> decls_{nullptr};
+  std::vector<Decl*> decls_;
   DeclStatement(SourceRange loc, std::vector<Decl*> decls)
       : Stmt(std::move(loc)), decls_(std::move(decls)) {}
   DeclStatement(SourceRange loc, Decl* decl) : Stmt(std::move(loc)) {

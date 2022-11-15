@@ -43,7 +43,15 @@ CodeGen::CodeGen(const std::string& file_name)
   Writeln("  .text");
 }
 
-void CodeGen::EmitVarDecl(VarDecl& decl) {}
+void CodeGen::EmitVarDecl(VarDecl& decl) {
+  if (decl.GetType()->IsInteger()) {
+    Writeln("  lea rax, -{}[rbp]", decl.GetType()->GetSize());
+    Push();
+    decl.GetInit()->GenCode(*this);
+    Pop("rdi");
+    Writeln("  mov [rdi], eax");
+  }
+}
 
 void CodeGen::EmitFunctionDecl(FunctionDecl& decl) {
   ctx.cur_func_name = decl.GetName();
@@ -54,6 +62,9 @@ void CodeGen::EmitFunctionDecl(FunctionDecl& decl) {
   EmitFunctionRAII emit_func_guard(*this);
 
   // Allocate stack for the function.
+  // FIXME: these're just arbitrary numbers.
+  Writeln("  sub rsp, {}", 160);
+  Writeln("  mov {}[rbp], rsp", -16);
   // Handle varidic function.
   // Save passed by regisiter arguments.
 
@@ -117,7 +128,11 @@ void CodeGen::EmitBreakStatement(BreakStatement& stmt) {}
 
 void CodeGen::EmitContinueStatement(ContinueStatement& stmt) {}
 
-void CodeGen::EmitDeclStatement(DeclStatement& stmt) {}
+void CodeGen::EmitDeclStatement(DeclStatement& stmt) {
+  for (auto* decl : stmt.GetDecls()) {
+    decl->GenCode(*this);
+  }
+}
 
 void CodeGen::EmitExprStatement(ExprStatement& stmt) {}
 
@@ -132,7 +147,7 @@ void CodeGen::EmitStringLiteral(StringLiteral& expr) {}
 void CodeGen::EmitCharacterLiteral(CharacterLiteral& expr) {}
 
 void CodeGen::EmitIntergerLiteral(IntergerLiteral& expr) {
-  Writeln("  mov %rax, {}", expr.GetValue());
+  Writeln("  mov rax, {}", expr.GetValue());
 }
 
 void CodeGen::EmitFloatingLiteral(FloatingLiteral& expr) {}
@@ -147,5 +162,11 @@ void CodeGen::EmitArraySubscriptExpr(ArraySubscriptExpr& expr) {}
 
 void CodeGen::EmitMemberExpr(MemberExpr& expr) {}
 
-void CodeGen::EmitDeclRefExpr(DeclRefExpr& expr) {}
+void CodeGen::EmitDeclRefExpr(DeclRefExpr& expr) {
+  // FIXME: this is totally hot garbage and not working,
+  // we need to know the offset of every locals so we can load them.
+  Writeln("  lea rax, {}[rbp]", -4);
+  // FIXME: this is the cast.
+  Writeln("  movsxd rax, [rax]");
+}
 }  // namespace jcc
