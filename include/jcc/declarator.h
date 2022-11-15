@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "jcc/ast_context.h"
 #include "jcc/type.h"
 
@@ -19,8 +21,13 @@ class DeclSpec {
     Unspecified
   };
 
-  enum class TypeQual { Const, Restrict, Volatile, Atomic, Unspecified };
-
+  enum class TypeQual : uint8_t {
+    Unspecified = 0,
+    Const = 1,
+    Restrict = 2,
+    Volatile = 3,
+    Atomic = 4
+  };
   enum class FunctionSpec { Inline, NoReturn, Unspecified };
 
   using TypeSpecKind = TypeKind;
@@ -76,7 +83,6 @@ class DeclSpec {
   void SetType(Type* type) { type_ = type; }
 
   void SynthesizeType() {
-    // What if it's a user-defined type?
     switch (GetTypeSpecWidth()) {
       case TypeSpecWidth::Short: {
         bool is_unsigned = (GetTypeSpecSign() == TypeSpecSign::Unsigned);
@@ -96,14 +102,14 @@ class DeclSpec {
     switch (GetTypeSpecKind()) {
       case TSK_Void:
         type_ = ctx_.GetVoidType();
-        return;
+        break;
       case TSK_Bool:
         type_ = ctx_.GetBoolType();
-        return;
+        break;
       case TSK_Char: {
         bool is_unsigned = GetTypeSpecSign() == TypeSpecSign::Unsigned;
         type_ = is_unsigned ? ctx_.GetUCharType() : ctx_.GetCharType();
-        return;
+        break;
       }
       case TSK_Int: {
         bool is_unsigned = GetTypeSpecSign() == TypeSpecSign::Unsigned;
@@ -121,6 +127,7 @@ class DeclSpec {
       default:
         jcc_unreachable("Unknown type specifier when generating type!");
     }
+    type_->SetQualifiers(static_cast<Qualifiers>(type_qual_));
   }
 
   [[nodiscard]] Type* GetType() const { return type_; }

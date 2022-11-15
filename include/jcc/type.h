@@ -1,6 +1,7 @@
 #pragma once
 
 #include <concepts>
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -12,11 +13,12 @@ namespace jcc {
 
 class ASTContext;
 
-enum class Qualifiers {
-  Unspecified,
-  Const,
-  Restrict,
-  Volatile,
+enum class Qualifiers : uint8_t {
+  Unspecified = 0,
+  Const = 1,
+  Restrict = 2,
+  Volatile = 3,
+  Atomic = 4
 };
 
 enum class TypeKind {
@@ -67,6 +69,7 @@ class Type {
   [[nodiscard]] bool HasQualifiers() const {
     return quals_ != Qualifiers::Unspecified;
   }
+  void SetQualifiers(Qualifiers quals) { quals_ = quals; }
 
   [[nodiscard]] bool IsConst() const { return quals_ == Qualifiers::Const; }
 
