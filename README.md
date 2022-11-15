@@ -29,7 +29,7 @@ cmake -DCMAKE_BUILD_TYPE=Debug            \
       -DJCC_USE_ASAN=ON                   \
       -GNinja ../ && ninja
 ```
-`-DJCC_USE_ASAN=ON` means enable the address sanitizer, it might be helpful to catch some memory bugs.
+`-DJCC_USE_ASAN=ON` means enable the address sanitizer, which might be helpful to catch some memory bugs.
 ### Run tests
 ```bash
 ninja test
@@ -44,5 +44,5 @@ ninja test
 ```
 - Generate the assembly.
 ```bash
-./jcc test.c # It will create test.s.
+./jcc test.c # It will produce a.out
 ```
