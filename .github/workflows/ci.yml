@@ -62,17 +62,3 @@ jobs:
         cmake -DCMAKE_C_COMPILER=gcc-11 -DCMAKE_CXX_COMPILER=g++-11 -DCMAKE_BUILD_TYPE=${{ matrix.target }} ..
         cmake --build . -j$(nproc)
         ctest . -j$(nproc)
-  build-windows:
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: setup conan
-      run: |
-        pip install conan
-        pip install conan_package_tools
-    - name: build
-      run: |
-        mkdir build
-        cd build
-        cmake -DCMAKE_BUILD_TYPE=Debug ..
-        cmake --build . -j $Env:NUMBER_OF_PROCESSORS
