@@ -276,7 +276,7 @@ Token Lexer::Lex() {
       return LexStringLiteral();
     // TODO(Jun): How should we deal with single character
     case '\'':
-      assert(0);
+      return LexCharacterLiteral();
     case '\0':
       return LexAtom(TokenKind::Eof);
     default:
@@ -408,6 +408,14 @@ Token Lexer::LexStringLiteral() {
   }
 
   return Token{TokenKind::StringLiteral, data, len, loc};
+}
+Token Lexer::LexCharacterLiteral() {
+  Advance();  // Eat the begin " ' "
+  SourceLocation loc{line_, column_, GetOffset()};
+  const char* data = buffer_ptr_;
+  Advance();  // Eat the character
+  Advance();  // Eat the end " ' "
+  return Token{TokenKind::Char, data, 1, loc};
 }
 
 // TODO(Jun): extend this to support hex and exp

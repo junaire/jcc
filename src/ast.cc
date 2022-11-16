@@ -130,9 +130,9 @@ void StringLiteral::dump(int indent) const {
 }
 
 CharacterLiteral* CharacterLiteral::Create(ASTContext& ctx, SourceRange loc,
-                                           char value) {
+                                           std::string value) {
   void* mem = ctx.Allocate<CharacterLiteral>();
-  auto* expr = new (mem) CharacterLiteral{std::move(loc), value};
+  auto* expr = new (mem) CharacterLiteral(std::move(loc), std::move(value));
   expr->SetType(ctx.GetCharType());
   return expr;
 }

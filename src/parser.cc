@@ -692,6 +692,12 @@ Expr* Parser::ParseCastExpr() {
       ConsumeToken();
       break;
     }
+    case TokenKind::Char: {
+      result = CharacterLiteral::Create(GetASTContext(), SourceRange(),
+                                        CurrentToken().GetAsString());
+      ConsumeToken();
+      break;
+    }
     case TokenKind::Ampersand: {
       ConsumeToken();
       result = ParseCastExpr();

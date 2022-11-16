@@ -54,15 +54,16 @@ class StringLiteral : public Expr {
 
 class CharacterLiteral : public Expr {
   // TODO(Jun): Support more character kinds.
-  char value_{0};
+  std::string value_;
 
-  CharacterLiteral(SourceRange loc, char value)
-      : Expr(std::move(loc)), value_(value) {}
+  CharacterLiteral(SourceRange loc, std::string value)
+      : Expr(std::move(loc)), value_(std::move(value)) {}
 
  public:
-  static CharacterLiteral* Create(ASTContext& ctx, SourceRange loc, char value);
+  static CharacterLiteral* Create(ASTContext& ctx, SourceRange loc,
+                                  std::string value);
 
-  [[nodiscard]] char GetValue() const { return value_; }
+  [[nodiscard]] std::string GetValue() const { return value_; }
 
   void dump(int indent) const override;
 

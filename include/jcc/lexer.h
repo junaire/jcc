@@ -48,6 +48,7 @@ class Lexer {
   Token LexAtom(TokenKind kind);
   Token LexAtom(TokenKind kind, SourceLocation loc);
   Token LexStringLiteral();
+  Token LexCharacterLiteral();
   Token LexIdentifierOrKeyword();
   Token LexNumericConstant();
 
