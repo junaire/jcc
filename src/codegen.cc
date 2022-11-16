@@ -134,7 +134,9 @@ void CodeGen::EmitDeclStatement(DeclStatement& stmt) {
   }
 }
 
-void CodeGen::EmitExprStatement(ExprStatement& stmt) {}
+void CodeGen::EmitExprStatement(ExprStatement& stmt) {
+  stmt.GetExpr()->GenCode(*this);
+}
 
 void CodeGen::EmitCompoundStatement(CompoundStatement& stmt) {
   for (std::size_t idx = 0; idx < stmt.GetSize(); idx++) {
