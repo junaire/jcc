@@ -14,8 +14,7 @@ class Keywords {
  public:
   Keywords();
 
-  // FIXME: odd api
-  std::pair<bool, TokenKind> matchKeyword(std::string_view identifier);
+  std::optional<TokenKind> matchKeyword(std::string_view identifier);
 };
 
 // the lexer is not responsible for managing the buffer, instead it's an

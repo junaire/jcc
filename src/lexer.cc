@@ -50,12 +50,12 @@ Keywords::Keywords() {
   keywords_.insert({"_Thread_local", TokenKind::DashThreadLocal});
 }
 
-std::pair<bool, TokenKind> Keywords::matchKeyword(std::string_view identifier) {
+std::optional<TokenKind> Keywords::matchKeyword(std::string_view identifier) {
   auto search = keywords_.find(identifier);
   if (search != keywords_.end()) {
-    return {true, search->second};
+    return search->second;
   }
-  return {false, TokenKind::Eof};
+  return std::nullopt;
 }
 
 Token Lexer::Lex() {
@@ -385,8 +385,8 @@ Token Lexer::LexIdentifierOrKeyword() {
   }
   // the token may be a keyword.
   std::string_view tok{data, len};
-  if (auto [isMatch, keyword] = keywords_.matchKeyword({data, len}); isMatch) {
-    return {keyword, data, len, loc};
+  if (auto keyword = keywords_.matchKeyword({data, len})) {
+    return {*keyword, data, len, loc};
   }
 
   return {TokenKind::Identifier, data, len, loc};
