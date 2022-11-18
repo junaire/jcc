@@ -146,7 +146,10 @@ void CodeGen::EmitCompoundStatement(CompoundStatement& stmt) {
 
 void CodeGen::EmitStringLiteral(StringLiteral& expr) {}
 
-void CodeGen::EmitCharacterLiteral(CharacterLiteral& expr) {}
+void CodeGen::EmitCharacterLiteral(CharacterLiteral& expr) {
+  assert(expr.GetValue().size() == 1 && "Not a character?");
+  Writeln("  mov rax, {}", static_cast<int>(expr.GetValue()[0]));
+}
 
 void CodeGen::EmitIntergerLiteral(IntergerLiteral& expr) {
   Writeln("  mov rax, {}", expr.GetValue());
