@@ -91,7 +91,6 @@ class FunctionDecl : public Decl {
 };
 
 class RecordDecl : public Decl {
-  std::string name_;
   std::vector<VarDecl*> members_;
 
   RecordDecl(SourceRange loc, std::string name, std::vector<VarDecl*> members)
@@ -100,8 +99,6 @@ class RecordDecl : public Decl {
  public:
   static RecordDecl* Create(ASTContext& ctx, SourceRange loc, std::string name,
                             std::vector<VarDecl*> members);
-
-  [[nodiscard]] std::string_view GetName() const { return name_; }
 
   VarDecl* GetMember(std::size_t index) { return members_[index]; }
 

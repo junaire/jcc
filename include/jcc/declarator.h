@@ -196,10 +196,7 @@ class Declarator {
 
   DeclSpec& GetDeclSpec() { return decl_spec_; }
 
-  Type* GetBaseType() {
-    return decl_spec_.GetType();
-    ;
-  }
+  Type* GetBaseType() { return decl_spec_.GetType(); }
 
   [[nodiscard]] TypeKind GetTypeKind() const {
     return decl_spec_.type_->GetKind();
