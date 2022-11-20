@@ -13,32 +13,31 @@ class Stmt;
 class ASTContext;
 
 class Decl : public ASTNode {
+  std::string name_;
+
  protected:
-  explicit Decl(SourceRange loc) : ASTNode(std::move(loc)) {}
+  explicit Decl(SourceRange loc, std::string name)
+      : ASTNode(std::move(loc)), name_(std::move(name)) {}
 
  public:
   template <typename Ty>
   requires std::is_base_of_v<Decl, Ty> Ty* AsDecl() {
     return static_cast<Ty*>(this);
   }
+
+  [[nodiscard]] std::string GetName() const { return name_; }
 };
 
 class VarDecl : public Decl {
   Stmt* init_ = nullptr;
   Type* type_ = nullptr;
-  std::string name_;
 
   VarDecl(SourceRange loc, Stmt* init, Type* type, std::string name)
-      : Decl(std::move(loc)),
-        init_(init),
-        type_(type),
-        name_(std::move(name)) {}
+      : Decl(std::move(loc), std::move(name)), init_(init), type_(type) {}
 
  public:
   static VarDecl* Create(ASTContext& ctx, SourceRange loc, Stmt* init,
                          Type* type, std::string name);
-
-  [[nodiscard]] std::string GetName() const { return name_; }
 
   Type* GetType() { return type_; }
 
@@ -53,20 +52,16 @@ class VarDecl : public Decl {
 };
 
 class FunctionDecl : public Decl {
-  std::string name_;
   std::vector<VarDecl*> args_;
   Type* return_type_;
   Stmt* body_ = nullptr;
 
   FunctionDecl(SourceRange loc, std::string name, Type* return_type)
-      : Decl(std::move(loc)),
-        name_(std::move(name)),
-        return_type_(return_type) {}
+      : Decl(std::move(loc), std::move(name)), return_type_(return_type) {}
 
   FunctionDecl(SourceRange loc, std::string name, std::vector<VarDecl*> args,
                Type* return_type, Stmt* body)
-      : Decl(std::move(loc)),
-        name_(std::move(name)),
+      : Decl(std::move(loc), std::move(name)),
         args_(std::move(args)),
         return_type_(return_type),
         body_(body) {}
@@ -77,8 +72,6 @@ class FunctionDecl : public Decl {
   static FunctionDecl* Create(ASTContext& ctx, SourceRange loc,
                               std::string name, std::vector<VarDecl*> args,
                               Type* return_type, Stmt* body);
-
-  [[nodiscard]] std::string_view GetName() const { return name_; }
 
   [[nodiscard]] bool IsMain() const { return GetName() == "main"; }
   Type* GetReturnType() { return return_type_; }
@@ -102,9 +95,7 @@ class RecordDecl : public Decl {
   std::vector<VarDecl*> members_;
 
   RecordDecl(SourceRange loc, std::string name, std::vector<VarDecl*> members)
-      : Decl(std::move(loc)),
-        name_(std::move(name)),
-        members_(std::move(members)) {}
+      : Decl(std::move(loc), std::move(name)), members_(std::move(members)) {}
 
  public:
   static RecordDecl* Create(ASTContext& ctx, SourceRange loc, std::string name,

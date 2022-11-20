@@ -265,8 +265,10 @@ DeclRefExpr* DeclRefExpr::Create(ASTContext& ctx, SourceRange loc, Decl* decl) {
   return expr;
 }
 
-// FIXME: WE don't really need to print that much information.
-void DeclRefExpr::dump(int indent) const { decl_->dump(indent); }
+void DeclRefExpr::dump(int indent) const {
+  InsertIndent(indent);
+  fmt::print("DeclRefExpr: {}\n", decl_->GetName());
+}
 
 ReturnStatement* ReturnStatement::Create(ASTContext& ctx, SourceRange loc,
                                          Expr* return_expr) {
