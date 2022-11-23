@@ -1,11 +1,12 @@
 SET(SOURCES
 	ast.cc
 	ast_context.cc
-	main.cc
+	codegen.cc
+	driver.cc
 	lexer.cc
+	main.cc
 	parser.cc
 	type.cc
-	codegen.cc
 )
 
 add_executable(
