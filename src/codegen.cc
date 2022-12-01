@@ -27,10 +27,78 @@ static int64_t Counter() {
 
 namespace jcc {
 
+static size_t align_to(size_t n, int align) {
+  return (n + align - 1) / align * align;
+}
+
+void CodeGen::AssignLocalOffsets(const std::vector<Decl*>& decls) {
+  for (Decl* decl : decls) {
+    if (auto* func = dynamic_cast<FunctionDecl*>(decl)) {
+      // If a function has many parameters, some parameters are
+      // inevitably passed by stack rather than by register.
+      // The first passed-by-stack parameter resides at RBP+16.
+      size_t top = 16;
+      size_t bottom = 0;
+      size_t gp = 0;
+      size_t fp = 0;
+
+      for (size_t idx = 0; idx < func->GetParamNum(); ++idx) {
+        VarDecl* param = func->GetParam(idx);
+        Type* param_type = param->GetType();
+        switch (param_type->GetKind()) {
+          case TypeKind::Struct:
+          case TypeKind::Union:
+            jcc_unimplemented();
+            break;
+          case TypeKind::Float:
+          case TypeKind::Double:
+            jcc_unimplemented();
+            break;
+          case TypeKind::Ldouble:
+            jcc_unimplemented();
+            break;
+          default: {
+            if (gp++ < 6) {
+              continue;
+            }
+            top = align_to(top, 8);
+            ctx.offsets[param] = top;
+            top += param_type->GetSize();
+          }
+        }
+        auto* compound_stmt = func->GetBody()->AsStmt<CompoundStatement>();
+        for (size_t i = 0; i < compound_stmt->GetSize(); ++i) {
+          Stmt* stmt = compound_stmt->GetStmt(i);
+          if (auto* stmt_decl = dynamic_cast<DeclStatement*>(stmt)) {
+            assert(stmt_decl->IsSingleDecl() && "Not a single decl!");
+            Decl* decl = stmt_decl->GetSingleDecl();
+            if (auto* var_decl = dynamic_cast<VarDecl*>(decl)) {
+              Type* type = var_decl->GetType();
+              // AMD64 System V ABI has a special alignment rule for an array of
+              // length at least 16 bytes. We need to align such array to at
+              // least 16-byte boundaries. See p.14 of
+              // https://github.com/hjl-tools/x86-psABI/wiki/x86-64-psABI-draft.pdf.
+              int align = (type->Is<TypeKind::Array>() && type->GetSize() >= 16)
+                              ? std::max(16, type->GetAlignment())
+                              : type->GetAlignment();
+
+              bottom += type->GetSize();
+              bottom = align_to(bottom, align);
+              ctx.offsets[var_decl] = -bottom;
+            }
+          }
+        }
+      }
+      ctx.func_stack_size[func] = align_to(bottom, 16);
+    }
+  }
+}
+
 std::string GenerateAssembly(const std::string& file_name,
                              const std::vector<jcc::Decl*>& decls) {
-  jcc::CodeGen generator(file_name);
-  for (jcc::Decl* decl : decls) {
+  CodeGen generator(file_name);
+  generator.AssignLocalOffsets(decls);
+  for (Decl* decl : decls) {
     decl->GenCode(generator);
   }
   return generator.GetFileName();

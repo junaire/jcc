@@ -3,7 +3,9 @@
 #include <fmt/format.h>
 
 #include <cassert>
+#include <cstddef>
 #include <cstdlib>
+#include <map>
 #include <string>
 #include <string_view>
 
@@ -41,7 +43,10 @@ class DeclRefExpr;
 
 struct CodeGenContext {
   std::string cur_func_name;
+  std::map<Decl*, size_t> offsets;
+  std::map<FunctionDecl*, size_t> func_stack_size;
 };
+
 // Entry point for generate assembly code.
 std::string GenerateAssembly(const std::string& file_name,
                              const std::vector<jcc::Decl*>& decls);
@@ -101,6 +106,8 @@ class CodeGen {
   File GetFile() { return file_; }
 
   [[nodiscard]] std::string GetFileName() const { return file_.GetName(); }
+
+  void AssignLocalOffsets(const std::vector<Decl*>& decls);
 
   EMITDECL(VarDecl)
   EMITDECL(FunctionDecl)
