@@ -37,7 +37,7 @@ static void RunSubprocess(char** argv) {
   // Wait for the child process to finish.
   int status;
   while (wait(&status) > 0) {
-    ;
+    // keep spinning after the child process is finished.
   }
   if (status != 0) {
     exit(1);
@@ -60,8 +60,8 @@ Driver::Driver(int argc, char** argv) {
     fmt::print("JCC expected aat least 1 argument!\n");
     exit(-1);
   }
-  std::vector<std::string_view> args(argc - 1);
-  for (int i = 0; i < argc - 1; ++i) {
+  std::vector<std::string_view> args(static_cast<size_t>(argc - 1));
+  for (size_t i = 0; i < static_cast<size_t>(argc - 1); ++i) {
     args[i] = argv[i + 1];
   }
 

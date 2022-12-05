@@ -5,6 +5,17 @@
 
 namespace jcc {
 
+// Pin the vtable here.
+Type::~Type() = default;
+
+ArrayType::~ArrayType() = default;
+
+PointerType::~PointerType() = default;
+
+RecordType::~RecordType() = default;
+
+FunctionType::~FunctionType() = default;
+
 bool Type::IsCompatible(const Type& lhs, const Type& rhs) {
   if (&lhs == &rhs) {
     return true;
@@ -51,7 +62,7 @@ Type* Type::CreateEnumType(ASTContext& ctx) {
   void* mem = ctx.Allocate<Type>();  \
   return new (mem) Type(KIND, SIZE, ALIGN);
 
-Type* Type::CreateVoidType(ASTContext& ctx) { INIT_TYPE(TypeKind::Void, 2, 1); }
+Type* Type::CreateVoidType(ASTContext& ctx){INIT_TYPE(TypeKind::Void, 2, 1)}
 
 Type* Type::CreateCharType(ASTContext& ctx, bool is_unsigned) {
   void* mem = ctx.Allocate<Type>();
@@ -87,13 +98,11 @@ Type* Type::CreateLongType(ASTContext& ctx, bool is_unsigned) {
   return type;
 }
 
-Type* Type::CreateFloatType(ASTContext& ctx) {
-  INIT_TYPE(TypeKind::Float, 4, 4);
-}
+Type* Type::CreateFloatType(ASTContext& ctx){INIT_TYPE(TypeKind::Float, 4, 4)}
 
 Type* Type::CreateDoubleType(ASTContext& ctx, bool is_long) {
-  int size_and_alignment = is_long ? 16 : 8;
-  INIT_TYPE(TypeKind::Double, size_and_alignment, size_and_alignment);
+  size_t size_and_alignment = is_long ? 16 : 8;
+  INIT_TYPE(TypeKind::Double, size_and_alignment, size_and_alignment)
 }
 #undef INIT_TYPE
 

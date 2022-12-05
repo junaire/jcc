@@ -33,7 +33,6 @@ GEN(BreakStatement)
 GEN(ContinueStatement)
 
 GEN(DeclRefExpr)
-GEN(ArraySubscriptExpr)
 GEN(BinaryExpr)
 GEN(UnaryExpr)
 GEN(RecordDecl)
@@ -242,21 +241,7 @@ void BinaryExpr::dump(int indent) const {
   rhs_->dump(indent + 2);
 }
 
-ArraySubscriptExpr* ArraySubscriptExpr::create(ASTContext& ctx, SourceRange loc,
-                                               Expr* lhs, Expr* rhs) {
-  void* mem = ctx.Allocate<ArraySubscriptExpr>();
-  return new (mem) ArraySubscriptExpr{std::move(loc), lhs, rhs};
-}
-
-void ArraySubscriptExpr::dump(int indent) const { jcc_unimplemented(); }
-
-MemberExpr* MemberExpr::create(ASTContext& ctx, SourceRange loc, Stmt* base,
-                               Decl* member) {
-  void* mem = ctx.Allocate<MemberExpr>();
-  return new (mem) MemberExpr{std::move(loc), base, member};
-}
-
-void MemberExpr::dump(int indent) const { jcc_unimplemented(); }
+void MemberExpr::dump(int) const { jcc_unimplemented(); }
 
 DeclRefExpr* DeclRefExpr::Create(ASTContext& ctx, SourceRange loc, Decl* decl) {
   void* mem = ctx.Allocate<DeclRefExpr>();
@@ -460,5 +445,11 @@ void ContinueStatement::dump(int indent) const {
   InsertIndent(indent);
   fmt::print("ContinueStatement\n");
 }
+
+Stmt::~Stmt() = default;
+
+Expr::~Expr() = default;
+
+Decl::~Decl() = default;
 
 }  // namespace jcc

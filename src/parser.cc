@@ -353,18 +353,19 @@ Type* Parser::ParseParams(Type* type) {
   while (true) {
     DeclSpec decl_spec = ParseDeclSpec();
     Declarator declarator = ParseDeclarator(decl_spec);
-    Type* type = decl_spec.GetType();
+    Type* param_type = decl_spec.GetType();
 
     if (declarator.GetTypeKind() == TypeKind::Array) {
-      type = Type::CreatePointerType(
+      param_type = Type::CreatePointerType(
           GetASTContext(),
           declarator.GetBaseType()->AsType<PointerType>()->GetBase());
       // FIXME: set name to type.
     } else if (declarator.GetTypeKind() == TypeKind::Func) {
-      type = Type::CreatePointerType(GetASTContext(), declarator.GetBaseType());
+      param_type =
+          Type::CreatePointerType(GetASTContext(), declarator.GetBaseType());
     }
 
-    params.push_back(type);
+    params.push_back(param_type);
 
     if (TryConsumeToken(TokenKind::RightParen)) {
       break;
@@ -384,7 +385,8 @@ Type* Parser::ParseArrayDimensions(Type* type) {
 
   if (TryConsumeToken(TokenKind::RightParen)) {
     Type* arr_type = ParseTypeSuffix(type);
-    return Type::CreateArrayType(GetASTContext(), arr_type, -1);
+    // FIXME: What is the length BTW?
+    return Type::CreateArrayType(GetASTContext(), arr_type, 0);
   }
 
   // cond ? A : B
@@ -618,7 +620,7 @@ Decl* Parser::ParseFunction(Declarator& declarator) {
 
   ScopeRAII scope_guard(*this);
 
-  function->SetParams(std::move(CreateParams(self)));
+  function->SetParams(CreateParams(self));
 
   if (TryConsumeToken(TokenKind::LeftBracket)) {
     function->SetBody(ParseCompoundStmt());
@@ -801,7 +803,7 @@ Expr* Parser::ParseRhsOfBinaryExpr(Expr* lhs, BinOpPreLevel min_prec) {
   BinOpPreLevel next_tok_prec = GetBinOpPrecedence(CurrentToken().GetKind());
   while (true) {
     if (next_tok_prec < min_prec) {
-      return lhs;
+      break;
     }
     Token op_tok = CurrentToken();  // Save the operator.
     ConsumeToken();
@@ -821,8 +823,6 @@ Expr* Parser::ParseRhsOfBinaryExpr(Expr* lhs, BinOpPreLevel min_prec) {
           ParseRhsOfBinaryExpr(rhs, static_cast<BinOpPreLevel>(this_tok_prec));
       next_tok_prec = GetBinOpPrecedence(CurrentToken().GetKind());
     }
-
-    Expr* origin_lhs = lhs;
 
     Expr* binary_expr =
         BinaryExpr::Create(GetASTContext(), SourceRange(),

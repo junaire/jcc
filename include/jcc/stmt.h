@@ -24,6 +24,7 @@ class Stmt : public ASTNode {
   requires std::is_base_of_v<Stmt, Ty> Ty* AsStmt() {
     return static_cast<Ty*>(this);
   }
+  ~Stmt() override;
 };
 
 class LabeledStatement : public Stmt {

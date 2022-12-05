@@ -1,5 +1,6 @@
 SET(SOURCES
 	ast.cc
+	ast_node.cc
 	ast_context.cc
 	codegen.cc
 	driver.cc

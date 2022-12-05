@@ -1,11 +1,13 @@
 #pragma once
 
 #include <concepts>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <string_view>
 #include <vector>
 
+#include "fmt/format.h"
 #include "jcc/common.h"
 #include "jcc/token.h"
 
@@ -37,26 +39,26 @@ enum class TypeKind {
   Array,
   Vla,  // variable-length array
   Struct,
-  Union,
+  Union
 };
 
 class Type {
   TypeKind kind_;
   Qualifiers quals_ = Qualifiers::Unspecified;
 
-  std::size_t size_ = 0;
-  int alignment_ = 0;
+  Token name_;
+
+  size_t size_ = 0;
+  size_t alignment_ = 0;
   bool unsigned_ = false;
 
   Type* origin_ = nullptr;
 
-  Token name_;
-
  public:
   Type() = default;
-  virtual ~Type() = default;
+  virtual ~Type();
 
-  explicit Type(TypeKind kind, std::size_t size, int alignment)
+  explicit Type(TypeKind kind, size_t size, size_t alignment)
       : kind_(kind), size_(size), alignment_(alignment) {}
 
   template <typename Ty>
@@ -64,7 +66,7 @@ class Type {
     return static_cast<Ty*>(this);
   }
 
-  virtual void dump(int indent) const { jcc_unimplemented(); }
+  virtual void dump(int) const { fmt::print("{}\n", GetNameAsString()); }
 
   [[nodiscard]] bool HasQualifiers() const {
     return quals_ != Qualifiers::Unspecified;
@@ -117,7 +119,7 @@ class Type {
 
   Token GetName() { return name_; }
 
-  void SetSizeAlign(int size, int alignment) {
+  void SetSizeAlign(size_t size, size_t alignment) {
     size_ = size;
     alignment_ = alignment;
   }
@@ -131,7 +133,7 @@ class Type {
 
   [[nodiscard]] std::size_t GetSize() const { return size_; }
 
-  [[nodiscard]] int GetAlignment() const { return alignment_; }
+  [[nodiscard]] size_t GetAlignment() const { return alignment_; }
 
   [[nodiscard]] bool IsUnsigned() const { return unsigned_; }
 
@@ -171,7 +173,9 @@ class ArrayType : public Type {
 
  public:
   ArrayType() = default;
-  ArrayType(TypeKind kind, std::size_t size, int alignment)
+  ~ArrayType() override;
+
+  ArrayType(TypeKind kind, std::size_t size, size_t alignment)
       : Type(kind, size, alignment) {}
 
   [[nodiscard]] std::size_t GetLength() const { return len_; }
@@ -188,7 +192,9 @@ class PointerType : public Type {
 
  public:
   PointerType() = default;
-  PointerType(TypeKind kind, int size, int alignment)
+  ~PointerType() override;
+
+  PointerType(TypeKind kind, size_t size, size_t alignment)
       : Type(kind, size, alignment) {}
 
   Type* GetBase() { return base_; }
@@ -200,8 +206,9 @@ class RecordType : public Type {
   std::vector<Type*> members_;
 
  public:
-  RecordType(TypeKind kind, int size, int alignment)
+  RecordType(TypeKind kind, size_t size, size_t alignment)
       : Type(kind, size, alignment) {}
+  ~RecordType() override;
 
   void SetMembers(const std::vector<Type*>& members) { members_ = members; }
 
@@ -216,7 +223,9 @@ class FunctionType : public Type {
 
  public:
   FunctionType() = default;
-  FunctionType(TypeKind kind, int size, int alignment)
+  ~FunctionType() override;
+
+  FunctionType(TypeKind kind, size_t size, size_t alignment)
       : Type(kind, size, alignment) {}
 
   Type* GetReturnType() { return return_type_; }

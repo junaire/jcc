@@ -13,7 +13,7 @@ class ASTNode {
   explicit ASTNode(SourceRange loc) : loc_(std::move(loc)) {}
 
  public:
-  virtual ~ASTNode() = default;
+  virtual ~ASTNode();
   virtual void dump(int indent) const = 0;
   virtual void GenCode(CodeGen& gen) = 0;
 };

@@ -26,6 +26,8 @@ class Decl : public ASTNode {
   }
 
   [[nodiscard]] std::string GetName() const { return name_; }
+
+  ~Decl() override;
 };
 
 class VarDecl : public Decl {

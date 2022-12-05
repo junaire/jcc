@@ -27,7 +27,7 @@ static int64_t Counter() {
 
 namespace jcc {
 
-static size_t align_to(size_t n, int align) {
+static size_t AlignTo(size_t n, size_t align) {
   return (n + align - 1) / align * align;
 }
 
@@ -61,7 +61,7 @@ void CodeGen::AssignLocalOffsets(const std::vector<Decl*>& decls) {
             if (gp++ < 6) {
               continue;
             }
-            top = align_to(top, 8);
+            top = AlignTo(top, 8);
             ctx.offsets[param] = top;
             top += param_type->GetSize();
           }
@@ -78,18 +78,19 @@ void CodeGen::AssignLocalOffsets(const std::vector<Decl*>& decls) {
               // length at least 16 bytes. We need to align such array to at
               // least 16-byte boundaries. See p.14 of
               // https://github.com/hjl-tools/x86-psABI/wiki/x86-64-psABI-draft.pdf.
-              int align = (type->Is<TypeKind::Array>() && type->GetSize() >= 16)
-                              ? std::max(16, type->GetAlignment())
-                              : type->GetAlignment();
+              size_t align =
+                  (type->Is<TypeKind::Array>() && type->GetSize() >= 16)
+                      ? std::max(static_cast<size_t>(16), type->GetAlignment())
+                      : type->GetAlignment();
 
               bottom += type->GetSize();
-              bottom = align_to(bottom, align);
+              bottom = AlignTo(bottom, align);
               ctx.offsets[var_decl] = -bottom;
             }
           }
         }
       }
-      ctx.func_stack_size[func] = align_to(bottom, 16);
+      ctx.func_stack_size[func] = AlignTo(bottom, 16);
     }
   }
 }

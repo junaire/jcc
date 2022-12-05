@@ -34,6 +34,8 @@ class Expr : public Stmt {
   }
 
   void SetType(Type* type) { type_ = type; }
+
+  ~Expr() override;
 };
 
 class StringLiteral : public Expr {
@@ -96,7 +98,7 @@ class FloatingLiteral : public Expr {
   static FloatingLiteral* Create(ASTContext& ctx, SourceRange loc,
                                  double value);
 
-  [[nodiscard]] double GetValue() const { return value_; };
+  [[nodiscard]] double GetValue() const { return value_; }
 
   void dump(int indent) const override;
 
@@ -133,17 +135,6 @@ class CastExpr : public Expr {
   // TODO(Jun): Implement this.
 };
 
-class InitListExpr : public Expr {
-  std::vector<Stmt*> initExprs_;
-
-  explicit InitListExpr(SourceRange loc, std::vector<Stmt*> initExprs)
-      : Expr(std::move(loc)), initExprs_(std::move(initExprs)) {}
-
- public:
-  static InitListExpr* create(ASTContext& ctx, SourceRange loc,
-                              std::vector<Stmt*> initExprs);
-};
-
 // TODO(Jun): Add more kinds.
 enum class UnaryOperatorKind {
   PreIncrement,
@@ -153,7 +144,7 @@ enum class UnaryOperatorKind {
   AddressOf,
   Deref,
   Plus,
-  Minus,
+  Minus
 };
 
 class UnaryExpr : public Expr {
@@ -183,7 +174,7 @@ enum class BinaryOperatorKind {
   Greater,
   Less,
   Equal,
-  PlusEqual,
+  PlusEqual
 };
 
 class BinaryExpr : public Expr {
@@ -203,26 +194,6 @@ class BinaryExpr : public Expr {
   Expr* GetLhs() { return lhs_; }
 
   Expr* GetRhs() { return rhs_; }
-
-  void dump(int indent) const override;
-
-  void GenCode(CodeGen& gen) override;
-};
-
-class ArraySubscriptExpr : public Expr {
-  Expr* lhs_{nullptr};
-  Expr* rhs_{nullptr};
-
-  ArraySubscriptExpr(SourceRange loc, Expr* lhs, Expr* rhs)
-      : Expr(std::move(loc)), lhs_(lhs), rhs_(rhs) {}
-
- public:
-  static ArraySubscriptExpr* create(ASTContext& ctx, SourceRange loc, Expr* lhs,
-                                    Expr* rhs);
-
-  Expr* getLhs() { return lhs_; }
-
-  Expr* getRhs() { return rhs_; }
 
   void dump(int indent) const override;
 
