@@ -17,7 +17,6 @@ namespace jcc {
 static BinOpPreLevel GetBinOpPrecedence(TokenKind kind) {
   switch (kind) {
     default:
-    case TokenKind::Greater:
       return BinOpPreLevel::Unknown;
     case TokenKind::Comma:
       return BinOpPreLevel::Comma;
@@ -48,6 +47,7 @@ static BinOpPreLevel GetBinOpPrecedence(TokenKind kind) {
       return BinOpPreLevel::And;
     case TokenKind::EqualEqual:
       return BinOpPreLevel::Equality;
+    case TokenKind::Greater:
     case TokenKind::LessEqual:
     case TokenKind::Less:
     case TokenKind::GreaterEqual:
