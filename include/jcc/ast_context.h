@@ -69,6 +69,8 @@ class ASTContext {
   // Returns current function we are parseing.
   FunctionDecl* GetCurFunc() { return cur_func_; }
 
+  void SetCurFunc(FunctionDecl* func) { cur_func_ = func; }
+
   // TODO(Jun): Look up in vars, need similiar work for tags.
   Decl* Lookup(const std::string& name) {
     for (auto rbeg = scopes_.rbegin(), rend = scopes_.rend(); rbeg != rend;

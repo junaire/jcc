@@ -19,7 +19,6 @@ class Decl : public ASTNode {
       : ASTNode(std::move(loc)), name_(std::move(name)) {}
 
  public:
-
   [[nodiscard]] std::string GetName() const { return name_; }
 
   ~Decl() override;
@@ -51,7 +50,7 @@ class VarDecl : public Decl {
 class FunctionDecl : public Decl {
   std::vector<VarDecl*> args_;
   // This makes it much easier to assign offsets for them.
-  std::vector<VarDecl*> locals_;
+  std::vector<Decl*> locals_;
   Type* return_type_;
   Stmt* body_ = nullptr;
 
@@ -73,7 +72,13 @@ class FunctionDecl : public Decl {
                               std::string name, std::vector<VarDecl*> args,
                               Type* return_type, Stmt* body);
 
-  void AddLocal(VarDecl* decl) { locals_.push_back(decl); }
+  void AddLocal(Decl* decl) { locals_.push_back(decl); }
+
+  void AddLocals(const std::vector<Decl*>& decls) {
+    locals_.insert(locals_.end(), decls.begin(), decls.end());
+  }
+
+  std::vector<Decl*> GetLocals() { return locals_; }
 
   [[nodiscard]] bool IsMain() const { return GetName() == "main"; }
 

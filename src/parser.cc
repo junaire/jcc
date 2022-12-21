@@ -842,10 +842,13 @@ std::vector<Decl*> Parser::ParseFunctionOrVar(DeclSpec& decl_spec) {
 
   Declarator declarator = ParseDeclarator(decl_spec);
   if (declarator.GetTypeKind() == TypeKind::Func) {
-    decls.push_back(ParseFunction(declarator));
+    Decl* func = ParseFunction(declarator);
+    decls.push_back(func);
+    GetASTContext().SetCurFunc(func->As<FunctionDecl>());
   } else {
     std::vector<Decl*> vars = ParseDeclaration(declarator);
     decls.insert(decls.end(), vars.begin(), vars.end());
+    GetASTContext().GetCurFunc()->AddLocals(vars);
   }
   return decls;
 }
