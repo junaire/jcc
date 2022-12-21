@@ -13,6 +13,8 @@
 
 namespace jcc {
 
+static constexpr int dump_indent = 2;
+
 #define GEN(Node) \
   void Node::GenCode(CodeGen& gen) { gen.Emit##Node(*this); }
 
@@ -64,7 +66,7 @@ void VarDecl::dump(int indent) const {
 
   // If we have init.
   if (init_ != nullptr) {
-    init_->dump(indent + 2);
+    init_->dump(indent + dump_indent);
   }
 }
 
@@ -89,15 +91,15 @@ FunctionDecl* FunctionDecl::Create(ASTContext& ctx, SourceRange loc,
 void FunctionDecl::dump(int indent) const {
   InsertIndent(indent);
   fmt::print("FunctionDecl: {}\n", GetName());
-  InsertIndent(indent + 2);
+  InsertIndent(indent + dump_indent);
   fmt::print("Args[{}]\n", GetParamNum());
   for (const auto* arg : args_) {
-    arg->dump(indent + 2);
+    arg->dump(indent + dump_indent);
   }
   if (body_ != nullptr) {
-    body_->dump(indent + 2);
+    body_->dump(indent + dump_indent);
   } else {
-    InsertIndent(indent + 2);
+    InsertIndent(indent + dump_indent);
     fmt::print("Body(empty)\n");
   }
 }
@@ -114,7 +116,7 @@ void RecordDecl::dump(int indent) const {
   InsertIndent(indent);
   fmt::print("RecordDecl: {}\n", GetName());
   for (const auto* member : members_) {
-    member->dump(indent + 2);
+    member->dump(indent + dump_indent);
   }
 }
 StringLiteral* StringLiteral::Create(ASTContext& ctx, SourceRange loc,
@@ -203,7 +205,7 @@ static std::string_view PrintUnaryOpKind(UnaryOperatorKind kind) {
 void UnaryExpr::dump(int indent) const {
   InsertIndent(indent);
   fmt::print("UnaryExpr({}):\n", PrintUnaryOpKind(kind_));
-  value_->dump(indent + 2);
+  value_->dump(indent + dump_indent);
 }
 
 BinaryExpr* BinaryExpr::Create(ASTContext& ctx, SourceRange loc,
@@ -237,8 +239,8 @@ static std::string_view PrintBinaryOpKind(BinaryOperatorKind kind) {
 void BinaryExpr::dump(int indent) const {
   InsertIndent(indent);
   fmt::print("BinaryExpr({}):\n", PrintBinaryOpKind(kind_));
-  lhs_->dump(indent + 2);
-  rhs_->dump(indent + 2);
+  lhs_->dump(indent + dump_indent);
+  rhs_->dump(indent + dump_indent);
 }
 
 void MemberExpr::dump(int) const { jcc_unimplemented(); }
@@ -265,9 +267,9 @@ void ReturnStatement::dump(int indent) const {
   InsertIndent(indent);
   fmt::print("ReturnStatement\n");
   if (return_expr_ != nullptr) {
-    return_expr_->dump(indent + 2);
+    return_expr_->dump(indent + dump_indent);
   } else {
-    InsertIndent(indent + 2);
+    InsertIndent(indent + dump_indent);
     fmt::print("Empty\n");
   }
 }
@@ -282,10 +284,10 @@ IfStatement* IfStatement::Create(ASTContext& ctx, SourceRange loc,
 void IfStatement::dump(int indent) const {
   InsertIndent(indent);
   fmt::print("IfStatement\n");
-  condition_->dump(indent + 2);
+  condition_->dump(indent + dump_indent);
   // FIXME: they're not always exsits.
-  then_stmt_->dump(indent + 2);
-  else_stmt_->dump(indent + 2);
+  then_stmt_->dump(indent + dump_indent);
+  else_stmt_->dump(indent + dump_indent);
 }
 
 WhileStatement* WhileStatement::Create(ASTContext& ctx, SourceRange loc,
@@ -297,9 +299,9 @@ WhileStatement* WhileStatement::Create(ASTContext& ctx, SourceRange loc,
 void WhileStatement::dump(int indent) const {
   InsertIndent(indent);
   fmt::print("WhileStatement\n");
-  condition_->dump(indent + 2);
+  condition_->dump(indent + dump_indent);
   // FIXME: it's not always exsits.
-  body_->dump(indent + 2);
+  body_->dump(indent + dump_indent);
 }
 
 DoStatement* DoStatement::Create(ASTContext& ctx, SourceRange loc,
@@ -312,8 +314,8 @@ void DoStatement::dump(int indent) const {
   InsertIndent(indent);
   fmt::print("DoStatement\n");
   // FIXME: it's not always exsits.
-  body_->dump(indent + 2);
-  condition_->dump(indent + 2);
+  body_->dump(indent + dump_indent);
+  condition_->dump(indent + dump_indent);
 }
 
 ForStatement* ForStatement::Create(ASTContext& ctx, SourceRange loc, Stmt* init,
@@ -329,16 +331,16 @@ void ForStatement::dump(int indent) const {
   fmt::print("ForStatement:\n");
 
   if (init_ != nullptr) {
-    init_->dump(indent + 2);
+    init_->dump(indent + dump_indent);
   }
   if (condition_ != nullptr) {
-    condition_->dump(indent + 2);
+    condition_->dump(indent + dump_indent);
   }
   if (increment_ != nullptr) {
-    increment_->dump(indent + 2);
+    increment_->dump(indent + dump_indent);
   }
   if (body_ != nullptr) {
-    body_->dump(indent + 2);
+    body_->dump(indent + dump_indent);
   }
 }
 
@@ -352,8 +354,8 @@ SwitchStatement* SwitchStatement::Create(ASTContext& ctx, SourceRange loc,
 void SwitchStatement::dump(int indent) const {
   InsertIndent(indent);
   fmt::print("SwitchStatement\n");
-  condition_->dump(indent + 2);
-  body_->dump(indent + 2);
+  condition_->dump(indent + dump_indent);
+  body_->dump(indent + dump_indent);
 }
 
 CaseStatement* CaseStatement::Create(ASTContext& ctx, SourceRange loc,
@@ -367,7 +369,7 @@ void CaseStatement::dump(int indent) const {
   fmt::print("CaseStatement\n");
   InsertIndent(indent);
   fmt::print("value: {}\n", GetValue());
-  stmt_->dump(indent + 2);
+  stmt_->dump(indent + dump_indent);
 }
 
 DefaultStatement* DefaultStatement::Create(ASTContext& ctx, SourceRange loc,
@@ -379,7 +381,7 @@ DefaultStatement* DefaultStatement::Create(ASTContext& ctx, SourceRange loc,
 void DefaultStatement::dump(int indent) const {
   InsertIndent(indent);
   fmt::print("DefaultStatement\n");
-  stmt_->dump(indent + 2);
+  stmt_->dump(indent + dump_indent);
 }
 
 DeclStatement* DeclStatement::Create(ASTContext& ctx, SourceRange loc,
@@ -394,8 +396,10 @@ DeclStatement* DeclStatement::Create(ASTContext& ctx, SourceRange loc,
 }
 
 void DeclStatement::dump(int indent) const {
+  InsertIndent(indent);
+  fmt::print("DeclStatement\n");
   for (const auto* decl : decls_) {
-    decl->dump(indent);
+    decl->dump(indent + dump_indent);
   }
 }
 
@@ -408,7 +412,7 @@ void CompoundStatement::dump(int indent) const {
   InsertIndent(indent);
   fmt::print("CompoundStatement\n");
   for (const auto* stmt : stmts_) {
-    stmt->dump(indent + 2);
+    stmt->dump(indent + dump_indent);
   }
 }
 
@@ -421,7 +425,7 @@ ExprStatement* ExprStatement::Create(ASTContext& ctx, SourceRange loc,
 void ExprStatement::dump(int indent) const {
   InsertIndent(indent);
   fmt::print("ExprStatement\n");
-  expr_->dump(indent + 2);
+  expr_->dump(indent + dump_indent);
 }
 
 BreakStatement* BreakStatement::Create(ASTContext& ctx, SourceRange loc,
