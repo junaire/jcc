@@ -591,8 +591,10 @@ Stmt* Parser::ParseCompoundStmt() {
                                             ParseFunction(declarator)));
         continue;
       }
-      stmt->AddStmt(DeclStatement::Create(GetASTContext(), SourceRange(),
-                                          ParseDeclaration(declarator)));
+      std::vector<Decl*> decls = ParseDeclaration(declarator);
+      stmt->AddStmt(
+          DeclStatement::Create(GetASTContext(), SourceRange(), decls));
+      GetASTContext().GetCurFunc()->AddLocals(decls);
     } else {
       stmt->AddStmt(ParseStatement());
     }
@@ -617,6 +619,7 @@ Decl* Parser::ParseFunction(Declarator& declarator) {
 
   FunctionDecl* function = FunctionDecl::Create(
       GetASTContext(), SourceRange(), func_name, self->GetReturnType());
+  GetASTContext().SetCurFunc(function);
 
   ScopeRAII scope_guard(*this);
 
@@ -844,11 +847,9 @@ std::vector<Decl*> Parser::ParseFunctionOrVar(DeclSpec& decl_spec) {
   if (declarator.GetTypeKind() == TypeKind::Func) {
     Decl* func = ParseFunction(declarator);
     decls.push_back(func);
-    GetASTContext().SetCurFunc(func->As<FunctionDecl>());
   } else {
     std::vector<Decl*> vars = ParseDeclaration(declarator);
     decls.insert(decls.end(), vars.begin(), vars.end());
-    GetASTContext().GetCurFunc()->AddLocals(vars);
   }
   return decls;
 }

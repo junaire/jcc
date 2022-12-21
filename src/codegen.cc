@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string_view>
-
+#include <fmt/format.h>
 #include "jcc/common.h"
 #include "jcc/decl.h"
 #include "jcc/expr.h"
@@ -33,7 +33,7 @@ static size_t AlignTo(size_t n, size_t align) {
 
 void CodeGen::AssignLocalOffsets(const std::vector<Decl*>& decls) {
   for (Decl* decl : decls) {
-    if (auto* func = dynamic_cast<FunctionDecl*>(decl)) {
+    if (auto* func = decl->As<FunctionDecl>(); func != nullptr) {
       // If a function has many parameters, some parameters are
       // inevitably passed by stack rather than by register.
       // The first passed-by-stack parameter resides at RBP+16.
@@ -66,28 +66,24 @@ void CodeGen::AssignLocalOffsets(const std::vector<Decl*>& decls) {
             top += param_type->GetSize();
           }
         }
-        auto* compound_stmt = func->GetBody()->As<CompoundStatement>();
-        for (size_t i = 0; i < compound_stmt->GetSize(); ++i) {
-          Stmt* stmt = compound_stmt->GetStmt(i);
-          if (auto* stmt_decl = dynamic_cast<DeclStatement*>(stmt)) {
-            assert(stmt_decl->IsSingleDecl() && "Not a single decl!");
-            Decl* decl = stmt_decl->GetSingleDecl();
-            if (auto* var_decl = dynamic_cast<VarDecl*>(decl)) {
-              Type* type = var_decl->GetType();
-              // AMD64 System V ABI has a special alignment rule for an array of
-              // length at least 16 bytes. We need to align such array to at
-              // least 16-byte boundaries. See p.14 of
-              // https://github.com/hjl-tools/x86-psABI/wiki/x86-64-psABI-draft.pdf.
-              size_t align =
-                  (type->Is<TypeKind::Array>() && type->GetSize() >= 16)
-                      ? std::max(static_cast<size_t>(16), type->GetAlignment())
-                      : type->GetAlignment();
+      }
+      std::vector<Decl*> locals = func->GetLocals();
+      for (const auto& local : locals) {
+        // Is this check really needed?
+        if (auto* var_decl = local->As<VarDecl>(); var_decl != nullptr) {
+          Type* type = var_decl->GetType();
+          // AMD64 System V ABI has a special alignment rule for an array of
+          // length at least 16 bytes. We need to align such array to at
+          // least 16-byte boundaries. See p.14 of
+          // https://github.com/hjl-tools/x86-psABI/wiki/x86-64-psABI-draft.pdf.
+          size_t align =
+              (type->Is<TypeKind::Array>() && type->GetSize() >= 16)
+                  ? std::max(static_cast<size_t>(16), type->GetAlignment())
+                  : type->GetAlignment();
 
-              bottom += type->GetSize();
-              bottom = AlignTo(bottom, align);
-              ctx.offsets[var_decl] = -bottom;
-            }
-          }
+          bottom += type->GetSize();
+          bottom = AlignTo(bottom, align);
+          ctx.offsets[var_decl] = -bottom;
         }
       }
       ctx.func_stack_size[func] = AlignTo(bottom, 16);
