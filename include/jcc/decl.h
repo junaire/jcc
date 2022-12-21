@@ -55,6 +55,8 @@ class VarDecl : public Decl {
 
 class FunctionDecl : public Decl {
   std::vector<VarDecl*> args_;
+  // This makes it much easier to assign offsets for them.
+  std::vector<VarDecl*> locals_;
   Type* return_type_;
   Stmt* body_ = nullptr;
 
@@ -71,11 +73,15 @@ class FunctionDecl : public Decl {
  public:
   static FunctionDecl* Create(ASTContext& ctx, SourceRange loc,
                               const std::string& name, Type* return_type);
+
   static FunctionDecl* Create(ASTContext& ctx, SourceRange loc,
                               std::string name, std::vector<VarDecl*> args,
                               Type* return_type, Stmt* body);
 
+  void AddLocal(VarDecl* decl) { locals_.push_back(decl); }
+
   [[nodiscard]] bool IsMain() const { return GetName() == "main"; }
+
   Type* GetReturnType() { return return_type_; }
 
   Stmt* GetBody() { return body_; }

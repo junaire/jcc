@@ -13,6 +13,7 @@
 namespace jcc {
 
 class Decl;
+class FunctionDecl;
 class Type;
 
 struct Scope {
@@ -30,6 +31,8 @@ class ASTContext {
 
   Allocator<ASTNode> ast_node_allocator_;
   Allocator<Type> type_allocator_;
+
+  FunctionDecl* cur_func_ = nullptr;
 
  public:
   ASTContext() = default;
@@ -62,6 +65,9 @@ class ASTContext {
   void ExitScope() { scopes_.pop_back(); }
 
   Scope& GetCurScope() { return scopes_.back(); }
+
+  // Returns current function we are parseing.
+  FunctionDecl* GetCurFunc() { return cur_func_; }
 
   // TODO(Jun): Look up in vars, need similiar work for tags.
   Decl* Lookup(const std::string& name) {
