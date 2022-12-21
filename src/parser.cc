@@ -452,7 +452,7 @@ Stmt* Parser::ParseSwitchStmt() {
   Expr* condition = ParseExpr();
   MustConsumeToken(TokenKind::RightParen);
   MustConsumeToken(TokenKind::LeftBracket);
-  auto* body = ParseCompoundStmt()->AsStmt<CompoundStatement>();
+  auto* body = ParseCompoundStmt()->As<CompoundStatement>();
   return SwitchStatement::Create(GetASTContext(), SourceRange(), condition,
                                  body);
 }
@@ -661,7 +661,7 @@ std::vector<Decl*> Parser::ParseDeclaration(Declarator& declarator) {
   if (TryConsumeToken(TokenKind::Equal)) {
     Expr* init = ParseAssignmentExpr();
     std::for_each(vars.begin(), vars.end(),
-                  [=](Decl* var) { var->AsDecl<VarDecl>()->SetInit(init); });
+                  [=](Decl* var) { var->As<VarDecl>()->SetInit(init); });
   }
   MustConsumeToken(TokenKind::Semi);  // Eat ';'
   return vars;

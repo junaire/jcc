@@ -2,7 +2,6 @@
 
 #include <cassert>
 #include <string>
-#include <type_traits>
 #include <vector>
 
 #include "jcc/ast_node.h"
@@ -20,10 +19,6 @@ class Stmt : public ASTNode {
   explicit Stmt(SourceRange loc) : ASTNode(std::move(loc)) {}
 
  public:
-  template <typename Ty>
-  requires std::is_base_of_v<Stmt, Ty> Ty* AsStmt() {
-    return static_cast<Ty*>(this);
-  }
   ~Stmt() override;
 };
 

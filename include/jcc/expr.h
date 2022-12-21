@@ -1,7 +1,6 @@
 #pragma once
 
 #include <memory>
-#include <type_traits>
 
 #include "jcc/source_location.h"
 #include "jcc/stmt.h"
@@ -23,11 +22,6 @@ class Expr : public Stmt {
   explicit Expr(SourceRange loc) : Stmt(std::move(loc)) {}
 
  public:
-  template <typename Ty>
-  requires std::is_base_of_v<Expr, Ty> Ty* AsExpr() {
-    return static_cast<Ty*>(this);
-  }
-
   Type* GetType() {
     assert(type_ && "Expr's type can't be null!");
     return type_;

@@ -176,9 +176,9 @@ CallExpr* CallExpr::Create(ASTContext& ctx, SourceRange loc, Expr* callee,
 void CallExpr::dump(int indent) const {
   InsertIndent(indent);
   fmt::print("CallExpr: {}\n", GetCallee()
-                                   ->AsExpr<DeclRefExpr>()
+                                   ->As<DeclRefExpr>()
                                    ->GetRefDecl()
-                                   ->AsDecl<FunctionDecl>()
+                                   ->As<FunctionDecl>()
                                    ->GetName());
 }
 

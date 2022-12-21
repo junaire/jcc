@@ -2,7 +2,6 @@
 
 #include <string>
 #include <string_view>
-#include <type_traits>
 #include <vector>
 
 #include "jcc/ast_node.h"
@@ -20,10 +19,6 @@ class Decl : public ASTNode {
       : ASTNode(std::move(loc)), name_(std::move(name)) {}
 
  public:
-  template <typename Ty>
-  requires std::is_base_of_v<Decl, Ty> Ty* AsDecl() {
-    return static_cast<Ty*>(this);
-  }
 
   [[nodiscard]] std::string GetName() const { return name_; }
 

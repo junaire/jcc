@@ -66,7 +66,7 @@ void CodeGen::AssignLocalOffsets(const std::vector<Decl*>& decls) {
             top += param_type->GetSize();
           }
         }
-        auto* compound_stmt = func->GetBody()->AsStmt<CompoundStatement>();
+        auto* compound_stmt = func->GetBody()->As<CompoundStatement>();
         for (size_t i = 0; i < compound_stmt->GetSize(); ++i) {
           Stmt* stmt = compound_stmt->GetStmt(i);
           if (auto* stmt_decl = dynamic_cast<DeclStatement*>(stmt)) {

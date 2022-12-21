@@ -16,5 +16,10 @@ class ASTNode {
   virtual ~ASTNode();
   virtual void dump(int indent) const = 0;
   virtual void GenCode(CodeGen& gen) = 0;
+
+  template <typename Ty>
+  Ty* As() {
+    return dynamic_cast<Ty*>(this);
+  }
 };
 }  // namespace jcc
