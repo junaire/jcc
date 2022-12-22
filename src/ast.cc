@@ -120,9 +120,9 @@ void RecordDecl::dump(int indent) const {
   }
 }
 StringLiteral* StringLiteral::Create(ASTContext& ctx, SourceRange loc,
-                                     std::string literal) {
+                                     Type* type, std::string literal) {
   void* mem = ctx.Allocate<StringLiteral>();
-  return new (mem) StringLiteral(std::move(loc), std::move(literal));
+  return new (mem) StringLiteral(std::move(loc), type, std::move(literal));
 }
 
 void StringLiteral::dump(int indent) const {
@@ -131,9 +131,10 @@ void StringLiteral::dump(int indent) const {
 }
 
 CharacterLiteral* CharacterLiteral::Create(ASTContext& ctx, SourceRange loc,
-                                           std::string value) {
+                                           Type* type, std::string value) {
   void* mem = ctx.Allocate<CharacterLiteral>();
-  auto* expr = new (mem) CharacterLiteral(std::move(loc), std::move(value));
+  auto* expr =
+      new (mem) CharacterLiteral(std::move(loc), type, std::move(value));
   expr->SetType(ctx.GetCharType());
   return expr;
 }
@@ -144,9 +145,9 @@ void CharacterLiteral::dump(int indent) const {
 }
 
 IntergerLiteral* IntergerLiteral::Create(ASTContext& ctx, SourceRange loc,
-                                         int value) {
+                                         Type* type, int value) {
   void* mem = ctx.Allocate<IntergerLiteral>();
-  auto* expr = new (mem) IntergerLiteral{std::move(loc), value};
+  auto* expr = new (mem) IntergerLiteral{std::move(loc), type, value};
   expr->SetType(ctx.GetIntType());
   return expr;
 }
@@ -157,9 +158,9 @@ void IntergerLiteral::dump(int indent) const {
 }
 
 FloatingLiteral* FloatingLiteral::Create(ASTContext& ctx, SourceRange loc,
-                                         double value) {
+                                         Type* type, double value) {
   void* mem = ctx.Allocate<FloatingLiteral>();
-  auto* expr = new (mem) FloatingLiteral(std::move(loc), value);
+  auto* expr = new (mem) FloatingLiteral(std::move(loc), type, value);
   expr->SetType(ctx.GetFloatType());
   return expr;
 }
@@ -169,10 +170,10 @@ void FloatingLiteral::dump(int indent) const {
   fmt::print("FloatingLiteral: {}\n", GetValue());
 }
 
-CallExpr* CallExpr::Create(ASTContext& ctx, SourceRange loc, Expr* callee,
-                           std::vector<Expr*> args) {
+CallExpr* CallExpr::Create(ASTContext& ctx, SourceRange loc, Type* type,
+                           Expr* callee, std::vector<Expr*> args) {
   void* mem = ctx.Allocate<CallExpr>();
-  return new (mem) CallExpr{std::move(loc), callee, std::move(args)};
+  return new (mem) CallExpr(std::move(loc), type, callee, std::move(args));
 }
 
 void CallExpr::dump(int indent) const {
@@ -184,10 +185,10 @@ void CallExpr::dump(int indent) const {
                                    ->GetName());
 }
 
-UnaryExpr* UnaryExpr::Create(ASTContext& ctx, SourceRange loc,
+UnaryExpr* UnaryExpr::Create(ASTContext& ctx, SourceRange loc, Type* type,
                              UnaryOperatorKind kind, Stmt* value) {
   void* mem = ctx.Allocate<UnaryExpr>();
-  return new (mem) UnaryExpr{std::move(loc), kind, value};
+  return new (mem) UnaryExpr(std::move(loc), type, kind, value);
 }
 
 static std::string_view PrintUnaryOpKind(UnaryOperatorKind kind) {
@@ -208,10 +209,10 @@ void UnaryExpr::dump(int indent) const {
   value_->dump(indent + dump_indent);
 }
 
-BinaryExpr* BinaryExpr::Create(ASTContext& ctx, SourceRange loc,
+BinaryExpr* BinaryExpr::Create(ASTContext& ctx, SourceRange loc, Type* type,
                                BinaryOperatorKind kind, Expr* lhs, Expr* rhs) {
   void* mem = ctx.Allocate<BinaryExpr>();
-  return new (mem) BinaryExpr{std::move(loc), kind, lhs, rhs};
+  return new (mem) BinaryExpr(std::move(loc), type, kind, lhs, rhs);
 }
 
 static std::string_view PrintBinaryOpKind(BinaryOperatorKind kind) {
@@ -245,9 +246,10 @@ void BinaryExpr::dump(int indent) const {
 
 void MemberExpr::dump(int) const { jcc_unimplemented(); }
 
-DeclRefExpr* DeclRefExpr::Create(ASTContext& ctx, SourceRange loc, Decl* decl) {
+DeclRefExpr* DeclRefExpr::Create(ASTContext& ctx, SourceRange loc, Type* type,
+                                 Decl* decl) {
   void* mem = ctx.Allocate<DeclRefExpr>();
-  auto* expr = new (mem) DeclRefExpr(std::move(loc), decl);
+  auto* expr = new (mem) DeclRefExpr(std::move(loc), type, decl);
   expr->SetType(ctx.GetIntType());
   return expr;
 }

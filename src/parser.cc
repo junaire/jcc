@@ -687,17 +687,21 @@ Expr* Parser::ParseCastExpr() {
       // FIXME: This is not right for floating numbers.
       int value = std::stoi(CurrentToken().GetData());
       ConsumeToken();
-      result = IntergerLiteral::Create(GetASTContext(), SourceRange(), value);
+      result = IntergerLiteral::Create(GetASTContext(), SourceRange(),
+                                       GetASTContext().GetIntType(), value);
       break;
     }
     case TokenKind::StringLiteral: {
-      result = StringLiteral::Create(GetASTContext(), SourceRange(),
-                                     CurrentToken().GetAsString());
+      // FIXME: What's the type of a string literal?
+      result =
+          StringLiteral::Create(GetASTContext(), SourceRange(),
+                                /*type=*/nullptr, CurrentToken().GetAsString());
       ConsumeToken();
       break;
     }
     case TokenKind::Char: {
       result = CharacterLiteral::Create(GetASTContext(), SourceRange(),
+                                        GetASTContext().GetCharType(),
                                         CurrentToken().GetAsString());
       ConsumeToken();
       break;
@@ -705,8 +709,9 @@ Expr* Parser::ParseCastExpr() {
     case TokenKind::Ampersand: {
       ConsumeToken();
       result = ParseCastExpr();
-      result = UnaryExpr::Create(GetASTContext(), SourceRange(),
-                                 UnaryOperatorKind::AddressOf, result);
+      result =
+          UnaryExpr::Create(GetASTContext(), SourceRange(), result->GetType(),
+                            UnaryOperatorKind::AddressOf, result);
       return result;
     }
     case TokenKind::Identifier: {
@@ -714,7 +719,8 @@ Expr* Parser::ParseCastExpr() {
       ConsumeToken();
       // Lookup the identifier and find where it comes from.
       if (auto* decl = Lookup(name)) {
-        result = DeclRefExpr::Create(GetASTContext(), SourceRange(), decl);
+        result = DeclRefExpr::Create(GetASTContext(), SourceRange(),
+                                     decl->As<VarDecl>()->GetType(), decl);
       } else {
         jcc_unimplemented();
       }
@@ -747,7 +753,8 @@ Expr* Parser::ParsePostfixExpr(Expr* lhs) {
         if (!CurrentToken().Is<TokenKind::RightParen>()) {
           args = ParseExprList();
         }
-        lhs = CallExpr::Create(GetASTContext(), SourceRange(), lhs,
+        lhs = CallExpr::Create(GetASTContext(), SourceRange(),
+                               GetASTContext().GetVoidType(), lhs,
                                std::move(args));
         MustConsumeToken(TokenKind::RightParen);
         break;
@@ -764,7 +771,8 @@ Expr* Parser::ParsePostfixExpr(Expr* lhs) {
         }
 
         ConsumeToken();
-        lhs = UnaryExpr::Create(GetASTContext(), SourceRange(), op_kind, lhs);
+        lhs = UnaryExpr::Create(GetASTContext(), SourceRange(), lhs->GetType(),
+                                op_kind, lhs);
         break;
       }
       case TokenKind::Arrow:
@@ -827,7 +835,7 @@ Expr* Parser::ParseRhsOfBinaryExpr(Expr* lhs, BinOpPreLevel min_prec) {
     }
 
     Expr* binary_expr =
-        BinaryExpr::Create(GetASTContext(), SourceRange(),
+        BinaryExpr::Create(GetASTContext(), SourceRange(), lhs->GetType(),
                            ConvertOpToKind(op_tok.GetKind()), lhs, rhs);
     lhs = binary_expr;
   }

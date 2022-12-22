@@ -19,7 +19,8 @@ class Expr : public Stmt {
   Type* type_ = nullptr;
 
  protected:
-  explicit Expr(SourceRange loc) : Stmt(std::move(loc)) {}
+  explicit Expr(SourceRange loc, Type* type)
+      : Stmt(std::move(loc)), type_(type) {}
 
  public:
   Type* GetType() {
@@ -35,11 +36,11 @@ class Expr : public Stmt {
 class StringLiteral : public Expr {
   std::string literal_;
 
-  StringLiteral(SourceRange loc, std::string literal)
-      : Expr(std::move(loc)), literal_(std::move(literal)) {}
+  StringLiteral(SourceRange loc, Type* type, std::string literal)
+      : Expr(std::move(loc), type), literal_(std::move(literal)) {}
 
  public:
-  static StringLiteral* Create(ASTContext& ctx, SourceRange loc,
+  static StringLiteral* Create(ASTContext& ctx, SourceRange loc, Type* type,
                                std::string literal);
 
   [[nodiscard]] std::string GetValue() const { return literal_; }
@@ -52,11 +53,11 @@ class CharacterLiteral : public Expr {
   // TODO(Jun): Support more character kinds.
   std::string value_;
 
-  CharacterLiteral(SourceRange loc, std::string value)
-      : Expr(std::move(loc)), value_(std::move(value)) {}
+  CharacterLiteral(SourceRange loc, Type* type, std::string value)
+      : Expr(std::move(loc), type), value_(std::move(value)) {}
 
  public:
-  static CharacterLiteral* Create(ASTContext& ctx, SourceRange loc,
+  static CharacterLiteral* Create(ASTContext& ctx, SourceRange loc, Type* type,
                                   std::string value);
 
   [[nodiscard]] std::string GetValue() const { return value_; }
@@ -69,11 +70,12 @@ class CharacterLiteral : public Expr {
 class IntergerLiteral : public Expr {
   int value_{0};
 
-  IntergerLiteral(SourceRange loc, int value)
-      : Expr(std::move(loc)), value_(value) {}
+  IntergerLiteral(SourceRange loc, Type* type, int value)
+      : Expr(std::move(loc), type), value_(value) {}
 
  public:
-  static IntergerLiteral* Create(ASTContext& ctx, SourceRange loc, int value);
+  static IntergerLiteral* Create(ASTContext& ctx, SourceRange loc, Type* type,
+                                 int value);
 
   [[nodiscard]] int GetValue() const { return value_; }
 
@@ -85,11 +87,11 @@ class IntergerLiteral : public Expr {
 class FloatingLiteral : public Expr {
   double value_{0};
 
-  FloatingLiteral(SourceRange loc, double value)
-      : Expr(std::move(loc)), value_(value) {}
+  FloatingLiteral(SourceRange loc, Type* type, double value)
+      : Expr(std::move(loc), type), value_(value) {}
 
  public:
-  static FloatingLiteral* Create(ASTContext& ctx, SourceRange loc,
+  static FloatingLiteral* Create(ASTContext& ctx, SourceRange loc, Type* type,
                                  double value);
 
   [[nodiscard]] double GetValue() const { return value_; }
@@ -107,12 +109,12 @@ class CallExpr : public Expr {
   Expr* callee_ = nullptr;
   std::vector<Expr*> args_;
 
-  CallExpr(SourceRange loc, Expr* callee, std::vector<Expr*> args)
-      : Expr(std::move(loc)), callee_(callee), args_(std::move(args)) {}
+  CallExpr(SourceRange loc, Type* type, Expr* callee, std::vector<Expr*> args)
+      : Expr(std::move(loc), type), callee_(callee), args_(std::move(args)) {}
 
  public:
-  static CallExpr* Create(ASTContext& ctx, SourceRange loc, Expr* callee,
-                          std::vector<Expr*> args);
+  static CallExpr* Create(ASTContext& ctx, SourceRange loc, Type* type,
+                          Expr* callee, std::vector<Expr*> args);
 
   [[nodiscard]] Expr* GetCallee() const { return callee_; }
 
@@ -145,11 +147,11 @@ class UnaryExpr : public Expr {
   UnaryOperatorKind kind_;
   Stmt* value_ = nullptr;
 
-  UnaryExpr(SourceRange loc, UnaryOperatorKind kind, Stmt* value)
-      : Expr(std::move(loc)), kind_(kind), value_(value) {}
+  UnaryExpr(SourceRange loc, Type* type, UnaryOperatorKind kind, Stmt* value)
+      : Expr(std::move(loc), type), kind_(kind), value_(value) {}
 
  public:
-  static UnaryExpr* Create(ASTContext& ctx, SourceRange loc,
+  static UnaryExpr* Create(ASTContext& ctx, SourceRange loc, Type* type,
                            UnaryOperatorKind kind, Stmt* value);
 
   [[nodiscard]] UnaryOperatorKind getKind() const { return kind_; }
@@ -176,11 +178,12 @@ class BinaryExpr : public Expr {
   Expr* lhs_ = nullptr;
   Expr* rhs_ = nullptr;
 
-  BinaryExpr(SourceRange loc, BinaryOperatorKind kind, Expr* lhs, Expr* rhs)
-      : Expr(std::move(loc)), kind_(kind), lhs_(lhs), rhs_(rhs) {}
+  BinaryExpr(SourceRange loc, Type* type, BinaryOperatorKind kind, Expr* lhs,
+             Expr* rhs)
+      : Expr(std::move(loc), type), kind_(kind), lhs_(lhs), rhs_(rhs) {}
 
  public:
-  static BinaryExpr* Create(ASTContext& ctx, SourceRange loc,
+  static BinaryExpr* Create(ASTContext& ctx, SourceRange loc, Type* type,
                             BinaryOperatorKind kind, Expr* lhs, Expr* rhs);
 
   [[nodiscard]] BinaryOperatorKind GetKind() const { return kind_; }
@@ -198,8 +201,8 @@ class MemberExpr : public Expr {
   Stmt* base_{nullptr};
   Decl* member_{nullptr};
 
-  MemberExpr(SourceRange loc, Stmt* base, Decl* member)
-      : Expr(std::move(loc)), base_(base), member_(member) {}
+  MemberExpr(SourceRange loc, Type* type, Stmt* base, Decl* member)
+      : Expr(std::move(loc), type), base_(base), member_(member) {}
 
  public:
   static MemberExpr* create(ASTContext& ctx, SourceRange loc, Stmt* base,
@@ -217,11 +220,12 @@ class MemberExpr : public Expr {
 class DeclRefExpr : public Expr {
   Decl* decl_ = nullptr;
 
-  DeclRefExpr(SourceRange loc, Decl* decl)
-      : Expr(std::move(loc)), decl_(decl) {}
+  DeclRefExpr(SourceRange loc, Type* type, Decl* decl)
+      : Expr(std::move(loc), type), decl_(decl) {}
 
  public:
-  static DeclRefExpr* Create(ASTContext& ctx, SourceRange loc, Decl* decl);
+  static DeclRefExpr* Create(ASTContext& ctx, SourceRange loc, Type* type,
+                             Decl* decl);
 
   Decl* GetRefDecl() { return decl_; }
 

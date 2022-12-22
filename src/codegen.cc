@@ -184,11 +184,11 @@ void CodeGen::EmitIfStatement(IfStatement& stmt) {
   Writeln("  je  .L.else.{}", section_cnt);
   stmt.GetThen()->GenCode(*this);
   Writeln("  jmp .L.end.{}", section_cnt);
-  Writeln(".L.else.{}", section_cnt);
+  Writeln(".L.else.{}:", section_cnt);
   if (auto* else_stmt = stmt.GetElse()) {
     else_stmt->GenCode(*this);
   }
-  Writeln(".L.end.{}", section_cnt);
+  Writeln(".L.end.{}:", section_cnt);
 }
 
 void CodeGen::EmitWhileStatement(WhileStatement& stmt) {}
@@ -275,8 +275,21 @@ void CodeGen::EmitCallExpr(CallExpr& expr) {}
 void CodeGen::EmitUnaryExpr(UnaryExpr& expr) {}
 
 void CodeGen::EmitBinaryExpr(BinaryExpr& expr) {
+  // Store lhs and rhs to rdi and rax respectively.
+  expr.GetLhs()->GenCode(*this);
+  Push();
+  expr.GetRhs()->GenCode(*this);
+  Pop("rdi");
+
   switch (expr.GetKind()) {
     case BinaryOperatorKind::Greater: {
+      Writeln("  cmp {}, {}", "edi", "eax");
+      if (expr.GetLhs()->GetType()->IsUnsigned()) {
+        Writeln("  setb al");
+      } else {
+        Writeln("  setl al");
+      }
+      Writeln("  movzb rax, al");
       break;
     }
     default:
