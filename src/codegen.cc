@@ -118,9 +118,13 @@ void CodeGen::EmitVarDecl(VarDecl& decl) {
   // TODO(Jun): Maybe we need a flag to indicate whether this is a local decl or
   // not?
   if (std::optional<int> offset = GetLocalOffset(&decl); offset.has_value()) {
-    Expr* init = decl.GetInit();
     assert(!ctx.cur_func_name.empty() &&
            "We're not inside a funtion? You sure it's a local decl?");
+    Expr* init = decl.GetInit();
+    if (init == nullptr) {
+      return;
+    }
+
     Writeln("  lea rax, {}[rbp]", *offset);
     Push();
     init->GenCode(*this);
