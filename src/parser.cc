@@ -618,7 +618,9 @@ Decl* Parser::ParseFunction(Declarator& declarator) {
   auto* self = declarator.GetType()->AsType<FunctionType>();
 
   FunctionDecl* function = FunctionDecl::Create(
-      GetASTContext(), SourceRange(), func_name, self->GetReturnType());
+      GetASTContext(), SourceRange(), func_name,
+      Type::CreateFuncType(GetASTContext(), self->GetReturnType()),
+      self->GetReturnType());
   GetASTContext().SetCurFunc(function);
 
   ScopeRAII scope_guard(*this);
@@ -719,8 +721,9 @@ Expr* Parser::ParseCastExpr() {
       ConsumeToken();
       // Lookup the identifier and find where it comes from.
       if (auto* decl = Lookup(name)) {
+        auto* var = decl->As<VarDecl>();
         result = DeclRefExpr::Create(GetASTContext(), SourceRange(),
-                                     decl->As<VarDecl>()->GetType(), decl);
+                                     decl->GetType(), decl);
       } else {
         jcc_unimplemented();
       }

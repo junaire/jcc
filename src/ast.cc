@@ -72,18 +72,21 @@ void VarDecl::dump(int indent) const {
 
 FunctionDecl* FunctionDecl::Create(ASTContext& ctx, SourceRange loc,
                                    std::string name, std::vector<VarDecl*> args,
-                                   Type* return_type, Stmt* body) {
+                                   Type* type, Type* return_type, Stmt* body) {
   void* mem = ctx.Allocate<FunctionDecl>();
-  auto* function = new (mem) FunctionDecl(std::move(loc), std::move(name),
-                                          std::move(args), return_type, body);
+  auto* function =
+      new (mem) FunctionDecl(std::move(loc), std::move(name), std::move(args),
+                             type, return_type, body);
   ctx.GetCurScope().PushVar(name, function);
   return function;
 }
 
 FunctionDecl* FunctionDecl::Create(ASTContext& ctx, SourceRange loc,
-                                   const std::string& name, Type* return_type) {
+                                   const std::string& name, Type* type,
+                                   Type* return_type) {
   void* mem = ctx.Allocate<FunctionDecl>();
-  auto* function = new (mem) FunctionDecl(std::move(loc), name, return_type);
+  auto* function =
+      new (mem) FunctionDecl(std::move(loc), name, type, return_type);
   ctx.GetCurScope().PushVar(name, function);
   return function;
 }

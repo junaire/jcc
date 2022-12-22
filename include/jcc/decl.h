@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -14,29 +15,32 @@ class ASTContext;
 
 class Decl : public ASTNode {
   std::string name_;
+  Type* type_ = nullptr;
 
  protected:
-  explicit Decl(SourceRange loc, std::string name)
-      : ASTNode(std::move(loc)), name_(std::move(name)) {}
+  explicit Decl(SourceRange loc, std::string name, Type* type)
+      : ASTNode(std::move(loc)), name_(std::move(name)), type_(type) {}
 
  public:
   [[nodiscard]] std::string GetName() const { return name_; }
+
+  Type* GetType() {
+    assert(type_ != nullptr);
+    return type_;
+  }
 
   ~Decl() override;
 };
 
 class VarDecl : public Decl {
   Expr* init_ = nullptr;
-  Type* type_ = nullptr;
 
   VarDecl(SourceRange loc, Expr* init, Type* type, std::string name)
-      : Decl(std::move(loc), std::move(name)), init_(init), type_(type) {}
+      : Decl(std::move(loc), std::move(name), type), init_(init) {}
 
  public:
   static VarDecl* Create(ASTContext& ctx, SourceRange loc, Expr* init,
                          Type* type, std::string name);
-
-  Type* GetType() { return type_; }
 
   Expr* GetInit() { return init_; }
 
@@ -55,23 +59,25 @@ class FunctionDecl : public Decl {
   Type* return_type_;
   Stmt* body_ = nullptr;
 
-  FunctionDecl(SourceRange loc, std::string name, Type* return_type)
-      : Decl(std::move(loc), std::move(name)), return_type_(return_type) {}
+  FunctionDecl(SourceRange loc, std::string name, Type* type, Type* return_type)
+      : Decl(std::move(loc), std::move(name), type),
+        return_type_(return_type) {}
 
   FunctionDecl(SourceRange loc, std::string name, std::vector<VarDecl*> args,
-               Type* return_type, Stmt* body)
-      : Decl(std::move(loc), std::move(name)),
+               Type* type, Type* return_type, Stmt* body)
+      : Decl(std::move(loc), std::move(name), type),
         args_(std::move(args)),
         return_type_(return_type),
         body_(body) {}
 
  public:
   static FunctionDecl* Create(ASTContext& ctx, SourceRange loc,
-                              const std::string& name, Type* return_type);
+                              const std::string& name, Type* type,
+                              Type* return_type);
 
   static FunctionDecl* Create(ASTContext& ctx, SourceRange loc,
                               std::string name, std::vector<VarDecl*> args,
-                              Type* return_type, Stmt* body);
+                              Type* type, Type* return_type, Stmt* body);
 
   void AddLocal(Decl* decl) { locals_.push_back(decl); }
 
@@ -99,11 +105,13 @@ class FunctionDecl : public Decl {
   void GenCode(CodeGen& gen) override;
 };
 
+// FIXME: Does RecordDecl has a type?
 class RecordDecl : public Decl {
   std::vector<VarDecl*> members_;
 
   RecordDecl(SourceRange loc, std::string name, std::vector<VarDecl*> members)
-      : Decl(std::move(loc), std::move(name)), members_(std::move(members)) {}
+      : Decl(std::move(loc), std::move(name), /*type=*/nullptr),
+        members_(std::move(members)) {}
 
  public:
   static RecordDecl* Create(ASTContext& ctx, SourceRange loc, std::string name,
