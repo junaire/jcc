@@ -204,12 +204,13 @@ void CodeGen::EmitForStatement(ForStatement& stmt) {
   if (auto* init = stmt.GetInit()) {
     init->GenCode(*this);
   }
-  Writeln(".L.begin.{}", section_cnt);
+  Writeln(".L.begin.{}:", section_cnt);
   if (auto* condition = stmt.GetCondition()) {
     condition->GenCode(*this);
     // FIXME: WE should really reevaluate it the relationship between stmt and
     // expr.
-    if (auto* cond_expr = dynamic_cast<ExprStatement*>(condition)) {
+    if (auto* cond_expr = condition->As<ExprStatement>();
+        cond_expr != nullptr) {
       CompZero(*cond_expr->GetExpr()->GetType());
       Writeln("  je {}", "?");
     } else {
@@ -287,7 +288,9 @@ void CodeGen::EmitBinaryExpr(BinaryExpr& expr) {
 
   switch (expr.GetKind()) {
     case BinaryOperatorKind::Greater: {
-      Writeln("  cmp {}, {}", "edi", "eax");
+      // FIXME: Register size!
+      assert(expr.GetLhs()->GetType()->GetSize() == 4);
+      Writeln("  cmp {}, {}", "eax", "edi");
       if (expr.GetLhs()->GetType()->IsUnsigned()) {
         Writeln("  setb al");
       } else {
