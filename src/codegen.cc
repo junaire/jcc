@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string_view>
-#include <fmt/format.h>
+
 #include "jcc/common.h"
 #include "jcc/decl.h"
 #include "jcc/expr.h"
@@ -38,7 +38,7 @@ void CodeGen::AssignLocalOffsets(const std::vector<Decl*>& decls) {
       // inevitably passed by stack rather than by register.
       // The first passed-by-stack parameter resides at RBP+16.
       size_t top = 16;
-      size_t bottom = 0;
+      int bottom = 0;
       size_t gp = 0;
       size_t fp = 0;
 
@@ -108,19 +108,43 @@ CodeGen::CodeGen(const std::string& file_name)
   Writeln("  .text");
 }
 
+// So we're doing things like:
+//   1. rax = &decl, we have allocate enough space for it in the stack.
+//   2. store rax on the top of the stack.
+//   3. rax = real value like `42`.
+//   4. pop the address of the decl and assign it to rdi.
+//   5. *rdi = rax, which is the real value.
 void CodeGen::EmitVarDecl(VarDecl& decl) {
-  if (decl.GetType()->IsInteger()) {
-    Writeln("  lea rax, -{}[rbp]", decl.GetType()->GetSize());
+  // TODO(Jun): Maybe we need a flag to indicate whether this is a local decl or
+  // not?
+  if (std::optional<int> offset = GetLocalOffset(&decl); offset.has_value()) {
+    Expr* init = decl.GetInit();
+    assert(!ctx.cur_func_name.empty() &&
+           "We're not inside a funtion? You sure it's a local decl?");
+    Writeln("  lea rax, {}[rbp]", *offset);
     Push();
-    decl.GetInit()->GenCode(*this);
+    init->GenCode(*this);
+    // TODO(Jun): May need casting here.
     Pop("rdi");
-    Writeln("  mov [rdi], eax");
+    if (init->GetType()->IsInteger()) {
+      switch (decl.GetInit()->GetType()->GetSize()) {
+        case 4:
+          Writeln("  mov [rdi], eax");
+          break;
+        default:
+          jcc_unimplemented();
+      }
+    } else {
+      jcc_unimplemented();
+    }
+  } else {
+    jcc_unimplemented();
   }
 }
 
 void CodeGen::EmitFunctionDecl(FunctionDecl& decl) {
   ctx.cur_func_name = decl.GetName();
-  Writeln("  .global {}", decl.GetName());
+  Writeln("  .globl {}", decl.GetName());
   Writeln("  .type {}, @function", decl.GetName());
   Writeln("{}:", decl.GetName());
 
@@ -250,16 +274,26 @@ void CodeGen::EmitCallExpr(CallExpr& expr) {}
 
 void CodeGen::EmitUnaryExpr(UnaryExpr& expr) {}
 
-void CodeGen::EmitBinaryExpr(BinaryExpr& expr) {}
+void CodeGen::EmitBinaryExpr(BinaryExpr& expr) {
+  switch (expr.GetKind()) {
+    case BinaryOperatorKind::Greater: {
+      break;
+    }
+    default:
+      jcc_unimplemented();
+  }
+}
 
 void CodeGen::EmitArraySubscriptExpr(ArraySubscriptExpr& expr) {}
 
 void CodeGen::EmitMemberExpr(MemberExpr& expr) {}
 
 void CodeGen::EmitDeclRefExpr(DeclRefExpr& expr) {
-  // FIXME: this is totally hot garbage and not working,
-  // we need to know the offset of every locals so we can load them.
-  Writeln("  lea rax, {}[rbp]", -4);
+  if (std::optional<int> offset = GetLocalOffset(expr.GetRefDecl())) {
+    Writeln("  lea rax, {}[rbp]", *offset);
+  } else {
+    jcc_unreachable("Can DeclRefExpr store a global decl?");
+  }
   // FIXME: this is the cast.
   Writeln("  movsxd rax, [rax]");
 }

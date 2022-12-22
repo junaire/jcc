@@ -52,7 +52,7 @@ static void InsertIndent(int n) {
   }
 }
 
-VarDecl* VarDecl::Create(ASTContext& ctx, SourceRange loc, Stmt* init,
+VarDecl* VarDecl::Create(ASTContext& ctx, SourceRange loc, Expr* init,
                          Type* type, std::string name) {
   void* mem = ctx.Allocate<VarDecl>();
   auto* var = new (mem) VarDecl(std::move(loc), init, type, std::move(name));

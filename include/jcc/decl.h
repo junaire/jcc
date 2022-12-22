@@ -9,6 +9,7 @@
 namespace jcc {
 class Type;
 class Stmt;
+class Expr;
 class ASTContext;
 
 class Decl : public ASTNode {
@@ -25,21 +26,21 @@ class Decl : public ASTNode {
 };
 
 class VarDecl : public Decl {
-  Stmt* init_ = nullptr;
+  Expr* init_ = nullptr;
   Type* type_ = nullptr;
 
-  VarDecl(SourceRange loc, Stmt* init, Type* type, std::string name)
+  VarDecl(SourceRange loc, Expr* init, Type* type, std::string name)
       : Decl(std::move(loc), std::move(name)), init_(init), type_(type) {}
 
  public:
-  static VarDecl* Create(ASTContext& ctx, SourceRange loc, Stmt* init,
+  static VarDecl* Create(ASTContext& ctx, SourceRange loc, Expr* init,
                          Type* type, std::string name);
 
   Type* GetType() { return type_; }
 
-  Stmt* GetInit() { return init_; }
+  Expr* GetInit() { return init_; }
 
-  void SetInit(Stmt* init) { init_ = init; }
+  void SetInit(Expr* init) { init_ = init; }
 
   [[nodiscard]] bool IsDefinition() const { return init_ == nullptr; }
 

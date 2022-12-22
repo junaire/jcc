@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <map>
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -108,6 +109,14 @@ class CodeGen {
   [[nodiscard]] std::string GetFileName() const { return file_.GetName(); }
 
   void AssignLocalOffsets(const std::vector<Decl*>& decls);
+
+  std::optional<int> GetLocalOffset(Decl* decl) {
+    auto iter = ctx.offsets.find(decl);
+    if (iter != ctx.offsets.end()) {
+      return iter->second;
+    }
+    return std::nullopt;
+  }
 
   EMITDECL(VarDecl)
   EMITDECL(FunctionDecl)

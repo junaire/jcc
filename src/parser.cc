@@ -115,7 +115,7 @@ std::vector<Type*> Parser::ParseMembers() {
     DeclSpec decl_spec = ParseDeclSpec();
     Declarator declarator = ParseDeclarator(decl_spec);
 
-    members.push_back(declarator.GetBaseType());
+    members.push_back(declarator.GetType());
     MustConsumeToken(TokenKind::Semi);
     if (TryConsumeToken(TokenKind::RightBracket)) {
       break;
@@ -150,7 +150,7 @@ Type* Parser::ParseRecordType(TokenKind kind) {
 Type* Parser::ParseTypename() {
   DeclSpec decl_spec = ParseDeclSpec();
   Declarator declarator = ParseDeclarator(decl_spec);
-  return declarator.GetBaseType();
+  return declarator.GetType();
 }
 
 DeclSpec Parser::ParseDeclSpec() {
@@ -274,7 +274,7 @@ DeclSpec Parser::ParseDeclSpec() {
 
 Type* Parser::ParsePointers(Declarator& declarator) {
   using enum TokenKind;
-  Type* type = declarator.GetBaseType();
+  Type* type = declarator.GetType();
   while (TryConsumeToken(Star)) {
     type = Type::CreatePointerType(GetASTContext(), type);
     while (CurrentToken().IsOneOf<Const, Volatile, Restrict>()) {
@@ -358,11 +358,11 @@ Type* Parser::ParseParams(Type* type) {
     if (declarator.GetTypeKind() == TypeKind::Array) {
       param_type = Type::CreatePointerType(
           GetASTContext(),
-          declarator.GetBaseType()->AsType<PointerType>()->GetBase());
+          declarator.GetType()->AsType<PointerType>()->GetBase());
       // FIXME: set name to type.
     } else if (declarator.GetTypeKind() == TypeKind::Func) {
       param_type =
-          Type::CreatePointerType(GetASTContext(), declarator.GetBaseType());
+          Type::CreatePointerType(GetASTContext(), declarator.GetType());
     }
 
     params.push_back(param_type);
@@ -615,7 +615,7 @@ Decl* Parser::ParseFunction(Declarator& declarator) {
     jcc_unreachable("function redefinition!");
   }
 
-  auto* self = declarator.GetBaseType()->AsType<FunctionType>();
+  auto* self = declarator.GetType()->AsType<FunctionType>();
 
   FunctionDecl* function = FunctionDecl::Create(
       GetASTContext(), SourceRange(), func_name, self->GetReturnType());
@@ -644,8 +644,7 @@ std::vector<Decl*> Parser::ParseDeclaration(Declarator& declarator) {
   std::vector<Decl*> vars;
 
   vars.push_back(VarDecl::Create(GetASTContext(), SourceRange(), nullptr,
-                                 declarator.GetBaseType(),
-                                 declarator.GetName()));
+                                 declarator.GetType(), declarator.GetName()));
   // Parse optional decls.
   while (!CurrentToken().Is<TokenKind::Semi>() &&
          !CurrentToken().Is<TokenKind::Equal>()) {
@@ -653,7 +652,7 @@ std::vector<Decl*> Parser::ParseDeclaration(Declarator& declarator) {
 
     if (CurrentToken().Is<TokenKind::Identifier>()) {
       vars.push_back(VarDecl::Create(GetASTContext(), SourceRange(), nullptr,
-                                     declarator.GetBaseType(),
+                                     declarator.GetType(),
                                      CurrentToken().GetAsString()));
       MustConsumeToken(TokenKind::Identifier);
     }
