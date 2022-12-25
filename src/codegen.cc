@@ -205,7 +205,18 @@ void CodeGen::EmitIfStatement(IfStatement& stmt) {
   Writeln(".L.end.{}:", section_cnt);
 }
 
-void CodeGen::EmitWhileStatement(WhileStatement& stmt) {}
+void CodeGen::EmitWhileStatement(WhileStatement& stmt) {
+  int64_t section_cnt = Counter();
+  Writeln(".L.begin.{}:", section_cnt);
+  if (auto* cond = stmt.GetCondition()) {
+    cond->GenCode(*this);
+    CompZero(*cond->GetType());
+  }
+  Writeln("  je .L.body.{}", section_cnt);
+  stmt.GetBody()->GenCode(*this);
+  Writeln("  jmp .L.begin.{}", section_cnt);
+  Writeln(".L.body.{}:", section_cnt);
+}
 
 void CodeGen::EmitDoStatement(DoStatement& stmt) {}
 
