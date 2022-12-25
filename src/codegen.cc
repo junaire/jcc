@@ -108,7 +108,7 @@ CodeGen::CodeGen(const std::string& file_name)
 }
 
 CodeGen::~CodeGen() {
-  std::fstream out(name_);
+  std::fstream out(name_, std::ios::out | std::ios::trunc);
   out << header_;
   out << data_;
   out << text_;
@@ -133,7 +133,7 @@ void CodeGen::Load(const Type& type) {
       Writeln("  movsxd (%rax), %rax");
       break;
     default:
-      jcc_unimplemented();
+      Writeln("  mov (%rax), %rax");
   }
 }
 
@@ -165,6 +165,11 @@ void CodeGen::Assign(Decl& decl, Stmt* init) {
 void CodeGen::EmitVarDecl(VarDecl& decl) { Assign(decl, decl.GetInit()); }
 
 void CodeGen::EmitFunctionDecl(FunctionDecl& decl) {
+  // Just a declaration, no need to emit code.
+  if (decl.GetBody() == nullptr) {
+    return;
+  }
+
   ctx.cur_func_name = decl.GetName();
   Writeln("  .globl {}", decl.GetName());
   Writeln("  .type {}, @function", decl.GetName());
@@ -316,7 +321,7 @@ void CodeGen::EmitStringLiteral(StringLiteral& expr) {
     Writeln("  .align {}", 1);
     Writeln("{}:", name);
     for (size_t i = 0; i < size; ++i) {
-      Writeln("  .byte {}", static_cast<int>(value[0]));
+      Writeln("  .byte {}", static_cast<int>(value[i]));
     }
   }
   Writeln("  lea {}(%rip), %rax", name);
@@ -333,7 +338,22 @@ void CodeGen::EmitIntergerLiteral(IntergerLiteral& expr) {
 
 void CodeGen::EmitFloatingLiteral(FloatingLiteral& expr) {}
 
-void CodeGen::EmitCallExpr(CallExpr& expr) {}
+void CodeGen::EmitCallExpr(CallExpr& expr) {
+  for (size_t i = 0; i < expr.GetArgNum(); ++i) {
+    expr.GetArg(i)->GenCode(*this);
+  }
+  Push();
+  std::string name =
+      expr.GetCallee()->As<DeclRefExpr>()->GetRefDecl()->GetName();
+  // FIXME: This is not right if we have the definition.
+  Writeln("  mov {}@GOTPCREL(%rip), %rax", name);
+  Pop("%rdi");
+
+  Writeln("  mov %rax, %r10");
+  Writeln("  mov $0, %rax");
+  Writeln("  call *%r10");
+  Writeln("  add $0, %rsp");
+}
 
 void CodeGen::EmitUnaryExpr(UnaryExpr& expr) {
   expr.GetValue()->GenCode(*this);
