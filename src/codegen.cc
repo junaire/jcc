@@ -218,7 +218,13 @@ void CodeGen::EmitWhileStatement(WhileStatement& stmt) {
   Writeln(".L.body.{}:", section_cnt);
 }
 
-void CodeGen::EmitDoStatement(DoStatement& stmt) {}
+void CodeGen::EmitDoStatement(DoStatement& stmt) {
+  int64_t section_cnt = Counter();
+  Writeln(".L.begin.{}:", section_cnt);
+  stmt.GetBody()->GenCode(*this);
+  stmt.GetCondition()->GenCode(*this);
+  Writeln("  jne .L.begin.{}", section_cnt);
+}
 
 // TODO(Jun): Support continue and break statements.
 void CodeGen::EmitForStatement(ForStatement& stmt) {

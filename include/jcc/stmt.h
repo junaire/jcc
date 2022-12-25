@@ -159,8 +159,8 @@ class WhileStatement : public Stmt {
 };
 
 class DoStatement : public Stmt {
-  Expr* condition_{nullptr};
-  Stmt* body_{nullptr};
+  Expr* condition_ = nullptr;
+  Stmt* body_ = nullptr;
 
   explicit DoStatement(SourceRange loc, Expr* condition, Stmt* body)
       : Stmt(std::move(loc)), condition_(condition), body_(body) {}
