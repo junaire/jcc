@@ -299,7 +299,28 @@ void CodeGen::EmitCompoundStatement(CompoundStatement& stmt) {
   }
 }
 
-void CodeGen::EmitStringLiteral(StringLiteral& expr) {}
+void CodeGen::EmitStringLiteral(StringLiteral& expr) {
+  // Include the null terminator.
+  size_t size = expr.GetValue().size() + 1;
+  std::string name = fmt::format(".L..{}", Counter());
+  std::string value = expr.GetValue();
+  {
+    EmitSectionRAII section_guard(*this, Section::Data);
+
+    Writeln("  .local {}", name);
+    // TODO(Jun): Support .tdata
+    Writeln("  .data");
+    Writeln("  .type {}, @object", name);
+    Writeln("  .size {}, {}", name, size);
+    // FIXME: What's the type of the StringLiteral?
+    Writeln("  .align {}", 1);
+    Writeln("{}:", name);
+    for (size_t i = 0; i < size; ++i) {
+      Writeln("  .byte {}", static_cast<int>(value[0]));
+    }
+  }
+  Writeln("  lea {}(%rip), %rax", name);
+}
 
 void CodeGen::EmitCharacterLiteral(CharacterLiteral& expr) {
   assert(expr.GetValue().size() == 1 && "Not a character?");
