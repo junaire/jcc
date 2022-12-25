@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
 #include <string_view>
 
 #include "jcc/common.h"
@@ -91,20 +92,27 @@ void CodeGen::AssignLocalOffsets(const std::vector<Decl*>& decls) {
   }
 }
 
-std::string GenerateAssembly(const std::string& file_name,
-                             const std::vector<jcc::Decl*>& decls) {
+void GenerateAssembly(const std::string& file_name,
+                      const std::vector<jcc::Decl*>& decls) {
   CodeGen generator(file_name);
   generator.AssignLocalOffsets(decls);
   for (Decl* decl : decls) {
     decl->GenCode(generator);
   }
-  return generator.GetFileName();
 }
 
 CodeGen::CodeGen(const std::string& file_name)
-    : file_(CreateAsmFileName(file_name)) {
+    : name_(CreateAsmFileName(file_name)) {
+  EmitSectionRAII section_guard(*this, Section::Header);
   Writeln(R"(  .file "{}")", file_name);
-  Writeln("  .text");
+}
+
+CodeGen::~CodeGen() {
+  std::fstream out(name_);
+  out << header_;
+  out << data_;
+  out << text_;
+  out.close();
 }
 
 void CodeGen::Store(const Type& type) {
@@ -114,7 +122,8 @@ void CodeGen::Store(const Type& type) {
       Writeln("  mov %eax, (%rdi)");
       break;
     default:
-      jcc_unimplemented();
+      Writeln("  mov %rax, (%rdi)");
+      // jcc_unimplemented();
   }
 }
 
@@ -159,6 +168,7 @@ void CodeGen::EmitFunctionDecl(FunctionDecl& decl) {
   ctx.cur_func_name = decl.GetName();
   Writeln("  .globl {}", decl.GetName());
   Writeln("  .type {}, @function", decl.GetName());
+  Writeln("  .text");
   Writeln("{}:", decl.GetName());
 
   EmitFunctionRAII emit_func_guard(*this);

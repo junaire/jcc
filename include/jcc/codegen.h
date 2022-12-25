@@ -49,8 +49,8 @@ struct CodeGenContext {
 };
 
 // Entry point for generate assembly code.
-std::string GenerateAssembly(const std::string& file_name,
-                             const std::vector<jcc::Decl*>& decls);
+void GenerateAssembly(const std::string& file_name,
+                      const std::vector<jcc::Decl*>& decls);
 
 class StackDepthTracker {
  public:
@@ -68,72 +68,21 @@ class StackDepthTracker {
   }
 };
 
-class File {
-  std::FILE* data_ = nullptr;
-  static constexpr const char* mode = "w+";
-  std::string file_name_;
-
- public:
-  explicit File(std::string file_name) : file_name_(std::move(file_name)) {
-    data_ = std::fopen(file_name_.data(), mode);
-  }
-
-  ~File() {
-    if (data_ != nullptr) {
-      std::fclose(data_);
-    }
-  }
-
-  [[nodiscard]] std::string GetName() const { return file_name_; }
-
-  template <typename S, typename... Args>
-  void Write(const S& format, Args... args) {
-    assert(data_ && "can't write to invalid file!");
-    fmt::vprint(data_, format, fmt::make_format_args(args...));
-  }
-};
-
 #define EMITDECL(Node) void Emit##Node(Node& decl);
 #define EMITSTMT(Node) void Emit##Node(Node& stmt);
 #define EMITEXPR(Node) void Emit##Node(Node& expr);
 
 class CodeGen {
-  File file_;
-  CodeGenContext ctx;
+  friend class EmitDataSectionRAII;
 
  public:
+  enum class Section { Header, Data, Text };
+
   explicit CodeGen(const std::string& file_name);
 
-  File GetFile() { return file_; }
-
-  [[nodiscard]] std::string GetFileName() const { return file_.GetName(); }
+  ~CodeGen();
 
   void AssignLocalOffsets(const std::vector<Decl*>& decls);
-
-  void Store(const Type& type);
-
-  // When we load a char or a short value to a register, we always
-  // extend them to the size of int, so we can assume the lower half of
-  // a register always contains a valid value. The upper half of a
-  // register for char, short and int may contain garbage. When we load
-  // a long value to a register, it simply occupies the entire register.
-  void Load(const Type& type);
-
-  // Consider cases below:
-  //   1. int x = 42;
-  //   2. y = 42;
-  // case 1 is a VarDecl and case 2 is a BinaryExpr,
-  // though they are different AST nodes, they generally
-  // share almost same codegen process.
-  void Assign(Decl& decl, Stmt* init);
-
-  std::optional<int> GetLocalOffset(Decl* decl) {
-    auto iter = ctx.offsets.find(decl);
-    if (iter != ctx.offsets.end()) {
-      return iter->second;
-    }
-    return std::nullopt;
-  }
 
   EMITDECL(VarDecl)
   EMITDECL(FunctionDecl)
@@ -167,13 +116,22 @@ class CodeGen {
  private:
   template <typename S, typename... Args>
   void Write(const S& format, Args&&... args) {
-    file_.Write(format, std::forward<Args>(args)...);
+    if (IsDataSection()) {
+      data_ += fmt::format(fmt::runtime(format), std::forward<Args>(args)...);
+      return;
+    }
+    if (IsHeaderSection()) {
+      header_ += fmt::format(fmt::runtime(format), std::forward<Args>(args)...);
+      return;
+    }
+    assert(section_ == Section::Text);
+    text_ += fmt::format(fmt::runtime(format), std::forward<Args>(args)...);
   }
 
   template <typename S, typename... Args>
   void Writeln(const S& format, Args&&... args) {
     Write(format, std::forward<Args>(args)...);
-    file_.Write("\n");
+    Write("\n");
   }
 
   void Push() {
@@ -185,7 +143,37 @@ class CodeGen {
     StackDepthTracker::Pop();
   }
 
+  void Store(const Type& type);
+
+  // When we load a char or a short value to a register, we always
+  // extend them to the size of int, so we can assume the lower half of
+  // a register always contains a valid value. The upper half of a
+  // register for char, short and int may contain garbage. When we load
+  // a long value to a register, it simply occupies the entire register.
+  void Load(const Type& type);
+
+  // Consider cases below:
+  //   1. int x = 42;
+  //   2. y = 42;
+  // case 1 is a VarDecl and case 2 is a BinaryExpr,
+  // though they are different AST nodes, they generally
+  // share almost same codegen process.
+  void Assign(Decl& decl, Stmt* init);
+
+  std::optional<int> GetLocalOffset(Decl* decl) {
+    auto iter = ctx.offsets.find(decl);
+    if (iter != ctx.offsets.end()) {
+      return iter->second;
+    }
+    return std::nullopt;
+  }
   void CompZero(const Type& type);
+
+  [[nodiscard]] bool IsDataSection() const { return section_ == Section::Data; }
+
+  [[nodiscard]] bool IsHeaderSection() const {
+    return section_ == Section::Header;
+  }
 
   class EmitFunctionRAII {
     CodeGen& gen_;
@@ -201,5 +189,29 @@ class CodeGen {
       gen_.Writeln("  ret");
     }
   };
+
+  class EmitSectionRAII {
+    CodeGen& gen_;
+
+   public:
+    explicit EmitSectionRAII(CodeGen& gen, Section section) : gen_(gen) {
+      gen_.section_ = section;
+    }
+    ~EmitSectionRAII() { gen_.section_ = Section::Text; }
+  };
+
+  std::string name_;
+
+  // Text section.
+  std::string text_;
+  // Data section.
+  std::string data_;
+
+  // This is onlt used for program header annotation.
+  std::string header_;
+
+  CodeGenContext ctx;
+
+  Section section_ = Section::Text;
 };
 }  // namespace jcc
