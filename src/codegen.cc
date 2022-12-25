@@ -311,10 +311,25 @@ void CodeGen::EmitMemberExpr(MemberExpr& expr) {}
 void CodeGen::EmitDeclRefExpr(DeclRefExpr& expr) {
   if (std::optional<int> offset = GetLocalOffset(expr.GetRefDecl())) {
     Writeln("  lea rax, {}[rbp]", *offset);
+    Type* type = expr.GetRefDecl()->GetType();
+
+    // When we load a char or a short value to a register, we always
+    // extend them to the size of int, so we can assume the lower half of
+    // a register always contains a valid value. The upper half of a
+    // register for char, short and int may contain garbage. When we load
+    // a long value to a register, it simply occupies the entire register.
+
+    // TODO(Jun): Implement cases when we have char or double types and etc.
+    // const char* instr = type->IsUnsigned() ? "movz" : "mos";
+    switch (type->GetSize()) {
+      case 4:
+        Writeln("  movsxd rax, [rax]");
+        break;
+      default:
+        jcc_unimplemented();
+    }
   } else {
     jcc_unreachable("Can DeclRefExpr store a global decl?");
   }
-  // FIXME: this is the cast.
-  Writeln("  movsxd rax, [rax]");
 }
 }  // namespace jcc
