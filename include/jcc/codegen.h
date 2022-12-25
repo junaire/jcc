@@ -160,7 +160,7 @@ class CodeGen {
   }
 
   void Push() {
-    Writeln("  push rax");
+    Writeln("  push %rax");
     StackDepthTracker::Push();
   }
   void Pop(std::string_view arg) {
@@ -175,12 +175,12 @@ class CodeGen {
 
    public:
     explicit EmitFunctionRAII(CodeGen& gen) : gen_(gen) {
-      gen_.Writeln("  push rbp");
-      gen_.Writeln("  mov rbp, rsp");
+      gen_.Writeln("  push %rbp");
+      gen_.Writeln("  mov %rsp, %rbp");
     }
     ~EmitFunctionRAII() {
-      gen_.Writeln("  mov rsp, rbp");
-      gen_.Writeln("  pop rbp");
+      gen_.Writeln("  mov %rbp, %rsp");
+      gen_.Writeln("  pop %rbp");
       gen_.Writeln("  ret");
     }
   };

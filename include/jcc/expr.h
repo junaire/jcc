@@ -156,6 +156,8 @@ class UnaryExpr : public Expr {
 
   [[nodiscard]] UnaryOperatorKind getKind() const { return kind_; }
 
+  Stmt* GetValue() { return value_; }
+
   void dump(int indent) const override;
 
   void GenCode(CodeGen& gen) override;

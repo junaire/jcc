@@ -104,7 +104,6 @@ std::string GenerateAssembly(const std::string& file_name,
 CodeGen::CodeGen(const std::string& file_name)
     : file_(CreateAsmFileName(file_name)) {
   Writeln(R"(  .file "{}")", file_name);
-  Writeln("  .intel_syntax noprefix");
   Writeln("  .text");
 }
 
@@ -125,15 +124,15 @@ void CodeGen::EmitVarDecl(VarDecl& decl) {
       return;
     }
 
-    Writeln("  lea rax, {}[rbp]", *offset);
+    Writeln("  lea {}(%rbp), %rax", *offset);
     Push();
     init->GenCode(*this);
     // TODO(Jun): May need casting here.
-    Pop("rdi");
+    Pop("%rdi");
     if (init->GetType()->IsInteger()) {
       switch (decl.GetInit()->GetType()->GetSize()) {
         case 4:
-          Writeln("  mov [rdi], eax");
+          Writeln("  mov %eax, (%rdi)");
           break;
         default:
           jcc_unimplemented();
@@ -156,8 +155,8 @@ void CodeGen::EmitFunctionDecl(FunctionDecl& decl) {
 
   // Allocate stack for the function.
   // FIXME: these're just arbitrary numbers.
-  Writeln("  sub rsp, {}", 160);
-  Writeln("  mov {}[rbp], rsp", -16);
+  Writeln("  sub ${}, %rsp", 160);
+  Writeln("  mov %rsp, {}(%rbp)", -16);
   // Handle varidic function.
   // Save passed by regisiter arguments.
 
@@ -166,7 +165,7 @@ void CodeGen::EmitFunctionDecl(FunctionDecl& decl) {
 
   // Section for ret.
   if (decl.IsMain()) {
-    Writeln("  mov rax, 0");
+    Writeln("  mov $0, %rax");
   }
   Writeln(".L.return.{}:", decl.GetName());
 }
@@ -175,7 +174,7 @@ void CodeGen::EmitRecordDecl(RecordDecl& decl) {}
 
 void CodeGen::CompZero(const Type& type) {
   if (type.IsInteger()) {
-    Writeln("  cmp rax, 0");
+    Writeln("  cmp %rax, $0");
     return;
   }
   jcc_unimplemented();
@@ -199,31 +198,31 @@ void CodeGen::EmitWhileStatement(WhileStatement& stmt) {}
 
 void CodeGen::EmitDoStatement(DoStatement& stmt) {}
 
+// TODO(Jun): Support continue and break statements.
 void CodeGen::EmitForStatement(ForStatement& stmt) {
   int64_t section_cnt = Counter();
   if (auto* init = stmt.GetInit()) {
     init->GenCode(*this);
   }
   Writeln(".L.begin.{}:", section_cnt);
-  if (auto* condition = stmt.GetCondition()) {
+  if (Stmt* condition = stmt.GetCondition()) {
     condition->GenCode(*this);
     // FIXME: WE should really reevaluate it the relationship between stmt and
     // expr.
     if (auto* cond_expr = condition->As<ExprStatement>();
         cond_expr != nullptr) {
       CompZero(*cond_expr->GetExpr()->GetType());
-      Writeln("  je {}", "?");
     } else {
       jcc_unreachable("Condition should has a expr!");
     }
+    Writeln("  je .L.end.{}", section_cnt);
   }
   stmt.GetBody()->GenCode(*this);
-  // continue label.
-  if (auto* inc = stmt.GetIncrement()) {
+  if (Stmt* inc = stmt.GetIncrement()) {
     inc->GenCode(*this);
   }
   Writeln("  jmp .L.begin.{}", section_cnt);
-  // break label.
+  Writeln(".L.end.{}:", section_cnt);
 }
 
 void CodeGen::EmitSwitchStatement(SwitchStatement& stmt) {}
@@ -266,38 +265,65 @@ void CodeGen::EmitStringLiteral(StringLiteral& expr) {}
 
 void CodeGen::EmitCharacterLiteral(CharacterLiteral& expr) {
   assert(expr.GetValue().size() == 1 && "Not a character?");
-  Writeln("  mov rax, {}", static_cast<int>(expr.GetValue()[0]));
+  Writeln("  mov {}, %rax", static_cast<int>(expr.GetValue()[0]));
 }
 
 void CodeGen::EmitIntergerLiteral(IntergerLiteral& expr) {
-  Writeln("  mov rax, {}", expr.GetValue());
+  Writeln("  mov ${}, %rax", expr.GetValue());
 }
 
 void CodeGen::EmitFloatingLiteral(FloatingLiteral& expr) {}
 
 void CodeGen::EmitCallExpr(CallExpr& expr) {}
 
-void CodeGen::EmitUnaryExpr(UnaryExpr& expr) {}
+void CodeGen::EmitUnaryExpr(UnaryExpr& expr) {
+  expr.GetValue()->GenCode(*this);
+  switch (expr.getKind()) {
+    case UnaryOperatorKind::PostIncrement: {
+      if (auto* ref_expr = expr.GetValue()->As<DeclRefExpr>();
+          ref_expr->GetRefDecl()->GetType()->GetSize() == 4) {
+        Writeln("  addl $1, {}(%rbp)", *GetLocalOffset(ref_expr->GetRefDecl()));
+      } else {
+        jcc_unimplemented();
+      }
+      break;
+    }
+    default:
+      jcc_unimplemented();
+  }
+}
 
 void CodeGen::EmitBinaryExpr(BinaryExpr& expr) {
   // Store lhs and rhs to rdi and rax respectively.
   expr.GetLhs()->GenCode(*this);
   Push();
   expr.GetRhs()->GenCode(*this);
-  Pop("rdi");
+  Pop("%rdi");
 
   switch (expr.GetKind()) {
-    case BinaryOperatorKind::Greater: {
+    case BinaryOperatorKind::Greater:
+    case BinaryOperatorKind::Less: {
       // FIXME: Register size!
       assert(expr.GetLhs()->GetType()->GetSize() == 4);
-      Writeln("  cmp {}, {}", "eax", "edi");
+      Writeln("  cmp {}, {}", "%edi", "%eax");
       if (expr.GetLhs()->GetType()->IsUnsigned()) {
-        Writeln("  setb al");
+        const char* instr =
+            expr.GetKind() == BinaryOperatorKind::Greater ? "setb" : "setbe";
+        Writeln("  {} %al", instr);
       } else {
-        Writeln("  setl al");
+        const char* instr =
+            expr.GetKind() == BinaryOperatorKind::Greater ? "setl" : "setle";
+        Writeln("  {} %al", instr);
       }
-      Writeln("  movzb rax, al");
+      Writeln("  movzb %al, %rax");
       break;
+    }
+    case BinaryOperatorKind::Equal: {
+      Writeln("  mov %rax, (rdi)");
+      break;
+    }
+    case BinaryOperatorKind::PlusEqual: {
+      jcc_unimplemented();
     }
     default:
       jcc_unimplemented();
@@ -310,7 +336,7 @@ void CodeGen::EmitMemberExpr(MemberExpr& expr) {}
 
 void CodeGen::EmitDeclRefExpr(DeclRefExpr& expr) {
   if (std::optional<int> offset = GetLocalOffset(expr.GetRefDecl())) {
-    Writeln("  lea rax, {}[rbp]", *offset);
+    Writeln("  lea {}(%rbp), %rax", *offset);
     Type* type = expr.GetRefDecl()->GetType();
 
     // When we load a char or a short value to a register, we always
@@ -323,7 +349,7 @@ void CodeGen::EmitDeclRefExpr(DeclRefExpr& expr) {
     // const char* instr = type->IsUnsigned() ? "movz" : "mos";
     switch (type->GetSize()) {
       case 4:
-        Writeln("  movsxd rax, [rax]");
+        Writeln("  movsxd (%rax), %rax");
         break;
       default:
         jcc_unimplemented();
