@@ -125,7 +125,7 @@ class CodeGen {
   // case 1 is a VarDecl and case 2 is a BinaryExpr,
   // though they are different AST nodes, they generally
   // share almost same codegen process.
-  void Assign(Decl& decl, Stmt* init = nullptr);
+  void Assign(Decl& decl, Stmt* init);
 
   std::optional<int> GetLocalOffset(Decl* decl) {
     auto iter = ctx.offsets.find(decl);

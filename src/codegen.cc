@@ -129,6 +129,9 @@ void CodeGen::Load(const Type& type) {
 }
 
 void CodeGen::Assign(Decl& decl, Stmt* init) {
+  if (init == nullptr) {
+    return;
+  }
   // TODO(Jun): Maybe we need a flag to indicate whether this is a local decl or
   // not?
   if (std::optional<int> offset = GetLocalOffset(&decl); offset.has_value()) {
@@ -150,13 +153,7 @@ void CodeGen::Assign(Decl& decl, Stmt* init) {
 //   3. rax = real value like `42`.
 //   4. pop the address of the decl and assign it to rdi.
 //   5. *rdi = rax, which is the real value.
-void CodeGen::EmitVarDecl(VarDecl& decl) {
-  Expr* init = decl.GetInit();
-  if (init == nullptr) {
-    return;
-  }
-  Assign(decl, decl.GetInit());
-}
+void CodeGen::EmitVarDecl(VarDecl& decl) { Assign(decl, decl.GetInit()); }
 
 void CodeGen::EmitFunctionDecl(FunctionDecl& decl) {
   ctx.cur_func_name = decl.GetName();
