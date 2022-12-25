@@ -110,6 +110,23 @@ class CodeGen {
 
   void AssignLocalOffsets(const std::vector<Decl*>& decls);
 
+  void Store(const Type& type);
+
+  // When we load a char or a short value to a register, we always
+  // extend them to the size of int, so we can assume the lower half of
+  // a register always contains a valid value. The upper half of a
+  // register for char, short and int may contain garbage. When we load
+  // a long value to a register, it simply occupies the entire register.
+  void Load(const Type& type);
+
+  // Consider cases below:
+  //   1. int x = 42;
+  //   2. y = 42;
+  // case 1 is a VarDecl and case 2 is a BinaryExpr,
+  // though they are different AST nodes, they generally
+  // share almost same codegen process.
+  void Assign(Decl& decl, Stmt* init = nullptr);
+
   std::optional<int> GetLocalOffset(Decl* decl) {
     auto iter = ctx.offsets.find(decl);
     if (iter != ctx.offsets.end()) {

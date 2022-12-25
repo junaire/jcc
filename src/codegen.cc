@@ -107,6 +107,43 @@ CodeGen::CodeGen(const std::string& file_name)
   Writeln("  .text");
 }
 
+void CodeGen::Store(const Type& type) {
+  Pop("%rdi");
+  switch (type.GetKind()) {
+    case TypeKind::Int:
+      Writeln("  mov %eax, (%rdi)");
+      break;
+    default:
+      jcc_unimplemented();
+  }
+}
+
+void CodeGen::Load(const Type& type) {
+  switch (type.GetSize()) {
+    case 4:
+      Writeln("  movsxd (%rax), %rax");
+      break;
+    default:
+      jcc_unimplemented();
+  }
+}
+
+void CodeGen::Assign(Decl& decl, Stmt* init) {
+  // TODO(Jun): Maybe we need a flag to indicate whether this is a local decl or
+  // not?
+  if (std::optional<int> offset = GetLocalOffset(&decl); offset.has_value()) {
+    assert(!ctx.cur_func_name.empty() &&
+           "We're not inside a funtion? You sure it's a local decl?");
+
+    Writeln("  lea {}(%rbp), %rax", *offset);
+    Push();
+    init->GenCode(*this);
+    Store(*decl.GetType());
+  } else {
+    jcc_unimplemented();
+  }
+}
+
 // So we're doing things like:
 //   1. rax = &decl, we have allocate enough space for it in the stack.
 //   2. store rax on the top of the stack.
@@ -114,35 +151,11 @@ CodeGen::CodeGen(const std::string& file_name)
 //   4. pop the address of the decl and assign it to rdi.
 //   5. *rdi = rax, which is the real value.
 void CodeGen::EmitVarDecl(VarDecl& decl) {
-  // TODO(Jun): Maybe we need a flag to indicate whether this is a local decl or
-  // not?
-  if (std::optional<int> offset = GetLocalOffset(&decl); offset.has_value()) {
-    assert(!ctx.cur_func_name.empty() &&
-           "We're not inside a funtion? You sure it's a local decl?");
-    Expr* init = decl.GetInit();
-    if (init == nullptr) {
-      return;
-    }
-
-    Writeln("  lea {}(%rbp), %rax", *offset);
-    Push();
-    init->GenCode(*this);
-    // TODO(Jun): May need casting here.
-    Pop("%rdi");
-    if (init->GetType()->IsInteger()) {
-      switch (decl.GetInit()->GetType()->GetSize()) {
-        case 4:
-          Writeln("  mov %eax, (%rdi)");
-          break;
-        default:
-          jcc_unimplemented();
-      }
-    } else {
-      jcc_unimplemented();
-    }
-  } else {
-    jcc_unimplemented();
+  Expr* init = decl.GetInit();
+  if (init == nullptr) {
+    return;
   }
+  Assign(decl, decl.GetInit());
 }
 
 void CodeGen::EmitFunctionDecl(FunctionDecl& decl) {
@@ -295,35 +308,36 @@ void CodeGen::EmitUnaryExpr(UnaryExpr& expr) {
 }
 
 void CodeGen::EmitBinaryExpr(BinaryExpr& expr) {
-  // Store lhs and rhs to rdi and rax respectively.
-  expr.GetLhs()->GenCode(*this);
-  Push();
-  expr.GetRhs()->GenCode(*this);
-  Pop("%rdi");
-
+  using enum BinaryOperatorKind;
   switch (expr.GetKind()) {
-    case BinaryOperatorKind::Greater:
-    case BinaryOperatorKind::Less: {
+    case Greater:
+    case Less: {
+      // Here we share the same code for `>` and `<` by exchange the order.
+      Expr* lhs = expr.GetKind() == Greater ? expr.GetLhs() : expr.GetRhs();
+      Expr* rhs = expr.GetKind() == Greater ? expr.GetRhs() : expr.GetLhs();
+      // Store lhs and rhs to rdi and rax respectively.
+      lhs->GenCode(*this);
+      Push();
+      rhs->GenCode(*this);
+      Pop("%rdi");
       // FIXME: Register size!
       assert(expr.GetLhs()->GetType()->GetSize() == 4);
       Writeln("  cmp {}, {}", "%edi", "%eax");
-      if (expr.GetLhs()->GetType()->IsUnsigned()) {
-        const char* instr =
-            expr.GetKind() == BinaryOperatorKind::Greater ? "setb" : "setbe";
-        Writeln("  {} %al", instr);
-      } else {
-        const char* instr =
-            expr.GetKind() == BinaryOperatorKind::Greater ? "setl" : "setle";
-        Writeln("  {} %al", instr);
-      }
+      const char* instr =
+          expr.GetLhs()->GetType()->IsUnsigned() ? "setb" : "setl";
+      Writeln("  {} %al", instr);
       Writeln("  movzb %al, %rax");
       break;
     }
-    case BinaryOperatorKind::Equal: {
-      Writeln("  mov %rax, (rdi)");
+    case Equal: {
+      // Can't invoke `EmitDeclRefExpr` as it will call `Load`
+      auto* ref_expr = expr.GetLhs()->As<DeclRefExpr>();
+      assert(ref_expr != nullptr &&
+             "The Lhs of the BinaryExpr is not a DeclRefExpr?");
+      Assign(*ref_expr->GetRefDecl(), expr.GetRhs());
       break;
     }
-    case BinaryOperatorKind::PlusEqual: {
+    case PlusEqual: {
       jcc_unimplemented();
     }
     default:
@@ -338,23 +352,10 @@ void CodeGen::EmitMemberExpr(MemberExpr& expr) {}
 void CodeGen::EmitDeclRefExpr(DeclRefExpr& expr) {
   if (std::optional<int> offset = GetLocalOffset(expr.GetRefDecl())) {
     Writeln("  lea {}(%rbp), %rax", *offset);
-    Type* type = expr.GetRefDecl()->GetType();
-
-    // When we load a char or a short value to a register, we always
-    // extend them to the size of int, so we can assume the lower half of
-    // a register always contains a valid value. The upper half of a
-    // register for char, short and int may contain garbage. When we load
-    // a long value to a register, it simply occupies the entire register.
 
     // TODO(Jun): Implement cases when we have char or double types and etc.
     // const char* instr = type->IsUnsigned() ? "movz" : "mos";
-    switch (type->GetSize()) {
-      case 4:
-        Writeln("  movsxd (%rax), %rax");
-        break;
-      default:
-        jcc_unimplemented();
-    }
+    Load(*expr.GetRefDecl()->GetType());
   } else {
     jcc_unreachable("Can DeclRefExpr store a global decl?");
   }
