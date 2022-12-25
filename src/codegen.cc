@@ -174,7 +174,8 @@ void CodeGen::EmitRecordDecl(RecordDecl& decl) {}
 
 void CodeGen::CompZero(const Type& type) {
   if (type.IsInteger()) {
-    Writeln("  cmp %rax, $0");
+    const char* instr = type.GetSize() <= 4 ? "%eax" : "%rax";
+    Writeln("  cmp $0, {}", instr);
     return;
   }
   jcc_unimplemented();
