@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -16,6 +17,7 @@ class ASTContext;
 class Decl : public ASTNode {
   std::string name_;
   Type* type_ = nullptr;
+  std::optional<int> offset_;
 
  protected:
   explicit Decl(SourceRange loc, std::string name, Type* type)
@@ -28,6 +30,9 @@ class Decl : public ASTNode {
     assert(type_ != nullptr);
     return type_;
   }
+
+  void SetOffset(int offset) { offset_ = offset; }
+  [[nodiscard]] std::optional<int> GetOffset() const { return offset_; }
 
   ~Decl() override;
 };
@@ -54,10 +59,13 @@ class VarDecl : public Decl {
 
 class FunctionDecl : public Decl {
   std::vector<VarDecl*> args_;
-  // This makes it much easier to assign offsets for them.
-  std::vector<Decl*> locals_;
   Type* return_type_;
   Stmt* body_ = nullptr;
+
+  // This makes it much easier to assign offsets for them.
+  std::vector<Decl*> locals_;
+
+  int stack_size_ = -1;
 
   FunctionDecl(SourceRange loc, std::string name, Type* type, Type* return_type)
       : Decl(std::move(loc), std::move(name), type),
@@ -84,6 +92,16 @@ class FunctionDecl : public Decl {
   void AddLocals(const std::vector<Decl*>& decls) {
     locals_.insert(locals_.end(), decls.begin(), decls.end());
   }
+
+  void SetStackSize(int stack_size) { stack_size_ = stack_size; }
+
+  [[nodiscard]] int GetStackSize() const {
+    assert(stack_size_ != -1 &&
+           "The stack size of current function is unknown");
+    return stack_size_;
+  }
+
+  [[nodiscard]] bool HasDefinition() const { return body_ != nullptr; }
 
   std::vector<Decl*> GetLocals() { return locals_; }
 

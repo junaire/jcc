@@ -44,8 +44,6 @@ class DeclRefExpr;
 
 struct CodeGenContext {
   std::string cur_func_name;
-  std::map<Decl*, size_t> offsets;
-  std::map<FunctionDecl*, size_t> func_stack_size;
 };
 
 // Entry point for generate assembly code.
@@ -81,8 +79,6 @@ class CodeGen {
   explicit CodeGen(const std::string& file_name);
 
   ~CodeGen();
-
-  void AssignLocalOffsets(const std::vector<Decl*>& decls);
 
   EMITDECL(VarDecl)
   EMITDECL(FunctionDecl)
@@ -124,7 +120,7 @@ class CodeGen {
       header_ += fmt::format(fmt::runtime(format), std::forward<Args>(args)...);
       return;
     }
-    assert(section_ == Section::Text);
+    assert(cur_section_ == Section::Text);
     text_ += fmt::format(fmt::runtime(format), std::forward<Args>(args)...);
   }
 
@@ -143,6 +139,12 @@ class CodeGen {
     StackDepthTracker::Pop();
   }
 
+  // Store all arguments to the stack.
+  void StoreArgs(FunctionDecl& func);
+
+  // Load all arguments so we can call a function.
+  void LoadArgs(size_t arg_size);
+
   void Store(const Type& type);
 
   // When we load a char or a short value to a register, we always
@@ -160,19 +162,14 @@ class CodeGen {
   // share almost same codegen process.
   void Assign(Decl& decl, Stmt* init);
 
-  std::optional<int> GetLocalOffset(Decl* decl) {
-    auto iter = ctx.offsets.find(decl);
-    if (iter != ctx.offsets.end()) {
-      return iter->second;
-    }
-    return std::nullopt;
-  }
   void CompZero(const Type& type);
 
-  [[nodiscard]] bool IsDataSection() const { return section_ == Section::Data; }
+  [[nodiscard]] bool IsDataSection() const {
+    return cur_section_ == Section::Data;
+  }
 
   [[nodiscard]] bool IsHeaderSection() const {
-    return section_ == Section::Header;
+    return cur_section_ == Section::Header;
   }
 
   class EmitFunctionRAII {
@@ -195,9 +192,9 @@ class CodeGen {
 
    public:
     explicit EmitSectionRAII(CodeGen& gen, Section section) : gen_(gen) {
-      gen_.section_ = section;
+      gen_.cur_section_ = section;
     }
-    ~EmitSectionRAII() { gen_.section_ = Section::Text; }
+    ~EmitSectionRAII() { gen_.cur_section_ = Section::Text; }
   };
 
   std::string name_;
@@ -207,11 +204,11 @@ class CodeGen {
   // Data section.
   std::string data_;
 
-  // This is onlt used for program header annotation.
+  // This is only used for program header annotation.
   std::string header_;
 
   CodeGenContext ctx;
 
-  Section section_ = Section::Text;
+  Section cur_section_ = Section::Text;
 };
 }  // namespace jcc

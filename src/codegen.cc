@@ -28,21 +28,29 @@ static int64_t Counter() {
 
 namespace jcc {
 
-static size_t AlignTo(size_t n, size_t align) {
-  return (n + align - 1) / align * align;
-}
+static std::string_view arg_reg8[] = {"%dil", "%sil", "%dl",
+                                      "%cl",  "%r8b", "%r9b"};
+static std::string_view arg_reg16[] = {"%di", "%si",  "%dx",
+                                       "%cx", "%r8w", "%r9w"};
+static std::string_view arg_reg32[] = {"%edi", "%esi", "%edx",
+                                       "%ecx", "%r8d", "%r9d"};
+static std::string_view arg_reg64[] = {"%rdi", "%rsi", "%rdx",
+                                       "%rcx", "%r8",  "%r9"};
 
-void CodeGen::AssignLocalOffsets(const std::vector<Decl*>& decls) {
+static int AlignTo(int n, int align) { return (n + align - 1) / align * align; }
+
+static void AssignLocalOffsets(const std::vector<Decl*>& decls) {
   for (Decl* decl : decls) {
     if (auto* func = decl->As<FunctionDecl>(); func != nullptr) {
       // If a function has many parameters, some parameters are
       // inevitably passed by stack rather than by register.
       // The first passed-by-stack parameter resides at RBP+16.
-      size_t top = 16;
+      int top = 16;
       int bottom = 0;
       size_t gp = 0;
       size_t fp = 0;
 
+      // Assign offsets to pass-by-stack parameters.
       for (size_t idx = 0; idx < func->GetParamNum(); ++idx) {
         VarDecl* param = func->GetParam(idx);
         Type* param_type = param->GetType();
@@ -62,32 +70,45 @@ void CodeGen::AssignLocalOffsets(const std::vector<Decl*>& decls) {
             if (gp++ < 6) {
               continue;
             }
-            top = AlignTo(top, 8);
-            ctx.offsets[param] = top;
-            top += param_type->GetSize();
           }
         }
+        top = AlignTo(top, 8);
+        param->SetOffset(top);
+        top += param_type->GetSize();
       }
-      std::vector<Decl*> locals = func->GetLocals();
-      for (const auto& local : locals) {
+
+      auto set_offset = [&](VarDecl* var) {
+        Type* type = var->GetType();
+        // AMD64 System V ABI has a special alignment rule for an array of
+        // length at least 16 bytes. We need to align such array to at
+        // least 16-byte boundaries. See p.14 of
+        // https://github.com/hjl-tools/x86-psABI/wiki/x86-64-psABI-draft.pdf.
+        size_t align =
+            (type->Is<TypeKind::Array>() && type->GetSize() >= 16)
+                ? std::max(static_cast<size_t>(16), type->GetAlignment())
+                : type->GetAlignment();
+
+        bottom += type->GetSize();
+        bottom = AlignTo(bottom, align);
+        var->SetOffset(-bottom);
+      };
+
+      for (const auto& local : func->GetLocals()) {
         // Is this check really needed?
         if (auto* var_decl = local->As<VarDecl>(); var_decl != nullptr) {
-          Type* type = var_decl->GetType();
-          // AMD64 System V ABI has a special alignment rule for an array of
-          // length at least 16 bytes. We need to align such array to at
-          // least 16-byte boundaries. See p.14 of
-          // https://github.com/hjl-tools/x86-psABI/wiki/x86-64-psABI-draft.pdf.
-          size_t align =
-              (type->Is<TypeKind::Array>() && type->GetSize() >= 16)
-                  ? std::max(static_cast<size_t>(16), type->GetAlignment())
-                  : type->GetAlignment();
-
-          bottom += type->GetSize();
-          bottom = AlignTo(bottom, align);
-          ctx.offsets[var_decl] = -bottom;
+          set_offset(var_decl);
         }
       }
-      ctx.func_stack_size[func] = AlignTo(bottom, 16);
+
+      // Assign offsets to pass-by-register parameters.
+      for (size_t idx = 0; idx < func->GetParamNum(); ++idx) {
+        VarDecl* param = func->GetParam(idx);
+        if (param->GetOffset().has_value()) {
+          continue;
+        }
+        set_offset(param);
+      }
+      func->SetStackSize(AlignTo(bottom, 16));
     }
   }
 }
@@ -95,7 +116,7 @@ void CodeGen::AssignLocalOffsets(const std::vector<Decl*>& decls) {
 void GenerateAssembly(const std::string& file_name,
                       const std::vector<jcc::Decl*>& decls) {
   CodeGen generator(file_name);
-  generator.AssignLocalOffsets(decls);
+  AssignLocalOffsets(decls);
   for (Decl* decl : decls) {
     decl->GenCode(generator);
   }
@@ -143,7 +164,7 @@ void CodeGen::Assign(Decl& decl, Stmt* init) {
   }
   // TODO(Jun): Maybe we need a flag to indicate whether this is a local decl or
   // not?
-  if (std::optional<int> offset = GetLocalOffset(&decl); offset.has_value()) {
+  if (std::optional<int> offset = decl.GetOffset()) {
     assert(!ctx.cur_func_name.empty() &&
            "We're not inside a funtion? You sure it's a local decl?");
 
@@ -164,11 +185,30 @@ void CodeGen::Assign(Decl& decl, Stmt* init) {
 //   5. *rdi = rax, which is the real value.
 void CodeGen::EmitVarDecl(VarDecl& decl) { Assign(decl, decl.GetInit()); }
 
+void CodeGen::StoreArgs(FunctionDecl& func) {
+  for (size_t i = 0; i < func.GetParamNum(); ++i) {
+    VarDecl* arg = func.GetParam(i);
+    switch (arg->GetType()->GetSize()) {
+      case 4: {
+        if (std::optional<int> offset = arg->GetOffset()) {
+          Writeln("  mov {}, {}(%rbp)", arg_reg32[i], *offset);
+          break;
+        }
+        jcc_unimplemented();
+      }
+      default:
+        jcc_unimplemented();
+    }
+  }
+}
+
 void CodeGen::EmitFunctionDecl(FunctionDecl& decl) {
   // Just a declaration, no need to emit code.
-  if (decl.GetBody() == nullptr) {
+  if (!decl.HasDefinition()) {
     return;
   }
+
+  // TODO(Jun): Keep informations like `static`, `extern` and etc.
 
   ctx.cur_func_name = decl.GetName();
   Writeln("  .globl {}", decl.GetName());
@@ -180,10 +220,11 @@ void CodeGen::EmitFunctionDecl(FunctionDecl& decl) {
 
   // Allocate stack for the function.
   // FIXME: these're just arbitrary numbers.
-  Writeln("  sub ${}, %rsp", 160);
-  Writeln("  mov %rsp, {}(%rbp)", -16);
+  Writeln("  sub ${}, %rsp", decl.GetStackSize());
   // Handle varidic function.
+
   // Save passed by regisiter arguments.
+  StoreArgs(decl);
 
   // Emit code for body.
   decl.GetBody()->GenCode(*this);
@@ -338,16 +379,27 @@ void CodeGen::EmitIntergerLiteral(IntergerLiteral& expr) {
 
 void CodeGen::EmitFloatingLiteral(FloatingLiteral& expr) {}
 
+void CodeGen::LoadArgs(size_t arg_size) {
+  for (int i = 1; i <= arg_size; ++i) {
+    if (i >= 6) {
+      jcc_unimplemented();
+    }
+    Pop(arg_reg64[i]);
+  }
+}
 void CodeGen::EmitCallExpr(CallExpr& expr) {
   for (size_t i = 0; i < expr.GetArgNum(); ++i) {
     expr.GetArg(i)->GenCode(*this);
+    Push();
   }
-  Push();
-  std::string name =
-      expr.GetCallee()->As<DeclRefExpr>()->GetRefDecl()->GetName();
-  // FIXME: This is not right if we have the definition.
-  Writeln("  mov {}@GOTPCREL(%rip), %rax", name);
-  Pop("%rdi");
+  auto* func =
+      expr.GetCallee()->As<DeclRefExpr>()->GetRefDecl()->As<FunctionDecl>();
+  if (func->HasDefinition()) {
+    Writeln("  lea {}(%rip), %rax", func->GetName());
+  } else {
+    Writeln("  mov {}@GOTPCREL(%rip), %rax", func->GetName());
+  }
+  LoadArgs(expr.GetArgNum());
 
   Writeln("  mov %rax, %r10");
   Writeln("  mov $0, %rax");
@@ -361,7 +413,7 @@ void CodeGen::EmitUnaryExpr(UnaryExpr& expr) {
     case UnaryOperatorKind::PostIncrement: {
       if (auto* ref_expr = expr.GetValue()->As<DeclRefExpr>();
           ref_expr->GetRefDecl()->GetType()->GetSize() == 4) {
-        Writeln("  addl $1, {}(%rbp)", *GetLocalOffset(ref_expr->GetRefDecl()));
+        Writeln("  addl $1, {}(%rbp)", *ref_expr->GetRefDecl()->GetOffset());
       } else {
         jcc_unimplemented();
       }
@@ -415,7 +467,7 @@ void CodeGen::EmitArraySubscriptExpr(ArraySubscriptExpr& expr) {}
 void CodeGen::EmitMemberExpr(MemberExpr& expr) {}
 
 void CodeGen::EmitDeclRefExpr(DeclRefExpr& expr) {
-  if (std::optional<int> offset = GetLocalOffset(expr.GetRefDecl())) {
+  if (std::optional<int> offset = expr.GetRefDecl()->GetOffset()) {
     Writeln("  lea {}(%rbp), %rax", *offset);
 
     // TODO(Jun): Implement cases when we have char or double types and etc.
