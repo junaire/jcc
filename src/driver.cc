@@ -121,13 +121,10 @@ void Driver::Run() {
     Compile();
     return;
   }
-  // Compile to executable.
-  if (opt_o_) {
-    Assemble(*contents, GetSourceName());
-    Compile();
-    Link();
-    return;
-  }
+  // Or we just compile it to an executable.
+  Assemble(*contents, GetSourceName());
+  Compile();
+  Link();
 }
 
 // Turn prog.c => prog.s
@@ -157,7 +154,12 @@ void Driver::Compile() {
 // Turn prog.o => prog
 void Driver::Link() {
   std::string obj_file = GetObjectName();
-  std::string exe_file = GetExeName();
+  std::string exe_file;
+  if (opt_o_) {
+    exe_file = GetExeName();
+  } else {
+    exe_file = default_exe;
+  }
   const char* cmd[] = {
       "ld", "-o", exe_file.c_str(), "-m", "elf_x86_64",
       "/usr/lib/x86_64-linux-gnu/crt1.o", "/usr/lib/x86_64-linux-gnu/crti.o",
@@ -191,10 +193,7 @@ std::string Driver::GetSourceName() {
 
 std::string Driver::GetExeName() {
   std::string dir = std::filesystem::current_path().string();
-  if (!executable_name_.empty()) {
-    return dir + "/" + executable_name_;
-  }
-  return dir + "/" + default_exe;
+  return dir + "/" + executable_name_;
 }
 
 }  // namespace jcc
