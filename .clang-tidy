@@ -9,11 +9,13 @@ Checks: '-*,
     readability-*,
 
     -modernize-use-trailing-return-type,
+    -modernize-use-c-arrays,
     -cppcoreguidelines-pro-type-*,
     -cppcoreguidelines-owning-memory,
     -google-runtime-*,
     -google-objc-*,
     -readability-magic-numbers,
+    -readability-identifier-length,
     -readability-function-cognitive-complexity,
     -bugprone-easily-swappable-parameters'
 

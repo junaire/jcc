@@ -250,7 +250,7 @@ void BinaryExpr::dump(int indent) const {
   rhs_->dump(indent + dump_indent);
 }
 
-void MemberExpr::dump(int) const { jcc_unimplemented(); }
+void MemberExpr::dump(int indent) const { jcc_unimplemented(); }
 
 DeclRefExpr* DeclRefExpr::Create(ASTContext& ctx, SourceRange loc, Type* type,
                                  Decl* decl) {

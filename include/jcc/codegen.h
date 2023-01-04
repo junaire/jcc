@@ -145,7 +145,7 @@ class CodeGen {
   void PushArgs(CallExpr& expr);
 
   // Pop all arguments so we can call a function.
-  void PopArgs(CallExpr& func);
+  void PopArgs(CallExpr& expr);
 
   void Store(const Type& type);
 

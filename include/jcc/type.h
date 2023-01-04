@@ -66,7 +66,7 @@ class Type {
     return static_cast<Ty*>(this);
   }
 
-  virtual void dump(int) const { fmt::print("{}\n", GetNameAsString()); }
+  virtual void dump(int indent) const { fmt::print("{}\n", GetNameAsString()); }
 
   [[nodiscard]] bool HasQualifiers() const {
     return quals_ != Qualifiers::Unspecified;
