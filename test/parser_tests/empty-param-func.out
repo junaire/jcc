@@ -1,0 +1,6 @@
+FunctionDecl: foo
+  Args[0]
+  CompoundStatement
+FunctionDecl: main
+  Args[0]
+  CompoundStatement

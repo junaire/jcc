@@ -1,0 +1,16 @@
+FunctionDecl: main
+  Args[0]
+  CompoundStatement
+    DeclStatement
+      VarDecl: x
+        IntergerLiteral: 42
+    SwitchStatement
+      DeclRefExpr: x
+      CompoundStatement
+        CaseStatement
+        value: 42
+          ReturnStatement
+            IntergerLiteral: 1
+        DefaultStatement
+          ReturnStatement
+            IntergerLiteral: 2

@@ -1,0 +1,11 @@
+FunctionDecl: main
+  Args[0]
+  CompoundStatement
+    DeclStatement
+      VarDecl: str
+        StringLiteral: Hello, world!
+    DeclStatement
+      VarDecl: a
+        CharacterLiteral: a
+    ReturnStatement
+      IntergerLiteral: 0

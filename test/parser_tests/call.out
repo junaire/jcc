@@ -1,0 +1,26 @@
+FunctionDecl: foo
+  Args[0]
+  CompoundStatement
+    ReturnStatement
+      IntergerLiteral: 42
+FunctionDecl: bar
+  Args[2]
+  VarDecl: x
+  VarDecl: y
+  CompoundStatement
+    ReturnStatement
+      BinaryExpr(+):
+        DeclRefExpr: x
+        DeclRefExpr: y
+FunctionDecl: main
+  Args[0]
+  CompoundStatement
+    DeclStatement
+      VarDecl: x
+        CallExpr: foo
+    ExprStatement
+      BinaryExpr(=):
+        DeclRefExpr: x
+        CallExpr: bar
+    ReturnStatement
+      DeclRefExpr: x

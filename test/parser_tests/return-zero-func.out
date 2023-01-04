@@ -1,0 +1,5 @@
+FunctionDecl: foo
+  Args[0]
+  CompoundStatement
+    ReturnStatement
+      IntergerLiteral: 0

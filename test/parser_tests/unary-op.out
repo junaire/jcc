@@ -1,0 +1,10 @@
+FunctionDecl: main
+  Args[0]
+  CompoundStatement
+    DeclStatement
+      VarDecl: x
+        IntergerLiteral: 42
+    DeclStatement
+      VarDecl: y
+        UnaryExpr(&):
+          DeclRefExpr: x

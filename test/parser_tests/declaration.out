@@ -1,0 +1,25 @@
+FunctionDecl: main
+  Args[0]
+  CompoundStatement
+    DeclStatement
+      VarDecl: x
+    DeclStatement
+      VarDecl: y
+        IntergerLiteral: 42
+    DeclStatement
+      VarDecl: a
+      VarDecl: b
+      VarDecl: c
+    DeclStatement
+      VarDecl: m
+        IntergerLiteral: 42
+      VarDecl: n
+        IntergerLiteral: 42
+      VarDecl: o
+        IntergerLiteral: 42
+    DeclStatement
+      VarDecl: q
+    ExprStatement
+      BinaryExpr(=):
+        DeclRefExpr: q
+        IntergerLiteral: 42

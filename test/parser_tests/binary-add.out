@@ -1,0 +1,22 @@
+FunctionDecl: foo
+  Args[0]
+  CompoundStatement
+    DeclStatement
+      VarDecl: x
+        BinaryExpr(+):
+          IntergerLiteral: 12
+          IntergerLiteral: 30
+    DeclStatement
+      VarDecl: y
+        BinaryExpr(+):
+          IntergerLiteral: 1
+          BinaryExpr(*):
+            IntergerLiteral: 2
+            IntergerLiteral: 3
+    DeclStatement
+      VarDecl: z
+        BinaryExpr(-):
+          BinaryExpr(/):
+            IntergerLiteral: 10
+            IntergerLiteral: 5
+          IntergerLiteral: 2

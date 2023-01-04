@@ -1,0 +1,7 @@
+FunctionDecl: main
+  Args[0]
+  CompoundStatement
+    WhileStatement
+      IntergerLiteral: 1
+      CompoundStatement
+        ContinueStatement

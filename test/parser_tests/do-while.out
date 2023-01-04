@@ -1,0 +1,6 @@
+FunctionDecl: main
+  Args[0]
+  CompoundStatement
+    DoStatement
+      CompoundStatement
+      IntergerLiteral: 1

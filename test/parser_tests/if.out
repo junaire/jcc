@@ -1,0 +1,13 @@
+FunctionDecl: foo
+  Args[0]
+  CompoundStatement
+    IfStatement
+      IntergerLiteral: 1
+      CompoundStatement
+        DeclStatement
+          VarDecl: x
+            IntergerLiteral: 42
+      CompoundStatement
+        DeclStatement
+          VarDecl: y
+            IntergerLiteral: 42
