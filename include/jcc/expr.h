@@ -40,7 +40,7 @@ class StringLiteral : public Expr {
       : Expr(std::move(loc), type), literal_(std::move(literal)) {}
 
  public:
-  static StringLiteral* Create(ASTContext& ctx, SourceRange loc, Type* type,
+  static StringLiteral* Create(ASTContext& ctx, SourceRange loc,
                                std::string literal);
 
   [[nodiscard]] std::string GetValue() const { return literal_; }

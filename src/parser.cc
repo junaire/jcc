@@ -694,10 +694,8 @@ Expr* Parser::ParseCastExpr() {
       break;
     }
     case TokenKind::StringLiteral: {
-      // FIXME: What's the type of a string literal?
-      result =
-          StringLiteral::Create(GetASTContext(), SourceRange(),
-                                /*type=*/nullptr, CurrentToken().GetAsString());
+      result = StringLiteral::Create(GetASTContext(), SourceRange(),
+                                     CurrentToken().GetAsString());
       ConsumeToken();
       break;
     }

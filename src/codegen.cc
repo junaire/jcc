@@ -415,14 +415,11 @@ void CodeGen::PushArgs(CallExpr& expr) {
   }
   for (int j = expr.GetArgNum() - 1; j >= 0; --j) {
     Expr* arg = expr.GetArg(j);
-    switch (arg->GetType()->GetKind()) {
-      case TypeKind::Int: {
-        arg->GenCode(*this);
-        break;
-      }
-      default:
-        jcc_unimplemented();
-    }
+    arg->GenCode(*this);
+    bool not_impl = arg->GetType()
+                        ->IsOneOf<TypeKind::Struct, TypeKind::Union,
+                                  TypeKind::Float, TypeKind::Double>();
+    assert(!not_impl && "Not implement yet!");
     Push();
   }
 }

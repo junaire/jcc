@@ -10,6 +10,7 @@
 #include "jcc/expr.h"
 #include "jcc/source_location.h"
 #include "jcc/stmt.h"
+#include "jcc/type.h"
 
 namespace jcc {
 
@@ -123,8 +124,10 @@ void RecordDecl::dump(int indent) const {
   }
 }
 StringLiteral* StringLiteral::Create(ASTContext& ctx, SourceRange loc,
-                                     Type* type, std::string literal) {
+                                     std::string literal) {
   void* mem = ctx.Allocate<StringLiteral>();
+  Type* type = Type::CreatePointerType(
+      ctx, Type::CreateCharType(ctx, /*is_unsigned=*/false));
   return new (mem) StringLiteral(std::move(loc), type, std::move(literal));
 }
 
