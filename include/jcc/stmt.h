@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -86,34 +87,39 @@ class IfStatement : public Stmt {
 
 class CaseStatement : public Stmt {
   Stmt* stmt_ = nullptr;
-  std::string value_;
+  std::optional<std::string> value_;
 
-  explicit CaseStatement(SourceRange loc, Stmt* stmt, std::string value)
-      : Stmt(std::move(loc)), stmt_(stmt), value_(std::move(value)) {}
+  std::string label_;
+  bool is_default_;
+
+  explicit CaseStatement(SourceRange loc, Stmt* stmt,
+                         std::optional<std::string> value, bool is_default)
+      : Stmt(std::move(loc)),
+        stmt_(stmt),
+        value_(std::move(value)),
+        is_default_(is_default) {}
 
  public:
   static CaseStatement* Create(ASTContext& ctx, SourceRange loc, Stmt* stmt,
-                               std::string value);
+                               std::optional<std::string> value,
+                               bool is_default = false);
 
   Stmt* GetStmt() { return stmt_; }
 
-  [[nodiscard]] std::string GetValue() const { return value_; }
+  [[nodiscard]] std::string GetValue() const {
+    assert(value_.has_value() && "Can't get value from a default statement!");
+    return *value_;
+  }
 
-  void dump(int indent) const override;
+  [[nodiscard]] std::string GetLabel() const {
+    assert(!label_.empty() &&
+           "The label of CaseStatement need to be set before use");
+    return label_;
+  }
 
-  void GenCode(CodeGen& gen) override;
-};
+  void SetLabel(const std::string& label) { label_ = label; }
 
-class DefaultStatement : public Stmt {
-  Stmt* stmt_ = nullptr;
-
-  explicit DefaultStatement(SourceRange loc, Stmt* stmt)
-      : Stmt(std::move(loc)), stmt_(stmt) {}
-
- public:
-  static DefaultStatement* Create(ASTContext& ctx, SourceRange loc, Stmt* stmt);
-
-  Stmt* GetStmt() { return stmt_; }
+  [[nodiscard]] bool IsDefault() const { return is_default_; }
 
   void dump(int indent) const override;
 
@@ -135,6 +141,8 @@ class SwitchStatement : public Stmt {
   [[nodiscard]] auto GetSize() const { return body_->GetSize(); }
 
   Stmt* GetStmt(std::size_t index) { return body_->GetStmt(index); }
+
+  Expr* GetCondition() { return condition_; }
 
   void dump(int indent) const override;
 

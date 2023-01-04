@@ -26,7 +26,6 @@ class DoStatement;
 class ForStatement;
 class SwitchStatement;
 class CaseStatement;
-class DefaultStatement;
 class ReturnStatement;
 class DeclStatement;
 class ExprStatement;
@@ -90,7 +89,6 @@ class CodeGen {
   EMITSTMT(ForStatement)
   EMITSTMT(SwitchStatement)
   EMITSTMT(CaseStatement)
-  EMITSTMT(DefaultStatement)
   EMITSTMT(ReturnStatement)
   EMITSTMT(BreakStatement)
   EMITSTMT(ContinueStatement)

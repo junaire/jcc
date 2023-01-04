@@ -30,7 +30,6 @@ GEN(IfStatement)
 GEN(DoStatement)
 GEN(SwitchStatement)
 GEN(CaseStatement)
-GEN(DefaultStatement)
 GEN(ReturnStatement)
 GEN(BreakStatement)
 GEN(ContinueStatement)
@@ -367,9 +366,12 @@ void SwitchStatement::dump(int indent) const {
 }
 
 CaseStatement* CaseStatement::Create(ASTContext& ctx, SourceRange loc,
-                                     Stmt* stmt, std::string value) {
+                                     Stmt* stmt,
+                                     std::optional<std::string> value,
+                                     bool is_default) {
   void* mem = ctx.Allocate<CaseStatement>();
-  return new (mem) CaseStatement(std::move(loc), stmt, std::move(value));
+  return new (mem)
+      CaseStatement(std::move(loc), stmt, std::move(value), is_default);
 }
 
 void CaseStatement::dump(int indent) const {
@@ -377,18 +379,6 @@ void CaseStatement::dump(int indent) const {
   fmt::print("CaseStatement\n");
   InsertIndent(indent);
   fmt::print("value: {}\n", GetValue());
-  stmt_->dump(indent + dump_indent);
-}
-
-DefaultStatement* DefaultStatement::Create(ASTContext& ctx, SourceRange loc,
-                                           Stmt* stmt) {
-  void* mem = ctx.Allocate<CaseStatement>();
-  return new (mem) DefaultStatement(std::move(loc), stmt);
-}
-
-void DefaultStatement::dump(int indent) const {
-  InsertIndent(indent);
-  fmt::print("DefaultStatement\n");
   stmt_->dump(indent + dump_indent);
 }
 

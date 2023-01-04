@@ -457,19 +457,16 @@ Stmt* Parser::ParseSwitchStmt() {
                                  body);
 }
 
-Stmt* Parser::ParseCaseStmt() {
-  Token value = CurrentToken();
-  ConsumeToken();
+Stmt* Parser::ParseCaseStmt(bool is_default) {
+  std::optional<std::string> value = std::nullopt;
+  if (!is_default) {
+    value = CurrentToken().GetAsString();
+    ConsumeToken();
+  }
   MustConsumeToken(TokenKind::Colon);
   Stmt* stmt = ParseStatement();
-  return CaseStatement::Create(GetASTContext(), SourceRange(), stmt,
-                               value.GetAsString());
-}
-
-Stmt* Parser::ParseDefaultStmt() {
-  MustConsumeToken(TokenKind::Colon);
-  Stmt* stmt = ParseStatement();
-  return DefaultStatement::Create(GetASTContext(), SourceRange(), stmt);
+  return CaseStatement::Create(GetASTContext(), SourceRange(), stmt, value,
+                               is_default);
 }
 
 Stmt* Parser::ParseBreakStmt() {
@@ -538,7 +535,7 @@ Stmt* Parser::ParseStatement() {
   }
 
   if (TryConsumeToken(TokenKind::Default)) {
-    return ParseDefaultStmt();
+    return ParseCaseStmt(/*is_default=*/true);
   }
 
   if (TryConsumeToken(TokenKind::Do)) {

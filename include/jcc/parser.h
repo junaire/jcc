@@ -73,7 +73,7 @@ class Parser {
 
   Stmt* ParseSwitchStmt();
 
-  Stmt* ParseCaseStmt();
+  Stmt* ParseCaseStmt(bool is_default = false);
 
   Stmt* ParseDefaultStmt();
 

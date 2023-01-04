@@ -315,11 +315,37 @@ void CodeGen::EmitForStatement(ForStatement& stmt) {
   Writeln(".L.end.{}:", section_cnt);
 }
 
-void CodeGen::EmitSwitchStatement(SwitchStatement& stmt) {}
+void CodeGen::EmitSwitchStatement(SwitchStatement& stmt) {
+  Expr* condition = stmt.GetCondition();
+  CaseStatement* default_stmt = nullptr;
 
-void CodeGen::EmitCaseStatement(CaseStatement& stmt) {}
+  condition->GenCode(*this);
 
-void CodeGen::EmitDefaultStatement(DefaultStatement& stmt) {}
+  const char* instr = condition->GetType()->GetSize() == 8 ? "%rax" : "%eax";
+
+  for (size_t i = 0; i < stmt.GetSize(); ++i) {
+    auto* case_stmt = stmt.GetStmt(i)->As<CaseStatement>();
+    case_stmt->SetLabel(fmt::format(".L..{}", Counter()));
+    if (case_stmt->IsDefault()) {
+      default_stmt = case_stmt;
+    } else {
+      Writeln("  cmp ${}, {}", case_stmt->GetValue(), instr);
+      Writeln("  je {}", case_stmt->GetLabel());
+    }
+  }
+  if (default_stmt != nullptr) {
+    Writeln("  jmp {}", default_stmt->GetLabel());
+  }
+
+  for (size_t i = 0; i < stmt.GetSize(); ++i) {
+    stmt.GetStmt(i)->GenCode(*this);
+  }
+}
+
+void CodeGen::EmitCaseStatement(CaseStatement& stmt) {
+  Writeln("{}:", stmt.GetLabel());
+  stmt.GetStmt()->GenCode(*this);
+}
 
 void CodeGen::EmitReturnStatement(ReturnStatement& stmt) {
   if (auto* return_expr = stmt.GetReturn()) {
