@@ -142,8 +142,10 @@ class CodeGen {
   // Store all arguments to the stack.
   void StoreArgs(FunctionDecl& func);
 
-  // Load all arguments so we can call a function.
-  void LoadArgs(FunctionDecl& func);
+  void PushArgs(CallExpr& expr);
+
+  // Pop all arguments so we can call a function.
+  void PopArgs(CallExpr& func);
 
   void Store(const Type& type);
 

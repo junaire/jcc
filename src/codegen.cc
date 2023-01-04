@@ -191,6 +191,9 @@ void CodeGen::EmitVarDecl(VarDecl& decl) { Assign(decl, decl.GetInit()); }
 void CodeGen::StoreArgs(FunctionDecl& func) {
   for (size_t i = 0; i < func.GetParamNum(); ++i) {
     VarDecl* arg = func.GetParam(i);
+    if (arg->GetOffset().value_or(-1) > 0) {
+      continue;
+    }
     switch (arg->GetType()->GetSize()) {
       case 4: {
         if (std::optional<int> offset = arg->GetOffset()) {
@@ -211,7 +214,7 @@ void CodeGen::EmitFunctionDecl(FunctionDecl& decl) {
     return;
   }
 
-  // TODO(Jun): Keep informations like `static`, `extern` and etc.
+  // TODO(Jun): Keep information like `static`, `extern` and etc.
 
   ctx.cur_func_name = decl.GetName();
   Writeln("  .globl {}", decl.GetName());
@@ -382,41 +385,78 @@ void CodeGen::EmitIntergerLiteral(IntergerLiteral& expr) {
 
 void CodeGen::EmitFloatingLiteral(FloatingLiteral& expr) {}
 
-void CodeGen::LoadArgs(FunctionDecl& func) {
+void CodeGen::PushArgs(CallExpr& expr) {
+  std::vector<bool> pass_by_stack(expr.GetArgNum(), false);
+
   size_t stack = 0;
   size_t gp = 0;
   size_t fp = 0;
 
   // TODO(Jun): What if the return type is a large struct or union?
 
-  for (size_t i = 0; i < func.GetParamNum(); ++i) {
-    VarDecl* arg = func.GetParam(i);
-    switch (arg->GetType()->GetKind()) {
+  for (size_t i = 0; i < expr.GetArgNum(); ++i) {
+    switch (expr.GetArg(i)->GetType()->GetKind()) {
       case TypeKind::Struct:
       case TypeKind::Union:
       case TypeKind::Float:
         jcc_unimplemented();
       default: {
         if (gp++ >= gp_max) {
+          pass_by_stack[i] = true;
           stack++;
         }
       }
     }
   }
-}
-void CodeGen::EmitCallExpr(CallExpr& expr) {
-  for (size_t i = 0; i < expr.GetArgNum(); ++i) {
-    expr.GetArg(i)->GenCode(*this);
+  if ((stack + StackDepthTracker::Get()) % 2 == 1) {
+    Writeln("  sub $8, %rsp");
+    StackDepthTracker::Push();
+    stack++;
+  }
+  for (int j = expr.GetArgNum() - 1; j >= 0; --j) {
+    Expr* arg = expr.GetArg(j);
+    switch (arg->GetType()->GetKind()) {
+      case TypeKind::Int: {
+        arg->GenCode(*this);
+        break;
+      }
+      default:
+        jcc_unimplemented();
+    }
     Push();
   }
+}
+
+void CodeGen::PopArgs(CallExpr& expr) {
+  size_t gp = 0;
+  for (size_t i = 0; i < expr.GetArgNum(); ++i) {
+    switch (expr.GetArg(i)->GetType()->GetKind()) {
+      case TypeKind::Struct:
+      case TypeKind::Union:
+      case TypeKind::Float:
+        jcc_unimplemented();
+      default: {
+        if (gp < gp_max) {
+          Pop(arg_reg64[gp++]);
+        }
+      }
+    }
+  }
+}
+
+void CodeGen::EmitCallExpr(CallExpr& expr) {
   auto* func =
       expr.GetCallee()->As<DeclRefExpr>()->GetRefDecl()->As<FunctionDecl>();
+
+  PushArgs(expr);
+
   if (func->HasDefinition()) {
     Writeln("  lea {}(%rip), %rax", func->GetName());
   } else {
     Writeln("  mov {}@GOTPCREL(%rip), %rax", func->GetName());
   }
-  LoadArgs(*func);
+
+  PopArgs(expr);
 
   Writeln("  mov %rax, %r10");
   Writeln("  mov $0, %rax");

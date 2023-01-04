@@ -756,8 +756,11 @@ Expr* Parser::ParsePostfixExpr(Expr* lhs) {
         if (!CurrentToken().Is<TokenKind::RightParen>()) {
           args = ParseExprList();
         }
-        lhs = CallExpr::Create(GetASTContext(), SourceRange(),
-                               GetASTContext().GetVoidType(), lhs,
+        Type* type = lhs->As<DeclRefExpr>()
+                         ->GetRefDecl()
+                         ->As<FunctionDecl>()
+                         ->GetReturnType();
+        lhs = CallExpr::Create(GetASTContext(), SourceRange(), type, lhs,
                                std::move(args));
         MustConsumeToken(TokenKind::RightParen);
         break;
