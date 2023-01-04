@@ -143,7 +143,7 @@ class CodeGen {
   void StoreArgs(FunctionDecl& func);
 
   // Load all arguments so we can call a function.
-  void LoadArgs(size_t arg_size);
+  void LoadArgs(FunctionDecl& func);
 
   void Store(const Type& type);
 

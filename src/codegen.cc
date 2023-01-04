@@ -28,14 +28,17 @@ static int64_t Counter() {
 
 namespace jcc {
 
-static std::string_view arg_reg8[] = {"%dil", "%sil", "%dl",
-                                      "%cl",  "%r8b", "%r9b"};
-static std::string_view arg_reg16[] = {"%di", "%si",  "%dx",
-                                       "%cx", "%r8w", "%r9w"};
-static std::string_view arg_reg32[] = {"%edi", "%esi", "%edx",
-                                       "%ecx", "%r8d", "%r9d"};
-static std::string_view arg_reg64[] = {"%rdi", "%rsi", "%rdx",
-                                       "%rcx", "%r8",  "%r9"};
+static constexpr std::string_view arg_reg8[] = {"%dil", "%sil", "%dl",
+                                                "%cl",  "%r8b", "%r9b"};
+static constexpr std::string_view arg_reg16[] = {"%di", "%si",  "%dx",
+                                                 "%cx", "%r8w", "%r9w"};
+static constexpr std::string_view arg_reg32[] = {"%edi", "%esi", "%edx",
+                                                 "%ecx", "%r8d", "%r9d"};
+static constexpr std::string_view arg_reg64[] = {"%rdi", "%rsi", "%rdx",
+                                                 "%rcx", "%r8",  "%r9"};
+
+// The max number of registers we can use when call a function.
+static constexpr size_t gp_max = 6;
 
 static int AlignTo(int n, int align) { return (n + align - 1) / align * align; }
 
@@ -67,7 +70,7 @@ static void AssignLocalOffsets(const std::vector<Decl*>& decls) {
             jcc_unimplemented();
             break;
           default: {
-            if (gp++ < 6) {
+            if (gp++ < gp_max) {
               continue;
             }
           }
@@ -379,12 +382,26 @@ void CodeGen::EmitIntergerLiteral(IntergerLiteral& expr) {
 
 void CodeGen::EmitFloatingLiteral(FloatingLiteral& expr) {}
 
-void CodeGen::LoadArgs(size_t arg_size) {
-  for (int i = 1; i <= arg_size; ++i) {
-    if (i >= 6) {
-      jcc_unimplemented();
+void CodeGen::LoadArgs(FunctionDecl& func) {
+  size_t stack = 0;
+  size_t gp = 0;
+  size_t fp = 0;
+
+  // TODO(Jun): What if the return type is a large struct or union?
+
+  for (size_t i = 0; i < func.GetParamNum(); ++i) {
+    VarDecl* arg = func.GetParam(i);
+    switch (arg->GetType()->GetKind()) {
+      case TypeKind::Struct:
+      case TypeKind::Union:
+      case TypeKind::Float:
+        jcc_unimplemented();
+      default: {
+        if (gp++ >= gp_max) {
+          stack++;
+        }
+      }
     }
-    Pop(arg_reg64[i]);
   }
 }
 void CodeGen::EmitCallExpr(CallExpr& expr) {
@@ -399,7 +416,7 @@ void CodeGen::EmitCallExpr(CallExpr& expr) {
   } else {
     Writeln("  mov {}@GOTPCREL(%rip), %rax", func->GetName());
   }
-  LoadArgs(expr.GetArgNum());
+  LoadArgs(*func);
 
   Writeln("  mov %rax, %r10");
   Writeln("  mov $0, %rax");
@@ -456,6 +473,14 @@ void CodeGen::EmitBinaryExpr(BinaryExpr& expr) {
     }
     case PlusEqual: {
       jcc_unimplemented();
+    }
+    case Plus: {
+      expr.GetLhs()->GenCode(*this);
+      Push();
+      expr.GetRhs()->GenCode(*this);
+      Pop("%rdi");
+      Writeln("  add {}, {}", "%edi", "%eax");
+      break;
     }
     default:
       jcc_unimplemented();
