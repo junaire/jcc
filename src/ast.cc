@@ -376,9 +376,13 @@ CaseStatement* CaseStatement::Create(ASTContext& ctx, SourceRange loc,
 
 void CaseStatement::dump(int indent) const {
   InsertIndent(indent);
-  fmt::print("CaseStatement\n");
-  InsertIndent(indent);
-  fmt::print("value: {}\n", GetValue());
+  if (IsDefault()) {
+    fmt::print("DefaultStatement\n");
+  } else {
+    fmt::print("CaseStatement\n");
+    InsertIndent(indent);
+    fmt::print("value: {}\n", GetValue());
+  }
   stmt_->dump(indent + dump_indent);
 }
 
