@@ -612,17 +612,16 @@ Decl* Parser::ParseFunction(Declarator& declarator) {
     jcc_unreachable("function redefinition!");
   }
 
-  auto* self = declarator.GetType()->AsType<FunctionType>();
+  auto* func_type = declarator.GetType()->AsType<FunctionType>();
 
-  FunctionDecl* function = FunctionDecl::Create(
-      GetASTContext(), SourceRange(), func_name,
-      Type::CreateFuncType(GetASTContext(), self->GetReturnType()),
-      self->GetReturnType());
+  FunctionDecl* function =
+      FunctionDecl::Create(GetASTContext(), SourceRange(), func_name, func_type,
+                           func_type->GetReturnType());
   GetASTContext().SetCurFunc(function);
 
   ScopeRAII scope_guard(*this);
 
-  function->SetParams(CreateParams(self));
+  function->SetParams(CreateParams(func_type));
 
   if (TryConsumeToken(TokenKind::LeftBracket)) {
     function->SetBody(ParseCompoundStmt());
