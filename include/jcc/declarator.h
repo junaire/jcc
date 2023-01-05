@@ -128,6 +128,9 @@ class DeclSpec {
         jcc_unreachable("Unknown type specifier when generating type!");
     }
     type_->SetQualifiers(static_cast<Qualifiers>(type_qual_));
+    if (IsStatic()) {
+      type_->SetStatic();
+    }
   }
 
   [[nodiscard]] Type* GetType() const { return type_; }

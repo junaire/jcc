@@ -45,6 +45,7 @@ enum class TypeKind {
 class Type {
   TypeKind kind_;
   Qualifiers quals_ = Qualifiers::Unspecified;
+  bool is_static_ = false;
 
   Token name_;
 
@@ -82,6 +83,10 @@ class Type {
   [[nodiscard]] bool IsVolatile() const {
     return quals_ == Qualifiers::Volatile;
   }
+
+  [[nodiscard]] bool IsStatic() const { return is_static_; }
+
+  void SetStatic() { is_static_ = true; }
 
   template <TypeKind ty>
   [[nodiscard]] bool Is() const {

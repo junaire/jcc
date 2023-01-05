@@ -217,7 +217,13 @@ void CodeGen::EmitFunctionDecl(FunctionDecl& decl) {
   // TODO(Jun): Keep information like `static`, `extern` and etc.
 
   ctx.cur_func_name = decl.GetName();
-  Writeln("  .globl {}", decl.GetName());
+
+  if (decl.GetType()->IsStatic()) {
+    Writeln("  .local {}", decl.GetName());
+  } else {
+    Writeln("  .globl {}", decl.GetName());
+  }
+
   Writeln("  .type {}, @function", decl.GetName());
   Writeln("  .text");
   Writeln("{}:", decl.GetName());
