@@ -791,20 +791,32 @@ static BinaryOperatorKind ConvertOpToKind(TokenKind kind) {
   switch (kind) {
     case TokenKind::Plus:
       return BinaryOperatorKind::Plus;
-    case TokenKind::Minus:
-      return BinaryOperatorKind::Minus;
-    case TokenKind::Star:
-      return BinaryOperatorKind::Multiply;
-    case TokenKind::Slash:
-      return BinaryOperatorKind::Divide;
-    case TokenKind::Greater:
-      return BinaryOperatorKind::Greater;
-    case TokenKind::Less:
-      return BinaryOperatorKind::Less;
-    case TokenKind::Equal:
-      return BinaryOperatorKind::Equal;
     case TokenKind::PlusEqual:
       return BinaryOperatorKind::PlusEqual;
+    case TokenKind::Minus:
+      return BinaryOperatorKind::Minus;
+    case TokenKind::MinusEqual:
+      return BinaryOperatorKind::MinusEqual;
+    case TokenKind::Star:
+      return BinaryOperatorKind::Multiply;
+    case TokenKind::StarEqual:
+      return BinaryOperatorKind::MultiplyEqual;
+    case TokenKind::Slash:
+      return BinaryOperatorKind::Divide;
+    case TokenKind::SlashEqual:
+      return BinaryOperatorKind::DivideEqual;
+    case TokenKind::Greater:
+      return BinaryOperatorKind::Greater;
+    case TokenKind::GreaterEqual:
+      return BinaryOperatorKind::GreaterEqual;
+    case TokenKind::Less:
+      return BinaryOperatorKind::Less;
+    case TokenKind::LessEqual:
+      return BinaryOperatorKind::LessEqual;
+    case TokenKind::Equal:
+      return BinaryOperatorKind::Equal;
+    case TokenKind::EqualEqual:
+      return BinaryOperatorKind::EqualEqual;
     default:
       jcc_unimplemented();
   }

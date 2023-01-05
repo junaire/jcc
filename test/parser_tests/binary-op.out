@@ -20,3 +20,23 @@ FunctionDecl: foo
             IntergerLiteral: 10
             IntergerLiteral: 5
           IntergerLiteral: 2
+    ExprStatement
+      BinaryExpr(+=):
+        DeclRefExpr: x
+        IntergerLiteral: 2
+    ExprStatement
+      BinaryExpr(-=):
+        DeclRefExpr: y
+        IntergerLiteral: 3
+    ExprStatement
+      BinaryExpr(/=):
+        DeclRefExpr: z
+        IntergerLiteral: 1
+    ExprStatement
+      BinaryExpr(*=):
+        DeclRefExpr: x
+        IntergerLiteral: 2
+    ExprStatement
+      BinaryExpr(==):
+        DeclRefExpr: x
+        DeclRefExpr: y

@@ -224,20 +224,32 @@ static std::string_view PrintBinaryOpKind(BinaryOperatorKind kind) {
   switch (kind) {
     case BinaryOperatorKind::Plus:
       return "+";
-    case BinaryOperatorKind::Minus:
-      return "-";
-    case BinaryOperatorKind::Multiply:
-      return "*";
-    case BinaryOperatorKind::Divide:
-      return "/";
-    case BinaryOperatorKind::Greater:
-      return ">";
-    case BinaryOperatorKind::Less:
-      return "<";
-    case BinaryOperatorKind::Equal:
-      return "=";
     case BinaryOperatorKind::PlusEqual:
       return "+=";
+    case BinaryOperatorKind::Minus:
+      return "-";
+    case BinaryOperatorKind::MinusEqual:
+      return "-=";
+    case BinaryOperatorKind::Multiply:
+      return "*";
+    case BinaryOperatorKind::MultiplyEqual:
+      return "*=";
+    case BinaryOperatorKind::Divide:
+      return "/";
+    case BinaryOperatorKind::DivideEqual:
+      return "/=";
+    case BinaryOperatorKind::Greater:
+      return ">";
+    case BinaryOperatorKind::GreaterEqual:
+      return ">=";
+    case BinaryOperatorKind::Less:
+      return "<";
+    case BinaryOperatorKind::LessEqual:
+      return "<=";
+    case BinaryOperatorKind::Equal:
+      return "=";
+    case BinaryOperatorKind::EqualEqual:
+      return "==";
     default:
       jcc_unimplemented();
   }

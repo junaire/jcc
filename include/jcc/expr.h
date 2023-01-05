@@ -166,13 +166,19 @@ class UnaryExpr : public Expr {
 // TODO(Jun): Add more kinds.
 enum class BinaryOperatorKind {
   Plus,
+  PlusEqual,
   Minus,
+  MinusEqual,
   Multiply,
+  MultiplyEqual,
   Divide,
+  DivideEqual,
   Greater,
+  GreaterEqual,
   Less,
+  LessEqual,
   Equal,
-  PlusEqual
+  EqualEqual
 };
 
 class BinaryExpr : public Expr {
