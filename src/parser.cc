@@ -901,8 +901,20 @@ Expr* Parser::ParseRhsOfBinaryExpr(Expr* lhs, BinOpPreLevel min_prec) {
 // Function or a simple declaration
 std::vector<Decl*> Parser::ParseFunctionOrVar(DeclSpec& decl_spec) {
   std::vector<Decl*> decls;
-  // Cases like struct { int x; };
+  // Cases like:
+  // 1. struct S { int x; };
+  // 2. union U { int x; char c; };
+  // 3. enum E { M, N };
+  // 4. void foo();
   if (TryConsumeToken(TokenKind::Semi)) {
+    Type* type = decl_spec.GetType();
+    // This is a dirty hack. Here we want to push user defined types to the
+    // scope. However, Other cases like a function declarator could also happens
+    // here. More importantly, we're not synthesized the type of a function
+    // until parsing itself, thus we need to do two sanity checks here.
+    if (type != nullptr && type->IsOneOf<TypeKind::Struct, TypeKind::Union, TypeKind::Enum>()) {
+      GetCurScope().PushType(type->GetNameAsString(), type);
+    }
     return decls;
   }
 
