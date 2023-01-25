@@ -18,15 +18,13 @@ class Type;
 
 struct Scope {
   void PushVar(const std::string& name, Decl* var) { vars[name] = var; }
-  void PushTag(const std::string& name, Decl* tag) { tags[name] = tag; }
+  void PushType(const std::string& name, Type* tag) { types[name] = tag; }
 
   std::map<std::string, Decl*> vars;
-  std::map<std::string, Decl*> tags;
+  std::map<std::string, Type*> types;
 };
 
 class ASTContext {
-  std::vector<Type*> user_defined_types_;
-
   std::vector<Scope> scopes_;
 
   Allocator<ASTNode> ast_node_allocator_;
@@ -71,8 +69,7 @@ class ASTContext {
 
   void SetCurFunc(FunctionDecl* func) { cur_func_ = func; }
 
-  // TODO(Jun): Look up in vars, need similiar work for tags.
-  Decl* Lookup(const std::string& name) {
+  [[nodiscard]] Decl* Lookup(const std::string& name) const {
     for (auto rbeg = scopes_.rbegin(), rend = scopes_.rend(); rbeg != rend;
          rbeg++) {
       auto iter = rbeg->vars.find(name);
@@ -83,7 +80,15 @@ class ASTContext {
     return nullptr;
   }
 
- private:
-  void RegisterUserType(Type* type);
+  [[nodiscard]] Type* LookupType(const std::string& name) const {
+    for (auto rbeg = scopes_.rbegin(), rend = scopes_.rend(); rbeg != rend;
+         rbeg++) {
+      auto iter = rbeg->types.find(name);
+      if (iter != rbeg->types.end()) {
+        return iter->second;
+      }
+    }
+    return nullptr;
+  }
 };
 }  // namespace jcc

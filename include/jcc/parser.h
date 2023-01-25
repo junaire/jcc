@@ -107,11 +107,19 @@ class Parser {
 
   Type* ParseTypename();
 
+  void ParseTypedef(DeclSpec& decl_spec);
+
   std::vector<VarDecl*> CreateParams(FunctionType* type);
 
   ASTContext& GetASTContext() { return ctx_; }
 
-  Decl* Lookup(const std::string& name) { return ctx_.Lookup(name); }
+  [[nodiscard]] Decl* Lookup(const std::string& name) const {
+    return ctx_.Lookup(name);
+  }
+  [[nodiscard]] Type* LookupType(const std::string& name) const {
+    return ctx_.LookupType(name);
+  }
+  Scope& GetCurScope() { return ctx_.GetCurScope(); }
 
  private:
   Token CurrentToken();
@@ -119,6 +127,7 @@ class Parser {
   void MustConsumeToken(TokenKind expected);
   bool TryConsumeToken(TokenKind expected);
   Token NextToken();
+  [[nodiscard]] bool IsType(Token token) const;
   Lexer& lexer_;
   Token token_;
   std::optional<Token> cache_;

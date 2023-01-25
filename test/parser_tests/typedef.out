@@ -1,0 +1,9 @@
+FunctionDecl: main
+  Args[0]
+  CompoundStatement
+    DeclStatement
+      VarDecl: a
+        IntergerLiteral: 42
+    DeclStatement
+      VarDecl: b
+        IntergerLiteral: 24

@@ -38,7 +38,4 @@ Type* ASTContext::GetLDoubleType() {
   return Type::CreateDoubleType(*this, /*is_long=*/true);
 }
 
-void ASTContext::RegisterUserType(Type* type) {
-  user_defined_types_.push_back(type);
-}
 }  // namespace jcc

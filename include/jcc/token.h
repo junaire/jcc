@@ -161,7 +161,7 @@ class Token {
 
   [[nodiscard]] bool IsValid() const { return kind_ != TokenKind::Unspecified; }
 
-  [[nodiscard]] std::string_view GetValue() const {
+  [[nodiscard]] std::string_view GetStrView() const {
     assert(getLength() != 0 &&
            "Cannot get value from tokens that have no value!");
     return {GetData(), getLength()};
@@ -372,42 +372,5 @@ class Token {
   [[nodiscard]] const char* GetData() const { return data_; }
 
   SourceLocation getLoc() { return loc_; }
-
-  [[nodiscard]] bool IsTypename() const {
-    // FIXME: the list seems to be not complete.
-    switch (GetKind()) {
-      case TokenKind::Auto:
-      case TokenKind::Char:
-      case TokenKind::Const:
-      case TokenKind::Default:
-      case TokenKind::Double:
-      case TokenKind::Enum:
-      case TokenKind::Extern:
-      case TokenKind::Float:
-      case TokenKind::Inline:
-      case TokenKind::Int:
-      case TokenKind::Long:
-      case TokenKind::Register:
-      case TokenKind::Restrict:
-      case TokenKind::Short:
-      case TokenKind::Signed:
-      case TokenKind::Static:
-      case TokenKind::Struct:
-      case TokenKind::Typedef:
-      case TokenKind::Union:
-      case TokenKind::Unsigned:
-      case TokenKind::Void:
-      case TokenKind::Volatile:
-      case TokenKind::DashAlignas:
-      case TokenKind::DashAtmoic:
-      case TokenKind::DashBool:
-      case TokenKind::DashComplex:
-      case TokenKind::DashNoReturn:
-      case TokenKind::DashThreadLocal:
-        return true;
-      default:
-        return false;
-    }
-  }
 };
 }  // namespace jcc

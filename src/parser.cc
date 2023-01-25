@@ -156,7 +156,7 @@ Type* Parser::ParseTypename() {
 DeclSpec Parser::ParseDeclSpec() {
   using enum TokenKind;
   DeclSpec decl_spec(GetASTContext());
-  while (CurrentToken().IsTypename()) {
+  while (IsType(CurrentToken())) {
     if (CurrentToken()
             .IsOneOf<Typedef, Static, Extern, Inline, DashThreadLocal>()) {
       // Check if storage class specifier is allowed in this context.
@@ -261,12 +261,18 @@ DeclSpec Parser::ParseDeclSpec() {
       case Unsigned:
         decl_spec.SetTypeSpecSign(DeclSpec::TypeSpecSign::Unsigned);
         break;
+      case Identifier: {
+        // When running into an identifier, presumably it's type alias or user
+        // defined type. Thus look up it in the scope, and set it for DeclSpec.
+        decl_spec.SetType(LookupType(CurrentToken().GetAsString()));
+        break;
+      }
       default:
-        jcc_unreachable("current token kind is not a builtin type");
+        jcc_unreachable("current token kind is not a type");
     }
 
-    decl_spec.SynthesizeType();
     ConsumeToken();
+    decl_spec.SynthesizeType();
   }
 
   return decl_spec;
@@ -575,11 +581,11 @@ Stmt* Parser::ParseCompoundStmt() {
                                  // a function body, so we create it twice?
 
   while (!CurrentToken().Is<TokenKind::RightBracket>()) {
-    if (CurrentToken().IsTypename() && !NextToken().Is<TokenKind::Colon>()) {
+    if (IsType(CurrentToken()) && !NextToken().Is<TokenKind::Colon>()) {
       DeclSpec decl_spec = ParseDeclSpec();
       if (decl_spec.IsTypedef()) {
         // Parse Typedef
-        jcc_unimplemented();
+        ParseTypedef(decl_spec);
         continue;
       }
       Declarator declarator = ParseDeclarator(decl_spec);
@@ -599,6 +605,44 @@ Stmt* Parser::ParseCompoundStmt() {
   }
   ConsumeToken();  // Eat '}'
   return stmt;
+}
+
+[[nodiscard]] bool Parser::IsType(Token token) const {
+  // FIXME: the list seems to be not complete.
+  switch (token.GetKind()) {
+    case TokenKind::Auto:
+    case TokenKind::Char:
+    case TokenKind::Const:
+    case TokenKind::Default:
+    case TokenKind::Double:
+    case TokenKind::Enum:
+    case TokenKind::Extern:
+    case TokenKind::Float:
+    case TokenKind::Inline:
+    case TokenKind::Int:
+    case TokenKind::Long:
+    case TokenKind::Register:
+    case TokenKind::Restrict:
+    case TokenKind::Short:
+    case TokenKind::Signed:
+    case TokenKind::Static:
+    case TokenKind::Struct:
+    case TokenKind::Typedef:
+    case TokenKind::Union:
+    case TokenKind::Unsigned:
+    case TokenKind::Void:
+    case TokenKind::Volatile:
+    case TokenKind::DashAlignas:
+    case TokenKind::DashAtmoic:
+    case TokenKind::DashBool:
+    case TokenKind::DashComplex:
+    case TokenKind::DashNoReturn:
+    case TokenKind::DashThreadLocal:
+      return true;
+    default:
+      break;
+  }
+  return LookupType(token.GetAsString()) != nullptr;
 }
 
 Decl* Parser::ParseFunction(Declarator& declarator) {
@@ -873,6 +917,22 @@ std::vector<Decl*> Parser::ParseFunctionOrVar(DeclSpec& decl_spec) {
   return decls;
 }
 
+// typedef int A, B, C;
+void Parser::ParseTypedef(DeclSpec& decl_spec) {
+  while (!CurrentToken().Is<TokenKind::Semi>()) {
+    if (CurrentToken().Is<TokenKind::Comma>()) {
+      // Skip the comma.
+      ConsumeToken();
+    }
+    assert(CurrentToken().GetKind() == TokenKind::Identifier &&
+           "Not an identifier in parsing typedef?");
+    std::string ident = CurrentToken().GetAsString();
+    GetCurScope().PushType(ident, decl_spec.GetType());
+    ConsumeToken();
+  }
+  MustConsumeToken(TokenKind::Semi);
+}
+
 std::vector<Decl*> Parser::ParseTranslateUnit() {
   ScopeRAII scope_guard(*this);  // The file scope.
 
@@ -881,7 +941,7 @@ std::vector<Decl*> Parser::ParseTranslateUnit() {
     DeclSpec decl_spec = ParseDeclSpec();
     // TODO(Jun): Handle typedefs
     if (decl_spec.IsTypedef()) {
-      jcc_unimplemented();
+      ParseTypedef(decl_spec);
     }
 
     std::vector<Decl*> decls = ParseFunctionOrVar(decl_spec);
