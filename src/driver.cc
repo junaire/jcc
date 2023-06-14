@@ -57,7 +57,7 @@ namespace jcc {
 // FIXME: Find a better way to deal with the arguments.
 Driver::Driver(int argc, char** argv) {
   if (argc < 2) {
-    fmt::print("JCC expected aat least 1 argument!\n");
+    fmt::print("JCC expected at least 1 argument!\n");
     exit(-1);
   }
   std::vector<std::string_view> args(static_cast<size_t>(argc - 1));
